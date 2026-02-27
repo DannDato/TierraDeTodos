@@ -1,0 +1,15 @@
+@media (max-width: 567px) {
+    .nav-container {
+        padding: 10px 40px;
+    }
+    nav ul {
+        gap: 30px;
+    }
+    nav ul li {
+        padding: 0px 0px !important;
+        font-size: 12px;
+    }
+    .hero-logo {
+        width: 350px;
+    }
+}

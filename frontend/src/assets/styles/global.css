@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+:root {
+  --primary-color: #6393c7;
+  --secondary-color: #309870;
+  --tertiary-color: #ffbb01;
+  --dirt-color: #7d4d2b;
+  --white-color: #e7dfc8;
+  --black-color: #000000;
+  --gray-color: #808080;
+  --cancel-color: #ff4d4d;
+  
+  --hover-primary: #4a6b9e;
+  --hover-secondary: #1e6b4d;
+  --hover-tertiary: #e6a000;
+  --hover-cancel: #b24343;
+  --hover-gray: #666666;
+  
+  --discord-color: #7289da;
+  --discord-hover: #5b6eae;
+}
+
+html, body {
+  font-family: "Outfit", sans-serif;
+  background-color: var(--black-color);
+  /* scroll-behavior: smooth; Añadido para que el botón "Juega ya!" baje suavemente */
+}
+
+/* Ocultar barra de scroll para el carrusel pero mantener funcionalidad */
+.custom-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.custom-scrollbar {
+  -ms-overflow-style: none;  /* IE y Edge */
+  scrollbar-width: none;  /* Firefox */
+}
