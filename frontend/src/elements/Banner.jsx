@@ -1,6 +1,6 @@
 
 function Banner({
-  backgroundImage = "/img/banner.gif",
+  backgroundImage = "/img/banner.webp",
   overlayColor = "rgba(44,44,44,0.6)",
   blur = "10px",
   children,
