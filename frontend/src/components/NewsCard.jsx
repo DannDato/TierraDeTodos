@@ -26,7 +26,7 @@ function NewsCard({
 
       {/* Meta info */}
       <div className="flex items-center text-[var(--black-color)] mb-1 text-sm">
-        <span className="pr-1 font-bold text-[var(--secondary-color)]">
+        <span className="pr-1 font-bold text-[var(--dirt-color)]">
           {category}
         </span>
         |

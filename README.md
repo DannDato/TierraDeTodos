@@ -18,7 +18,7 @@ Desarrollar un **launcher personalizado** que:
 
 | Componente        | Tecnología |
 |------------------|------------|
-| Base de Datos     | MariaDB |
+| Base de Datos     | MySQL |
 | Backend API       | Node.js |
 | Launcher          | Electron |
 | Servidor Minecraft| Vultam |

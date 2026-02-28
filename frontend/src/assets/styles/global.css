@@ -8,6 +8,7 @@
   --white-color: #e7dfc8;
   --black-color: #000000;
   --gray-color: #808080;
+  --gray-dark-color: #0f0f0f;
   --cancel-color: #ff4d4d;
   
   --hover-primary: #4a6b9e;
@@ -23,7 +24,13 @@
 html, body {
   font-family: "Outfit", sans-serif;
   background-color: var(--black-color);
-  /* scroll-behavior: smooth; Añadido para que el botón "Juega ya!" baje suavemente */
+}
+html {
+  scroll-behavior: smooth !important;
+}
+
+section[id] {
+  scroll-margin-top: 100px;
 }
 
 /* Ocultar barra de scroll para el carrusel pero mantener funcionalidad */
@@ -33,4 +40,37 @@ html, body {
 .custom-scrollbar {
   -ms-overflow-style: none;  /* IE y Edge */
   scrollbar-width: none;  /* Firefox */
+}
+
+/* Clase principal para el fondo */
+.bg-minecraft {
+  background-color: var(--black-color);
+  position: relative;
+}
+
+/* Animación y posicionamiento de los cubos */
+.mc-cube-anim {
+  position: absolute;
+  bottom: -100px; /* Inician fuera de la pantalla por abajo */
+  opacity: 0;
+  animation: float-minecraft linear infinite;
+  will-change: transform; /* Optimización de rendimiento */
+}
+
+/* El keyframe que los hace flotar hacia arriba y girar suavemente */
+@keyframes float-minecraft {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  15% {
+    opacity: 1; 
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-500vh) rotate(120deg);
+    opacity: 1;
+  }
 }
