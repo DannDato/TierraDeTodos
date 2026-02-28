@@ -7,7 +7,7 @@ function Banner({
   className = "",
 }) {
   return (
-    <section className={`relative h-[600px] md:h-[800px] lg:h-[1000px] overflow-hidden ${className}`}>
+    <section id="inicio" className={`relative h-[600px] md:h-[800px] lg:h-[1000px] overflow-hidden ${className}`}>
       
       {/* Imagen de fondo */}
       <div

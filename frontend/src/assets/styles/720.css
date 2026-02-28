@@ -1,5 +1,21 @@
-@media (max-width: 720px) {
+@media (max-width: 768px) {
     .nav-container {
         padding: 10px 40px;
+    }
+    .timeline::before {
+        left: 20px;
+    }
+
+    .timeline-item {
+        width: 100%;
+        padding-left: 60px;
+        padding-right: 20px;
+        text-align: left;
+        left: 0 !important;
+    }
+
+    .timeline-icon {
+        left: 0 !important;
+        right: auto;
     }
 }

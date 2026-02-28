@@ -1,9 +1,34 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Button from "../elements/Button";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const navItems = ["Inicio", "Noticias", "Reglas", "Streamers", "Timeline"];
+
+  const scrollToSection = (sectionId) => {
+    const doScroll = () => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    };
+
+    // Si NO estamos en home, navegamos primero
+    if (location.pathname !== "/") {
+      navigate("/", { state: { scrollTo: sectionId } });
+    } else {
+      doScroll();
+    }
+
+    setIsOpen(false);
+  };
 
   return (
     <>
@@ -12,25 +37,40 @@ function Navbar() {
           <div className="flex items-center justify-between h-20">
 
             {/* Logo */}
-            <Link to="/" className="text-white mx-10">
+            <button
+              onClick={() => scrollToSection("inicio")}
+              className="text-white mx-10"
+            >
               <img
                 src="/img/dblank.webp"
                 alt="Logo"
+                data-aos="fade-right"
+                data-aos-duration="3000"
                 className="w-7 mx-10"
               />
-            </Link>
+            </button>
 
             {/* Desktop Menu */}
             <ul className="hidden lg:flex gap-10 text-[var(--white-color)]">
-              {["Inicio", "Timeline", "Noticias", "Reglas", "Streamers"].map((item, i) => (
-                <li key={i} className="hover:text-[var(--secondary-color)] transition-colors cursor-pointer" href={`#${item.toLowerCase()}`} >
-                  {item}
+              {navItems.map((item, i) => (
+                <li key={i}>
+                  <button
+                    onClick={() => scrollToSection(item.toLowerCase())}
+                    data-aos="fade-down"
+                    data-aos-duration={500 + i * 200}
+                    className="hover:text-[var(--secondary-color)] transition-colors cursor-pointer"
+                  >
+                    {item}
+                  </button>
                 </li>
               ))}
             </ul>
 
             {/* Desktop Buttons */}
-            <div className="hidden sm:flex gap-3 mx-10 xl:-ml-30">
+            <div className="hidden sm:flex gap-3 mx-10 xl:-ml-30"
+                data-aos="fade-left"
+                data-aos-duration="3000"
+            >
               <Button variant="outline" href="/login">
                 Entrar
               </Button>
@@ -72,10 +112,15 @@ function Navbar() {
           >
             ✕
           </button>
-          {["Inicio", "Timeline", "Noticias", "Reglas", "Streamers"].map((item, i) => (
-            <Link key={i} to="/" onClick={() => setIsOpen(false)} className="text-lg hover:text-[var(--secondary-color)] transition-colors">
+
+          {navItems.map((item, i) => (
+            <button
+              key={i}
+              onClick={() => scrollToSection(item.toLowerCase())}
+              className="text-lg text-left hover:text-[var(--secondary-color)] transition-colors"
+            >
               {item}
-            </Link>
+            </button>
           ))}
 
           <div className="border-t border-gray-700 pt-6 flex flex-col gap-3">
