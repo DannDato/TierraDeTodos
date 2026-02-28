@@ -70,16 +70,16 @@ export default function Reglas() {
 
         {/* Encabezado Principal */}
         <div className="text-center space-y-4">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-[var(--white-color)]">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-[var(--white-color)]" data-aos="fade-up" data-aos-duration="2000">
             Reglas del Servidor
           </h2>
-          <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+          <p className="text-gray-400 max-w-2xl mx-auto text-lg" data-aos="fade-up" data-aos-duration="3000">
             Lee detenidamente las normas para mantener una convivencia sana y evitar sanciones.
           </p>
         </div>
 
         {/* Grid de Tarjetas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8" data-aos="fade-up" data-aos-duration="1000">
           {reglasData.map((section) => (
             <div 
               key={section.id} 
@@ -88,10 +88,10 @@ export default function Reglas() {
               
               {/* Título e Icono de la Tarjeta */}
               <div className="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
-                <span className="text-3xl bg-black/30 p-3 rounded-xl shadow-inner">
+                <span className="text-3xl bg-black/30 p-3 rounded-xl shadow-inner" data-aos="fade" data-aos-duration="3000" data-aos-delay="500">
                   {section.icon}
                 </span>
-                <h3 className={`text-2xl font-bold tracking-wide ${section.color}`}>
+                <h3 className={`text-2xl font-bold tracking-wide ${section.color}`} data-aos="fade" data-aos-duration="1000">
                   {section.titulo}
                 </h3>
               </div>
@@ -110,7 +110,7 @@ export default function Reglas() {
                 {section.items.map((item, index) => (
                   <li key={index} className="flex items-start gap-3 text-gray-300">
                     <span className={`mt-1 text-sm ${section.color}`}>✦</span>
-                    <span className="leading-relaxed">{item}</span>
+                    <span className="leading-relaxed" data-aos="fade-up" data-aos-duration={500 + index * 200}>{item}</span>
                   </li>
                 ))}
               </ul>
