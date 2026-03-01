@@ -12,6 +12,7 @@ import Configuration from "./pages/user/configuration";
 import Start from "./pages/user/start";
 import UsersControl from "./pages/user/usersControl";
 import Reports from "./pages/user/reports";
+import Download from "./pages/user/download";
 
 const App = function App() {
   useEffect(() => {
@@ -28,6 +29,7 @@ const App = function App() {
       <Route path="/start" element={<DashboardLayout><Start /></DashboardLayout>}/>
       <Route path="/userscontrol" element={<DashboardLayout><UsersControl /></DashboardLayout>}/>
       <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>}/>
+      <Route path="/download" element={<DashboardLayout><Download /></DashboardLayout>}/>
     </Routes>
   );
 }
