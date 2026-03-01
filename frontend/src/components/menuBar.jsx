@@ -9,6 +9,7 @@ import {
   FlagTriangleRight,
   Settings,
   Info,
+  ArrowBigDown,
 } from "lucide-react";
 
 function MenuBar() {
@@ -17,12 +18,13 @@ function MenuBar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
-    { id: 0, name: "Usuarios", icon: Users, path: "/userscontrol", target: "_self", shortAccess: true },
-    { id: 1, name: "Inicio", icon: Home, path: "/start", target: "_self", shortAccess: true },
-    { id: 2, name: "Reportes", icon: FlagTriangleRight, path: "/reports", target: "_self", shortAccess: true },
-    { id: 3, name: "Perfil", icon: User, path: "/profile", target: "_self", shortAccess: false },
-    { id: 4, name: "Configuración", icon: Settings, path: "/configuration", target: "_self", shortAccess: false },
-    { id: 5, name: "Acerca de", icon: Info, path: "/aboutapp", target: "_self", shortAccess: false },
+    { id: 0, name: "Inicio", icon: Home, path: "/start", target: "_self", shortAccess: true },
+    { id: 1, name: "Usuarios", icon: Users, path: "/userscontrol", target: "_self", shortAccess: false },
+    { id: 2, name: "Descarga", icon: ArrowBigDown, path: "/download", target: "_self", shortAccess: true },
+    { id: 3, name: "Reportes", icon: FlagTriangleRight, path: "/reports", target: "_self", shortAccess: true },
+    { id: 4, name: "Perfil", icon: User, path: "/profile", target: "_self", shortAccess: true },
+    { id: 5, name: "Configuración", icon: Settings, path: "/configuration", target: "_self", shortAccess: false },
+    { id: 6, name: "Acerca de", icon: Info, path: "/aboutapp", target: "_self", shortAccess: false },
   ];
 
   const handleNavigate = (path, target) => {
@@ -37,15 +39,15 @@ function MenuBar() {
   return (
     <>
       {/* BOTTOM BAR */}
-      <nav className="fixed bottom-0 left-0 w-full bg-[var(--white-color)] border-t border-gray-300 z-50 shadow-lg">
-        <div className="flex justify-around items-center h-16">
+      <nav className="fixed bottom-0 left-0 w-full bg-[var(--white-color)] z-50 shadow-lg">
+
+        <div className="flex justify-around items-center h-16 bg-black/5">
 
           {menuItems
             .filter((item) => item.shortAccess)
             .map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-
               return (
                 <button
                   key={item.id}
