@@ -1,7 +1,7 @@
-import Input from "../elements/Input" 
-import Button from "../elements/Button"
-import Banner from "../elements/Banner"
-import SocialsAuth from "../components/SocialsAuth"
+import Input from "../../elements/Input" 
+import Button from "../../elements/Button"
+import Banner from "../../elements/Banner"
+import SocialsAuth from "../../components/SocialsAuth"
 
 
 function Register() {
