@@ -1,11 +1,11 @@
-import Banner from "../elements/Banner";
-import Button from "../elements/Button";
-import Timeline from "../components/Timeline";
-import News from "../components/News";
-import Streamers from "../components/Streamers";
-import Navbar from "../components/Navbar"
-import Footer from "../components/Footer"
-import Reglas from "../components/Reglas";
+import Banner from "../../elements/Banner";
+import Button from "../../elements/Button";
+import Timeline from "../../components/Timeline";
+import News from "../../components/News";
+import Streamers from "../../components/Streamers";
+import Navbar from "../../components/Navbar"
+import Footer from "../../components/Footer"
+import Reglas from "../../components/Reglas";
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 

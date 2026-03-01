@@ -1,9 +1,9 @@
-import Input from "../elements/Input" 
-import Button from "../elements/Button"
-import Banner from "../elements/Banner"
-import Footer from "../components/Footer"
+import Input from "../../elements/Input" 
+import Button from "../../elements/Button"
+import Banner from "../../elements/Banner"
+import Footer from "../../components/Footer"
 
-import SocialsAuth from "../components/SocialsAuth"
+import SocialsAuth from "../../components/SocialsAuth"
 
 
 function Login() {
