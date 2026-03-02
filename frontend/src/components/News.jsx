@@ -11,7 +11,7 @@ export default function News() {
       image: "/img/noticias/noticia1.jpg",
       category: "Actualización",
       date: "25/08/2026",
-      title: "TDT lanza su nueva edición",
+      title: "TDT lanza su nueva edición mamalona",
       description:
         "La nueva edición de Tierra de Todos, correspondiente al número 3, trae emocionantes novedades y mejoras..."
     },

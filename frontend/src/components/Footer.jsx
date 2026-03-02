@@ -2,14 +2,11 @@ import Button from "../elements/Button";
 
 function Footer() {
   return (
-    // Cambié a var(--black-color) y añadí un borde superior sutil para separarlo del contenido anterior
     <footer className="bg-[var(--black-color)] text-[var(--white-color)] pt-16 pb-8 border-t border-white/5 relative z-20">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         
-        {/* Contenedor Superior */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 mb-12">
           
-          {/* Columna Izquierda (Izquierda en PC, Centro en Móvil) */}
           <div className="flex flex-col text-center md:text-left items-center md:items-start">
             <h2 className="text-3xl font-extrabold mb-4 tracking-wide">
               Tierra de <span className="text-[var(--tertiary-color)]">Todos 3</span>
@@ -19,7 +16,6 @@ function Footer() {
             </p>
           </div>
           
-          {/* Columna Derecha (Derecha en PC, Centro en Móvil) */}
           <div className="flex flex-col text-center md:text-right items-center md:items-end justify-center gap-4">
             <Button 
               variant="discord" 
@@ -37,9 +33,6 @@ function Footer() {
           </div>
 
         </div>
-
-        {/* Contenedor Inferior (Copyright y Créditos) */}
-        {/* Aquí agregué flex flex-col md:flex-row para que funcione el justify-between */}
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs md:text-sm font-light text-gray-500 text-center md:text-left">
             © {new Date().getFullYear()} Tierra de Todos 3. Todos los derechos reservados.

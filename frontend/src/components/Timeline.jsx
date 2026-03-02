@@ -149,9 +149,8 @@ export default function Timeline() {
             {timelineData.map((item) => {
               const state = getItemState(item.date);
               
-              // Aquí definimos visualmente qué le pasa a cada estado
               const stateClasses = {
-                past: "opacity-75 hover:opacity-100", // <- Mantiene sus colores, solo baja un poco la opacidad
+                past: "opacity-75 hover:opacity-100", 
                 current: "opacity-100 scale-[1.02]",
                 future: "opacity-40 grayscale blur-[0.5px] hover:blur-none hover:opacity-60"
               }[state];
@@ -159,7 +158,7 @@ export default function Timeline() {
               const cardGlow = state === "current" 
                 ? "shadow-[0_0_30px_rgba(255,187,1,0.2)] ring-2 ring-[var(--tertiary-color)]" 
                 : state === "past"
-                ? "border border-green-500/20 hover:border-green-500/40" // Le damos un leve toque verde al borde si ya pasó
+                ? "border border-green-500/20 hover:border-green-500/40" 
                 : "border border-white/5 hover:border-white/20";
 
               return (

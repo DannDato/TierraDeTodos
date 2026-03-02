@@ -8,11 +8,7 @@ export default function Input({
   onChange,
   error,
 }) {
-  // 1. Estado para controlar si vemos el password o no 🕵️‍♂️
   const [showPassword, setShowPassword] = useState(false);
-
-  // 2. Si es de tipo password y showPassword es true, lo cambiamos a text.
-  // Si no, respetamos el tipo original que le pasaron al componente.
   const inputType = type === "password" && showPassword ? "text" : type;
 
   return (
@@ -23,21 +19,17 @@ export default function Input({
         </label>
       )}
 
-      {/* 3. Contenedor RELATIVO para poder flotar el ojito adentro */}
       <div className="relative w-full">
         <input
           type={inputType}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          // Agregamos 'w-full' y un padding derecho 'pr-12' SOLO si es password, 
-          // para que el texto no se meta debajo del icono del ojito
           className={`w-full text-gray-900 bg-[var(--white-color)] px-4 py-3 rounded-3xl border border-gray-900 
           focus:border-[var(--secondary-color)] focus:ring-1 focus:ring-[var(--secondary-color)] 
           outline-none transition ${type === "password" ? "pr-12" : ""}`}
         />
 
-        {/* 4. Renderizamos el botón del ojito SOLO si el tipo original era password */}
         {type === "password" && (
           <button
             type="button"
