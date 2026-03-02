@@ -20,7 +20,7 @@ function Navbar() {
       }
     };
 
-    // Si NO estamos en home, navegamos primero
+    // Si NO estamos en home navegamos primero
     if (location.pathname !== "/") {
       navigate("/", { state: { scrollTo: sectionId } });
     } else {

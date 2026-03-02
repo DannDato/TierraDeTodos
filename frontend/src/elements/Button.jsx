@@ -13,7 +13,7 @@ export default function Button({
   ...props
 }) {
   const baseStyles =
-    "rounded-3xl font-medium hover:scale-105 shadow-md transition-all duration-300 focus:outline-none";
+    "flex items-center justify-center rounded-3xl font-medium hover:scale-105 shadow-md transition-all duration-300 focus:outline-none gap-2";
 
   const variants = {
     primary:
@@ -45,7 +45,6 @@ export default function Button({
     className
   );
 
-  // 🔗 Si tiene href → renderiza <a>
   if (href) {
     return (
       <a
@@ -60,7 +59,6 @@ export default function Button({
     );
   }
 
-  // 🔘 Si no → renderiza <button>
   return (
     <button
       type={type}

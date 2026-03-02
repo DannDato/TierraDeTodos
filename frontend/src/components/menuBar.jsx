@@ -21,8 +21,8 @@ function MenuBar() {
     { id: 0, name: "Inicio", icon: Home, path: "/start", target: "_self", shortAccess: true },
     { id: 1, name: "Usuarios", icon: Users, path: "/userscontrol", target: "_self", shortAccess: false },
     { id: 2, name: "Descarga", icon: ArrowBigDown, path: "/download", target: "_self", shortAccess: true },
-    { id: 3, name: "Reportes", icon: FlagTriangleRight, path: "/reports", target: "_self", shortAccess: true },
-    { id: 4, name: "Perfil", icon: User, path: "/profile", target: "_self", shortAccess: true },
+    { id: 3, name: "Usuarios", icon: Users, path: "/users", target: "_self", shortAccess: true },
+    { id: 4, name: "Cuenta", icon: User, path: "/profile", target: "_self", shortAccess: true },
     { id: 5, name: "Configuración", icon: Settings, path: "/configuration", target: "_self", shortAccess: false },
     { id: 6, name: "Acerca de", icon: Info, path: "/aboutapp", target: "_self", shortAccess: false },
   ];
@@ -41,7 +41,7 @@ function MenuBar() {
       {/* BOTTOM BAR */}
       <nav className="fixed bottom-0 left-0 w-full bg-[var(--white-color)] z-50 shadow-lg">
 
-        <div className="flex justify-around items-center h-16 bg-black/5">
+        <div className="flex w-full justify-between h-16 bg-black/5">
 
           {menuItems
             .filter((item) => item.shortAccess)
@@ -52,7 +52,7 @@ function MenuBar() {
                 <button
                   key={item.id}
                   onClick={() => handleNavigate(item.path, item.target)}
-                  className={`flex flex-col items-center justify-center text-sm transition-all duration-300
+                  className={`flex-1 flex flex-col items-center justify-center text-sm transition-all duration-300
                     ${isActive
                       ? "text-black scale-110"
                       : "text-black/70 hover:text-black"
@@ -67,9 +67,9 @@ function MenuBar() {
           {/* BURGER */}
           <button
             onClick={() => setIsOpen(true)}
-            className="flex flex-col items-center justify-center text-black/70 hover:text-black transition-all duration-300"
+            className="flex-1 flex flex-col items-center justify-center text-black/70 hover:text-black transition-all duration-300"
           >
-            <Menu size={24} />
+            <Menu size={22} />
             <span className="text-xs mt-1">Menu</span>
           </button>
 
