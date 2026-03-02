@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { User, LogOut, PencilIcon, Monitor, ShieldAlert } from "lucide-react";
-import Button from "../../elements/button";
+import Button from "../../elements/Button";
 
 function Profile() {
   const Icon = User;
