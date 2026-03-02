@@ -20,7 +20,13 @@
   
   --discord-color: #7289da;
   --discord-hover: #5b6eae;
+  
+  --ins-background: #333130;
+  --ins-text-white: #e7dfc8;
+  --ins-text-gray: #bcb7a7;
+  --ins-text-dark: #545454;
 }
+
 
 html, body {
   font-family: "Outfit", sans-serif;

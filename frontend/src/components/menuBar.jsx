@@ -20,11 +20,10 @@ function MenuBar() {
   const menuItems = [
     { id: 0, name: "Inicio", icon: Home, path: "/start", target: "_self", shortAccess: true },
     { id: 1, name: "Usuarios", icon: Users, path: "/userscontrol", target: "_self", shortAccess: false },
-    { id: 2, name: "Descarga", icon: ArrowBigDown, path: "/download", target: "_self", shortAccess: true },
-    { id: 3, name: "Usuarios", icon: Users, path: "/users", target: "_self", shortAccess: true },
-    { id: 4, name: "Cuenta", icon: User, path: "/profile", target: "_self", shortAccess: true },
-    { id: 5, name: "Configuración", icon: Settings, path: "/configuration", target: "_self", shortAccess: false },
-    { id: 6, name: "Acerca de", icon: Info, path: "/aboutapp", target: "_self", shortAccess: false },
+    { id: 2, name: "Usuarios", icon: Users, path: "/users", target: "_self", shortAccess: true },
+    { id: 3, name: "Cuenta", icon: User, path: "/profile", target: "_self", shortAccess: true },
+    { id: 4, name: "Configuración", icon: Settings, path: "/configuration", target: "_self", shortAccess: false },
+    { id: 5, name: "Acerca de", icon: Info, path: "/aboutapp", target: "_self", shortAccess: false },
   ];
 
   const handleNavigate = (path, target) => {

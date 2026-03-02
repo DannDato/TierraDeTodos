@@ -1,4 +1,4 @@
-import MenuBar from "../components/menuBar"
+import MenuBar from "../components/MenuBar"
 
 function DashboardLayout({ children }) {
   return (
