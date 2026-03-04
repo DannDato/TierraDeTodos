@@ -222,7 +222,7 @@ function Start() {
         </div>
         {/* CONTENIDO PRINCIPAL*/}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-          <div className="lg:col-span-2 flex flex-col gap-6">            
+          <div className="col-span-2 flex flex-col gap-6">            
             {featuredNews && (
               <div className="relative h-80 w-full rounded-3xl overflow-hidden shadow-md group cursor-pointer">
                 <img 

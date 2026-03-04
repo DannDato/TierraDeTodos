@@ -1,3 +1,7 @@
+import { Navigate, useNavigate } from "react-router-dom";
+import api from "../../api/axios"
+import { useState } from "react"
+
 import Input from "../../elements/Input" 
 import Button from "../../elements/Button"
 import Banner from "../../elements/Banner"
@@ -7,6 +11,40 @@ import SocialsAuth from "../../components/SocialsAuth"
 
 
 function Login() {
+  let navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const[ email, setEmail] = useState("")
+  const[ password, setPassword] = useState("")
+  const [emailError, setEmailError] = useState(false);
+  const [passwordError, setPasswordError] = useState(false);
+
+  if (token) {return <Navigate to="/start" replace />;}
+  
+  const handleLogin = async (event) => { 
+    event.preventDefault();
+
+    if(localStorage.getItem("token")) {navigate("/start");return;}
+
+    !email ? setEmailError("El correo electrónico es obligatorio") : setEmailError(false);
+    !password ? setPasswordError("La contraseña es obligatoria") : setPasswordError(false);
+
+    let regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email && !regexEmail.test(email)) {setEmailError("Por favor, ingresa un correo electrónico válido");return;}
+    
+    const { data } = await api.post("/auth/login", {
+      email,
+      password,
+    }).catch((error) => {
+      if (error.response && error.response.data && error.response.data.message) {
+        setEmailError("Correo o contraseña incorrectos");
+        setPasswordError("Correo o contraseña incorrectos");
+      }
+    });
+    if(data.hasOwnProperty("token")) {
+      localStorage.setItem("token", data.token);
+      navigate("/start");
+    } 
+  };
   return (
     <>
       <Banner>
@@ -18,21 +56,33 @@ function Login() {
             <form className="flex flex-col gap-4">
               <Input 
                 label="Correo electrónico"
+                context="light"
+                name="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Ingresa tu correo electrónico"
                 type = "email"
+                error={emailError}
               />
 
               <Input 
                 label="Contraseña"
+                context="light"
+                name="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)} 
                 placeholder="Ingresa tu contraseña"
                 type = "password"
+                error={passwordError}
               />
               <SocialsAuth
                 onGoogle={() => console.log("Google login")}
                 onDiscord={() => console.log("Discord login")}
                 onMicrosoft={() => console.log("Microsoft login")}
               />
-              <Button variant="primary" className="mt-10">Iniciar sesión</Button>
+              <Button variant="primary" className="mt-10" onClick={handleLogin}>Iniciar sesión</Button>
             </form>
           </div>
           <div className="col bg-[var(--black-color)] rounded-r-3xl flex flex-col items-center justify-center p-8 text-[var(--white-color)]" data-aos="fade-right" >
@@ -51,6 +101,6 @@ function Login() {
       <Footer></Footer>
     </>
   )
-}
+};
 
 export default Login

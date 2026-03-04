@@ -11,6 +11,16 @@
   --gray-dark-color: #0f0f0f;
   --gray-light-color: #e3d9bb;
   --cancel-color: #ff4d4d;
+
+  --active-color: #29d096;
+  --warning-color: #f9c725;
+  --danger-color: #f44336;
+
+  --user-color: #29d096;
+  --streammer-color: #b17dff;
+  --moderator-color: #f9c725;
+  --admin-color: #000000;
+
   
   --hover-primary: #4a6b9e;
   --hover-secondary: #1e6b4d;
@@ -18,13 +28,14 @@
   --hover-cancel: #b24343;
   --hover-gray: #666666;
   
-  --discord-color: #7289da;
-  --discord-hover: #5b6eae;
+  --discord-color: #5865f2;
+  --discord-hover: #555eca;
   
   --ins-background: #333130;
   --ins-text-white: #e7dfc8;
   --ins-text-gray: #bcb7a7;
   --ins-text-dark: #545454;
+  --ins-menu-color: #545454;
 }
 
 
