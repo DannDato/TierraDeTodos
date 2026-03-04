@@ -55,7 +55,7 @@ function Home() {
               Bienvenido a TDT, un servidor de Minecraft donde la comunidad,
               la aventura y la creatividad se unen en una nueva edición.
             </p>
-            <Button variant="primary" size="lg" fullWidth={true} data-aos="fade" data-aos-duration="3000">¡Juega ya!</Button>
+            <Button variant="primary" size="lg" href={"/login"} fullWidth={true} data-aos="fade" data-aos-duration="3000">¡Juega ya!</Button>
           </div>
         </center>
       </Banner>

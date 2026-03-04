@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import Input from "../../elements/Input" 
 import Button from "../../elements/Button"
 import Banner from "../../elements/Banner"
@@ -5,6 +6,9 @@ import SocialsAuth from "../../components/SocialsAuth"
 
 
 function Register() {
+  const token = localStorage.getItem("token");
+  if (token) {return <Navigate to="/start" replace />;}
+
   return (
     <>
       <Banner>
@@ -27,21 +31,25 @@ function Register() {
             <form className="flex flex-col gap-4">
               <Input 
                 label="Nombre de usuario"
+                context="light"
                 placeholder="Ingresa tu nombre de usuario"
                 type = "text"
               />
               <Input 
                 label="Correo electrónico"
+                context="light"
                 placeholder="Ingresa tu correo electrónico"
                 type = "email"
               />
               <Input 
                 label="Contraseña"
+                context="light"
                 placeholder="Ingresa tu contraseña"
                 type = "password"
               />
               <Input 
                 label="Repetir contraseña"
+                context="light"
                 placeholder="Repite tu contraseña"
                 type = "password"
               />

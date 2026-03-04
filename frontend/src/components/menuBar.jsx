@@ -38,9 +38,9 @@ function MenuBar() {
   return (
     <>
       {/* BOTTOM BAR */}
-      <nav className="fixed bottom-0 left-0 w-full bg-[var(--white-color)] z-50 shadow-lg">
+      <nav className="fixed bottom-0 left-0 w-full bg-[var(--white-color)] z-50">
 
-        <div className="flex w-full justify-between h-16 bg-black/5">
+        <div className="flex w-full justify-between h-16 ">
 
           {menuItems
             .filter((item) => item.shortAccess)
@@ -54,7 +54,7 @@ function MenuBar() {
                   className={`flex-1 flex flex-col items-center justify-center text-sm transition-all duration-300
                     ${isActive
                       ? "text-black scale-110"
-                      : "text-black/70 hover:text-black"
+                      : "text-black/70 hover:text-[var(--secondary-color)]"
                     }`}
                 >
                   <Icon size={22} />
@@ -66,7 +66,7 @@ function MenuBar() {
           {/* BURGER */}
           <button
             onClick={() => setIsOpen(true)}
-            className="flex-1 flex flex-col items-center justify-center text-black/70 hover:text-black transition-all duration-300"
+            className="flex-1 flex flex-col items-center justify-center text-black/70 hover:text-[var(--secondary-color)] transition-all duration-300"
           >
             <Menu size={22} />
             <span className="text-xs mt-1">Menu</span>
@@ -78,7 +78,7 @@ function MenuBar() {
       {/* OVERLAY */}
       <div
         onClick={() => setIsOpen(false)}
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300
+        className={`fixed inset-0 0 backdrop-blur-sm z-40 transition-opacity duration-300
           ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
       />
 

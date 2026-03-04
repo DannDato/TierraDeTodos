@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import React from "react"
 
 // Páginas de home
@@ -21,9 +21,16 @@ import Users from "./pages/admin/users";
 
 
 const App = function App() {
+  const location = useLocation();
+
   useEffect(() => {
-    AOS.init();
+    window.AOS?.init();
   }, []);
+
+  useEffect(() => {
+    window.AOS?.refreshHard();
+  }, [location.pathname]);
+
   return (
     <Routes>
       <Route path="/" element={<Home />} />

@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { User, LogOut, PencilIcon, Monitor, ShieldAlert } from "lucide-react";
 import Button from "../../elements/Button";
+import AlertModal from "../../elements/AlertModal";
 
 function Profile() {
   const Icon = User;
   const [user, setUser] = useState(null);
+  const [showAlert, setShowAlert] = useState(false);
 
   useEffect(() => {
-    // 🔹 Agregamos datos falsos para cuentas y sesiones basándonos en tu arquitectura
     const mockUser = {
       id: 1,
-      username: "Steve",
+      username: "Steve_mata_pros_miencraft",
       email: "steve@minecraft.com",
       country: "MEX",
       role: "Usuario",
@@ -44,7 +45,6 @@ function Profile() {
     setUser(mockUser);
   }, []);
 
-  // 🔹 Configuración dinámica de estatus
   const statusConfig = {
     ACTIVE: {
       label: "Activo",
@@ -56,7 +56,7 @@ function Profile() {
     },
     INACTIVE: {
       label: "Inactivo",
-      color: "bg-gray-500",
+      color: "bg-[var(--ins-text-gray)]",
     },
     BANNED: {
       label: "Suspendido",
@@ -68,11 +68,36 @@ function Profile() {
     return <ProfileSkeleton />;
   }
 
+  const role= user.role.toUpperCase();
+  const getRoleBadge = (role) => {
+    const baseClass ="inline-flex justify-center items-center text-xs font-bold px-3 py-1 rounded-full shadow-sm w-28";
+    switch (role) {
+      case "ADMIN":
+        return <span className={`${baseClass} text-[var(--admin-color)] bg-[var(--black-color)]/10`}>ADMIN</span>;
+      case "MODERADOR":
+        return <span className={`${baseClass} text-[var(--moderator-color)] bg-[var(--moderator-color)]/10`}>MODERADOR</span>;
+      case "STREAMER":
+        return <span className={`${baseClass} text-[var(--streammer-color)] bg-[var(--streammer-color)]/10`}>STREAMER</span>;
+      default:
+        return <span className={`${baseClass} text-[var(--user-color)] bg-[var(--user-color)]/10`}>USUARIO</span>;
+    }
+  };
   const currentStatus = statusConfig[user.status];
 
+  const showAlertLogout = () => {setShowAlert(true);};
+  const handleLogout = () => {localStorage.removeItem("token"); window.location.href = "/login";};
+    
   return (
-    <section className="min-h-screen py-10 flex items-center justify-center bg-[var(--white-color)]">
-      <div className="flex-row w-full max-w-7xl px-4 md:mx-20 mx-0">
+    <section className="min-h-screen py-10 flex items-center justify-center bg-[var(--ins-background)]">
+      <AlertModal
+        isOpen={showAlert}
+        type="warning"
+        title="Un momento..."
+        message="Estas a punto de cerrar sesión."
+        onClose={() => setShowAlert(false)}
+        onConfirm={handleLogout}
+      />
+      <div className="flex-row w-full max-w-7xl px-4 md:mx-20 mx-0 text-[var(--ins-text-white)]">
 
         {/* ENCABEZADO DE LA PÁGINA CON BALANCE VISUAL */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
@@ -82,63 +107,60 @@ function Profile() {
             <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
               <span>{user.role}</span>
               <span>/</span>
-              <span className="text-emerald-600">Perfil</span>
+              <span className="text-[var(--secondary-color)]">Perfil</span>
             </div>
             
-            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--ins-text-white)] tracking-tight">
               Tu cuenta
             </h1>
             
-            <p className="text-sm text-gray-500 mt-2 max-w-lg">
+            <p className="text-sm text-[var(--ins-text-gray)] mt-2 max-w-lg">
               Gestiona tu información personal, seguridad, vinculación de cuentas y preferencias del Launcher TDT.
             </p>
           </div>
 
-          {/* Lado Derecho: Contrapeso (Status del Servidor o ID) */}
-          {/* Lado Derecho: Acciones Principales */}
           <div className="flex items-center gap-3">
             <Button variant="primary" size="sm" className="flex items-center gap-2 shadow-sm">
               <PencilIcon size={16} /> Editar Perfil
             </Button>
-            <Button variant="cancel" size="sm" className="flex items-center gap-2 shadow-sm">
+            <Button variant="cancel" size="sm" className="flex items-center gap-2 shadow-sm" onClick={showAlertLogout}>
               <LogOut size={16} /> Cerrar Sesión
             </Button>
           </div>
           
         </div>
 
-        <div className="bg-[var(--gray-light-color)] rounded-2xl overflow-hidden shadow-md">
-
+        <div className="bg-white/5 rounded-2xl overflow-hidden shadow-md">
           {/* Banner */}
           <div className="relative h-60 w-full overflow-hidden">
             <img
-              src="/img/banner.webp"
+              src="/img/userBanner.webp"
               alt="Banner"
               className="absolute inset-0 h-full w-full object-cover blur-[5px] scale-104"
             />
-            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute inset-0 bg-gray-600/40" />
 
-            <div className="absolute bottom-6 left-10 flex items-end gap-6 z-10">
-              <div className="p-3 bg-white rounded-full shadow-lg">
-                <Icon size={72} />
+            {/* <div className="absolute bottom-8 left-10 flex items-center gap-6 z-10 align-center justify-center"> */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 absolute inset-0 m-auto bg-black/15">
+              <div className="p-3 bg-[var(--white-color)] rounded-full shadow-lg w-[128px] h-[128px] m-auto flex items-center justify-center">
+                <Icon size={72} className="text-[var(--ins-background)]" />
               </div>
-              <div>
-                <h2 className="text-4xl font-bold text-white">
+              <div className="flex gap-3 align-center flex-col justify-center m-auto flex items-center justify-center">
+                <h2 className="font-bold text-[var(--ins-text-white)] md:text-3xl text-sm  text-shadow-lg ">
                   {user.username}
                 </h2>
-                <p className="text-white/70 text-sm">
-                  Rol: {user.role}
+                <p className="text-[var(--ins-text-white)] text-shadow-lg align-center flex">
+                 {getRoleBadge(role)}
                 </p>
               </div>
             </div>
-            {/* Botones (lógica futura) */}
           </div>
 
           {/* ================= INFORMACIÓN PERSONAL ================= */}
           <div className="p-10 flex flex-col md:flex-row gap-10">
             <div className="md:w-1/3">
               <h2 className="text-2xl font-bold mb-3">Información Personal</h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[var(--ins-text-gray)]">
                 Información privada asociada a tu cuenta.
               </p>
             </div>
@@ -161,7 +183,7 @@ function Profile() {
           <div className="p-10 flex flex-col md:flex-row gap-10">
             <div className="md:w-1/3">
               <h2 className="text-2xl font-bold mb-3">Estatus</h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[var(--ins-text-gray)]">
                 Información relacionada al estado actual de tu cuenta.
               </p>
             </div>
@@ -206,7 +228,7 @@ function Profile() {
           <div className="p-10 flex flex-col md:flex-row gap-10">
             <div className="md:w-1/3">
               <h2 className="text-2xl font-bold mb-3">Conexiones</h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[var(--ins-text-gray)]">
                 Administra tus cuentas vinculadas para iniciar sesión más rápido.
               </p>
             </div>
@@ -221,10 +243,10 @@ function Profile() {
                   </div>
                   <div>
                     <h3 className="font-bold leading-tight">Discord</h3>
-                    <p className="text-sm text-gray-500">{user.linkedAccounts.discord}</p>
+                    <p className="text-sm text-[var(--ins-text-gray)]">{user.linkedAccounts.discord}</p>
                   </div>
                 </div>
-                <button className="text-sm font-semibold text-gray-500 hover:text-red-500 transition-colors">
+                <button className="text-sm font-semibold text-[var(--ins-text-gray)] hover:text-red-500 transition-colors">
                   Desvincular
                 </button>
               </div>
@@ -237,10 +259,10 @@ function Profile() {
                   </div>
                   <div>
                     <h3 className="font-bold leading-tight">Minecraft Premium</h3>
-                    <p className="text-sm text-gray-500">{user.linkedAccounts.minecraft}</p>
+                    <p className="text-sm text-[var(--ins-text-gray)]">{user.linkedAccounts.minecraft}</p>
                   </div>
                 </div>
-                <button className="text-sm font-semibold text-gray-500 hover:text-red-500 transition-colors">
+                <button className="text-sm font-semibold text-[var(--ins-text-gray)] hover:text-red-500 transition-colors">
                   Desvincular
                 </button>
               </div>
@@ -254,7 +276,7 @@ function Profile() {
           <div className="p-10 flex flex-col md:flex-row gap-10">
             <div className="md:w-1/3">
               <h2 className="text-2xl font-bold mb-3">Seguridad</h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[var(--ins-text-gray)]">
                 Controla los dispositivos desde los que has iniciado sesión recientemente.
               </p>
             </div>
@@ -262,9 +284,9 @@ function Profile() {
             <div className="md:w-2/3 flex flex-col gap-4">
               
               {user.sessions.map((session) => (
-                <div key={session.id} className={`p-4 rounded-xl flex items-center justify-between border ${session.isCurrent ? 'bg-emerald-50 border-emerald-200' : 'bg-black/5 border-transparent'}`}>
+                <div key={session.id} className={`p-4 rounded-xl flex items-center justify-between ${session.isCurrent ? 'bg-[var(--secondary-color)]/10 ' : 'bg-black/5 border-transparent'}`}>
                   <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-full ${session.isCurrent ? 'bg-emerald-100 text-emerald-600' : 'bg-black/10 text-gray-600'}`}>
+                    <div className={`p-3 rounded-full ${session.isCurrent ? 'bg-emerald-100/ text-emerald-600' : 'bg-black/10 text-gray-600'}`}>
                       <Monitor size={20} />
                     </div>
                     <div>
@@ -276,7 +298,7 @@ function Profile() {
                           </span>
                         )}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-[var(--ins-text-gray)] mt-1">
                         IP: {session.ip} • Última vez: {session.lastActive}
                       </p>
                     </div>
@@ -284,16 +306,16 @@ function Profile() {
                 </div>
               ))}
 
-              <div className="mt-4 p-4 bg-red-50 rounded-xl flex items-start gap-4 border border-red-100">
-                <ShieldAlert className="text-red-500 shrink-0 mt-0.5" size={20} />
+              <div className="mt-4 p-4 bg-[var(--danger-color)]/5 rounded-xl flex items-start gap-4 ">
+                <ShieldAlert className="text-[var(--danger-color)] shrink-0 mt-0.5" size={20} />
                 <div>
-                  <h3 className="text-red-800 font-bold text-sm">¿Ves actividad sospechosa?</h3>
-                  <p className="text-red-600/80 text-xs mt-1 mb-3">
+                  <h3 className="text-[var(--danger-color)] font-bold text-sm">¿Ves actividad sospechosa?</h3>
+                  <p className="text-[var(--danger-color)]/80 text-xs mt-1 mb-3">
                     Esto cerrará tu sesión en todos los dispositivos y en el Launcher de TDT, forzando a iniciar sesión nuevamente.
                   </p>
-                  <button className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-4 rounded-lg transition-colors">
-                    Cerrar todas las sesiones
-                  </button>
+                  <Button variant="cancel" size="sm" className="flex items-center gap-2 shadow-sm" onClick={showAlertLogout}>
+                    Cerrar sesión en todos los dispositivos
+                  </Button>
                 </div>
               </div>
 
@@ -310,7 +332,7 @@ function Profile() {
 function InfoCard({ title, value }) {
   return (
     <div className="bg-black/5 p-4 rounded-xl flex-1">
-      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">
+      <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-wider block">
         {title}
       </span>
       <span className="text-md font-bold">{value}</span>
