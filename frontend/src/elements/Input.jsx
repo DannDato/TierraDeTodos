@@ -43,7 +43,7 @@ export default function Input({
                 : "text-[var(--white-color)] border-b border-[var(--ins-text-gray)] bg-transparent placeholder-gray-400"
             }
 
-            focus:border-[var(--secondary-color)] focus:ring-1 focus:ring-[var(--secondary-color)]
+            focus:border-b-[var(--secondary-color)] 
           `}
         />
 

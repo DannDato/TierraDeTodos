@@ -4,7 +4,7 @@ import cors from 'cors'
 // importando rutas del proyecto
 import homeRoutes from './routes/homeRoutes.js' 
 import authRoutes from './routes/authRoutes.js'
-import db from './config/database.js'
+import { db, loadModels, models } from './models/loader.js'
 
 // Crear la app 
 const app = express()
@@ -16,15 +16,26 @@ app.use((req, res, next) => {
 });
 
 // conexion a la bd 
-try{
+try {
+    await loadModels();
     await db.authenticate();
-    if(process.env.NODE_ENV === 'development'){
-        await db.sync({ force: true, alter: true });
-    }else{
+    if (process.env.NODE_ENV === 'development') {
+        // en desarrollo, sincronizar forzadamente para reflejar cambios en modelos
+        await db.sync({ force: true });
+    } else {
+        // en producción, sincronizar sin perder datos
         await db.sync({ alter: true });
     }
+
+    // ejecutar seeds automaticamente si existen
+    for (const modelName of Object.keys(models)) {
+        const model = models[modelName];
+        if (typeof model.seed === 'function') {
+            await model.seed();
+        }
+    }
     console.log('Conexion correcta a la base de datos');
-} catch(error){
+} catch (error) {
     console.log(error);
 }
 
@@ -32,12 +43,6 @@ try{
 app.use( express.static('public'))
 
 // CORS
-console.log("CORS origin:", `${process.env.FRONTEND_BASE}:${process.env.FRONTEND_PORT}`);
-// app.use(cors({
-//     origin: `${process.env.FRONTEND_BASE}:${process.env.FRONTEND_PORT}`,
-//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH",],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-// }))
 app.use(cors({
     origin: "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
@@ -48,7 +53,7 @@ app.use(cors({
 app.use(express.urlencoded({extended: true}))
 app.use(express.json());
 
-// Reuting
+// Routing
 app.use(`${process.env.FOLDER || ''}/`, homeRoutes)
 app.use(`${process.env.FOLDER || ''}/auth`, authRoutes)
 

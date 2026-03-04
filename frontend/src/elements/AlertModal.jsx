@@ -47,7 +47,7 @@ function AlertModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-[90%] max-w-md p-6 text-center animate-fadeIn">
+      <div className="relative bg-[var(--white-color)] rounded-2xl shadow-2xl w-[90%] max-w-md p-6 text-center animate-fadeIn">
         
         <div className={`text-5xl mb-4 ${current.color}`}>
           {current.icon}

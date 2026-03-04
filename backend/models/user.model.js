@@ -1,6 +1,6 @@
+export default (sequelize, DataTypes) => {
 
-module.exports = (sequelize, DataTypes) => {
-  return sequelize.define('Users', {
+  const User = sequelize.define('Users', {
     id:{
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -12,8 +12,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     rol: {
-        type: DataTypes.ENUM('ROLE_ADMIN', 'ROLE_MOD','ROLE_POLICE','ROLE_STREAMER','ROLE_USER'),
-        defaultValue: 'ROLE_USER',
+        type: DataTypes.ENUM('ADMIN', 'MOD','POLICE','STREAMER','USER'),
+        defaultValue: 'USER',
         allowNull: false
     },
     email: {
@@ -30,9 +30,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    isPremium: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
+    mojang: {
+      type: DataTypes.ENUM('PREMIUM', 'NO-PREMIUM'),
+      defaultValue: 'NO-PREMIUM'
     },
     account: { 
         type: DataTypes.ENUM('ACTIVE', 'BANNED', 'INACTIVE'),
@@ -41,11 +41,27 @@ module.exports = (sequelize, DataTypes) => {
     },
   },{
     tableName: 'Users',
-    timestamps: true,
-    indexes: [
-      { fields: ['username'] },
-      { fields: ['rol'] },
-      { fields: ['account'] }
-    ]
+    timestamps: true
   });
+
+  User.seed = async () => {
+    const admin = await User.findOne({ where: { username: 'admin' } });
+
+    if (!admin) {
+      await User.create({
+        username: 'danndato',
+        rol: 'ADMIN',
+        email:'danieltova97@gmail.com',
+        password:'qwqwqw',
+        displayName: 'DannDato',
+        uuid: '00000000-0000-0000-0000-000000000000',
+        mojang: 'PREMIUM',
+        account: 'ACTIVE'
+      });
+
+      console.log('Admin creado');
+    }
+  };
+
+  return User;
 };
