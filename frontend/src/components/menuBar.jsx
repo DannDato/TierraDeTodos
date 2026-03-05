@@ -2,20 +2,20 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Home,
-  Newspaper,
   User,
   Users,
   Menu,
-  FlagTriangleRight,
   Settings,
   Info,
-  ArrowBigDown,
+  LogOut, 
 } from "lucide-react";
+import AlertModal from "../elements/AlertModal"; 
 
 function MenuBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [showAlert, setShowAlert] = useState(false); 
 
   const menuItems = [
     { id: 0, name: "Inicio", icon: Home, path: "/start", target: "_self", shortAccess: true },
@@ -35,13 +35,25 @@ function MenuBar() {
     setIsOpen(false);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  };
+
   return (
     <>
+      <AlertModal
+        isOpen={showAlert}
+        type="warning"
+        title="Un momento..."
+        message="Estas a punto de cerrar sesión."
+        onClose={() => setShowAlert(false)}
+        onConfirm={handleLogout}
+      />
+
       {/* BOTTOM BAR */}
-      <nav className="fixed bottom-0 left-0 w-full bg-[var(--white-color)] z-50">
-
-        <div className="flex w-full justify-between h-16 ">
-
+      <nav className="fixed bottom-0 left-0 w-full bg-[var(--white-color)] z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <div className="flex w-full justify-between h-16">
           {menuItems
             .filter((item) => item.shortAccess)
             .map((item) => {
@@ -71,54 +83,65 @@ function MenuBar() {
             <Menu size={22} />
             <span className="text-xs mt-1">Menu</span>
           </button>
-
         </div>
       </nav>
 
       {/* OVERLAY */}
       <div
         onClick={() => setIsOpen(false)}
-        className={`fixed inset-0 0 backdrop-blur-sm z-40 transition-opacity duration-300
-          ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
+        className={`fixed inset-0 backdrop-blur-sm z-40 transition-opacity duration-300
+          ${isOpen ? "opacity-100 visible bg-black/20" : "opacity-0 invisible"}`}
       />
 
       {/* SIDEBAR */}
       <div
         className={`fixed top-0 right-0 h-full w-72 bg-[var(--white-color)] z-50
-          transform transition-transform duration-300 ease-out
+          transform transition-transform duration-300 ease-out flex flex-col
           ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
-        <div className="p-6 flex flex-col gap-6 text-black">
-
-          <h2 className="text-md font-semibold border-b border-gray-700 pb-3 flex items-center gap-2">
-            Tierra de Todos
-            <img
-              src="img/cubo.webp"
-              className="max-w-[25px] mt-1 mx-5"
-              alt="Cubo"
-            />
+        {/* Contenido Superior */}
+        <div className="p-6 flex flex-col gap-6 text-black flex-1">
+          <h2 className="text-md font-semibold  pb-4 flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              Tierra de Todos
+              <img src="img/cubo.webp" className="w-6 mt-1" alt="Cubo" />
+            </span>
           </h2>
 
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+          <div className="flex flex-col gap-5">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavigate(item.path, item.target)}
-                className={`flex items-center gap-3 text-left transition-all duration-200
-                  ${isActive
-                    ? "text-[var(--secondary-color)]"
-                    : "text-black/70 hover:text-black"
-                  }`}
-              >
-                <Icon size={20} />
-                <span>{item.name}</span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavigate(item.path, item.target)}
+                  className={`flex items-center gap-3 text-left transition-all duration-200
+                    ${isActive
+                      ? "text-[var(--secondary-color)] font-medium"
+                      : "text-black/70 hover:text-black"
+                    }`}
+                >
+                  <Icon size={20} />
+                  <span>{item.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
+        <div className="p-6 ">
+          <button
+            onClick={() => {
+              setIsOpen(false); 
+              setShowAlert(true); 
+            }}
+            className="flex items-center gap-3 w-full py-3 px-4 rounded-xl text-[var(--cancel-color)] hover:bg-[var(--cancel-color)]/10 transition-all duration-200 font-semibold"
+          >
+            <LogOut size={20} />
+            <span>Cerrar Sesión</span>
+          </button>
         </div>
       </div>
     </>

@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
 
-  const User = sequelize.define('Users', {
+  const Users = sequelize.define('Users', {
     id:{
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -35,33 +35,42 @@ export default (sequelize, DataTypes) => {
       defaultValue: 'NO-PREMIUM'
     },
     account: { 
-        type: DataTypes.ENUM('ACTIVE', 'BANNED', 'INACTIVE'),
+        type: DataTypes.ENUM('ACTIVE', 'BANNED', 'INACTIVE', 'BLOCKED'),
         defaultValue: 'INACTIVE',
         allowNull: false
     },
   },{
     tableName: 'Users',
-    timestamps: true
+    timestamps: true,
+    indexes: [
+      {
+        name: 'users_username_unique',
+        unique: true,
+        fields: ['username']
+      },
+      {
+        name: 'users_email_unique',
+        unique: true,
+        fields: ['email']
+      }
+    ]
   });
 
-  User.seed = async () => {
-    const admin = await User.findOne({ where: { username: 'admin' } });
-
-    if (!admin) {
-      await User.create({
-        username: 'danndato',
-        rol: 'ADMIN',
-        email:'danieltova97@gmail.com',
-        password:'qwqwqw',
-        displayName: 'DannDato',
-        uuid: '00000000-0000-0000-0000-000000000000',
-        mojang: 'PREMIUM',
-        account: 'ACTIVE'
-      });
-
-      console.log('Admin creado');
-    }
+  Users.seed = async () => {
+    const validate  = await Users.findAll();
+    if(validate.length > 0) return;
+    await Users.create({
+      username: 'danndato',
+      rol: 'ADMIN',
+      email:'danieltova97@gmail.com',
+      password:'$2b$10$rQgptFOsAm1mZtZbRMEnreQBuWqs6VOdweNey4jwHqXkMmeeIrqrO',
+      displayName: 'DannDato',
+      uuid: '123e4567-e89b-12d3-a456-426614174000',
+      mojang: 'PREMIUM',
+      account: 'ACTIVE'
+    });
+    console.log('Admin creado');
   };
 
-  return User;
+  return Users;
 };

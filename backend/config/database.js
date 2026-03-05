@@ -17,7 +17,8 @@ const db = new Sequelize(process.env.db_name,  process.env.db_user, process.env.
         acquire: 30000,
         idle: 10000
     },
-    operatorAliases: false
+    operatorAliases: false,
+    logging: false
 });
 
 

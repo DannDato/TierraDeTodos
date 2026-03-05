@@ -1,0 +1,123 @@
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"info","message":"Error interno del servidor","username":null}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - usuario no encontrado","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"level":"info","message":"Usuario undefined intentando verificar nuevo dispositivo con código 748120"}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"ip":"::1","level":"error","message":"WHERE parameter \"username\" has invalid \"undefined\" value","username":null}
+{"ip":"::1","level":"warn","message":"Verificación de dispositivo fallida - datos incompletos","username":null}
+{"ip":"::1","level":"warn","message":"Verificación de dispositivo fallida - datos incompletos","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"warn","message":"Verificación de dispositivo fallida - datos incompletos","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - usuario no encontrado","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - usuario no encontrado","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"warn","message":"Cuenta bloqueada - múltiples intentos de login fallidos","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"error","message":"bycrypt is not defined","username":null}
+{"ip":"::1","level":"info","message":"Verificación de dispositivo fallida - código incorrecto o expirado","username":null}
+{"ip":"::1","level":"info","message":"Verificación de dispositivo fallida - código incorrecto o expirado","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login desde dispositivo nuevo","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login fallido - contraseña incorrecta","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}
+{"ip":"::1","level":"info","message":"Login exitoso","username":null}

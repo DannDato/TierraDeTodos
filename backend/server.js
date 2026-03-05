@@ -4,7 +4,9 @@ import cors from 'cors'
 // importando rutas del proyecto
 import homeRoutes from './routes/homeRoutes.js' 
 import authRoutes from './routes/authRoutes.js'
-import { db, loadModels, models } from './models/loader.js'
+import { db, loadModels, models } from './models/index.js'
+import injectLogAction from "./middlewares/injectLogAction.js";
+import secureDelay from "./middlewares/secureDelay.js";
 
 // Crear la app 
 const app = express()
@@ -16,12 +18,13 @@ app.use((req, res, next) => {
 });
 
 // conexion a la bd 
+let messageDb=''
 try {
     await loadModels();
     await db.authenticate();
     if (process.env.NODE_ENV === 'development') {
-        // en desarrollo, sincronizar forzadamente para reflejar cambios en modelos
-        await db.sync({ force: true });
+        await db.sync({ alter: true });
+        // await db.sync({ force: true });
     } else {
         // en producción, sincronizar sin perder datos
         await db.sync({ alter: true });
@@ -34,9 +37,9 @@ try {
             await model.seed();
         }
     }
-    console.log('Conexion correcta a la base de datos');
+    messageDb = 'Conexión a la base de datos exitosa';
 } catch (error) {
-    console.log(error);
+    messageDb = 'Error al conectar a la base de datos'+error.message;
 }
 
 // carpeta publica
@@ -49,6 +52,10 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
+// mis injections
+app.use(injectLogAction);
+app.use(secureDelay);
+
 // Habilitar lectura de datos de formulario
 app.use(express.urlencoded({extended: true}))
 app.use(express.json());
@@ -59,10 +66,12 @@ app.use(`${process.env.FOLDER || ''}/auth`, authRoutes)
 
 
 // Definir como se ha iniciado el proeycto
-console.log(`Servidor iniciado en ${process.env.NODE_ENV}`);
 
 const port = process.env.PORT || 3000;
 
 app.listen(port, ()=> {
+    console.clear();
+    console.log(messageDb);
+    console.log(`Servidor iniciado en ${process.env.NODE_ENV}`);
     console.log(`El servidor esta funcionando en ${process.env.BACKEND_URL}:${port}/`);
 });
