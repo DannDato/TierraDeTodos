@@ -1,18 +1,34 @@
 import jwt from 'jsonwebtoken';
+import { models } from '../models/index.js';
 
-export const verifyToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
+export const verifyToken = async (req, res, next) => {
 
-    if(!authHeader) { return res.status(401).json({ message: 'JWT no authorizado' }); }
+  const authHeader = req.headers['authorization'];
 
-    const token = authHeader.split(' ')[1];
+  if (!authHeader) {
+    return res.status(401).json({ message: 'JWT no autorizado' });
+  }
 
-    try{
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.userId = decoded.id;
-        next();
+  const token = authHeader.split(' ')[1];
+
+  try {
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await models.Users.findByPk(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({ message: 'Usuario no encontrado' });
     }
-    catch(error){
-        return res.status(403).json({ message: 'JWT no valido' });
-    }
-}
+
+    req.user = user;
+
+    next();
+
+  } catch (error) {
+
+    return res.status(403).json({ message: 'JWT no válido' });
+
+  }
+
+};
