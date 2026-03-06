@@ -56,11 +56,6 @@ export default (sequelize, DataTypes) => {
     timestamps: false,
     indexes: [
       {
-        name: 'user_devices_device_hash_unique',
-        unique: true,
-        fields: ['device_hash']
-      },
-      {
         name: 'user_devices_user_index',
         fields: ['user']
       }

@@ -6,7 +6,10 @@ export default (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true
     },
-
+    codigo:{
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
     user: {
       type: DataTypes.INTEGER,
       allowNull: false
@@ -21,33 +24,14 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-
-    delivery_method: {
-      type: DataTypes.STRING,
-      allowNull: true
-      // email | sms | whatsapp | app
-    },
-
-    attempts: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0
-    },
-
-    max_attempts: {
-      type: DataTypes.INTEGER,
-      defaultValue: 5
-    },
-
     is_used: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
+      type: DataTypes.ENUM('USED','UNUSED'),
+      defaultValue: 'UNUSED'
     },
-
     expires_at: {
       type: DataTypes.DATE,
       allowNull: false
     },
-
     verified_at: {
       type: DataTypes.DATE,
       allowNull: true
@@ -60,7 +44,7 @@ export default (sequelize, DataTypes) => {
 
   },{
     tableName: 'AccessCodes',
-    timestamps: true
+    timestamps: false
   });
 
   return AccessCodes;

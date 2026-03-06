@@ -28,7 +28,6 @@ export default (sequelize, DataTypes) => {
     },
     uuid: {
       type: DataTypes.STRING,
-      allowNull: false
     },
     mojang: {
       type: DataTypes.ENUM('PREMIUM', 'NO-PREMIUM'),

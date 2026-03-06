@@ -4,6 +4,7 @@ import cors from 'cors'
 // importando rutas del proyecto
 import homeRoutes from './routes/homeRoutes.js' 
 import authRoutes from './routes/authRoutes.js'
+import userRoutes from './routes/userRoutes.js'
 import { db, loadModels, models } from './models/index.js'
 import injectLogAction from "./middlewares/injectLogAction.js";
 import secureDelay from "./middlewares/secureDelay.js";
@@ -23,11 +24,13 @@ try {
     await loadModels();
     await db.authenticate();
     if (process.env.NODE_ENV === 'development') {
-        await db.sync({ alter: true });
+        await db.sync();
         // await db.sync({ force: true });
+        // await db.sync({ alter: true });
     } else {
         // en producción, sincronizar sin perder datos
-        await db.sync({ alter: true });
+        // await db.sync({ alter: true });
+        await db.sync();
     }
 
     // ejecutar seeds automaticamente si existen
@@ -63,6 +66,7 @@ app.use(express.json());
 // Routing
 app.use(`${process.env.FOLDER || ''}/`, homeRoutes)
 app.use(`${process.env.FOLDER || ''}/auth`, authRoutes)
+app.use(`${process.env.FOLDER || ''}/user`, userRoutes)
 
 
 // Definir como se ha iniciado el proeycto
