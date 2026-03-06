@@ -24,6 +24,7 @@ function Register() {
   const [passwordError, setPasswordError] = useState(false);
   const [Rpassword, setRpassword] = useState("");
   const [RpasswordError, setRpasswordError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [showAlert, setShowAlert] = useState(false);
 
@@ -50,23 +51,32 @@ function Register() {
 
   const handleRegister = async () => {
     setShowAlert(false);
+    setLoading(true)
     try {
       const { data } = await api.post("/auth/register", {
-        username,
-        email,
-        password
-      });
+          username,
+          email,
+          password
+        },
+      );  
 
+      // nvo dispositivo
+      if (data.type === "new_device") {
+        // return navigate("/verifyAccess", { state: { usuario } });
+        localStorage.setItem("tempUser", username);
+        return navigate("/verifyAccess");
+      }
+
+      // login Directo
       if (data.token) {
         localStorage.setItem("token", data.token);
         navigate("/start");
-      } else {
-        // Si el backend pide verificar correo tras registro
-        navigate("/verifyAccess", { state: { usuario: username } });
       }
     } catch (error) {
-      const message = error.response?.data?.message || "Error al registrar cuenta";
+      const message = error.response?.data?.message || "Error al conectar con el servidor";
       setUsernameError(message);
+      setEmailError(message);
+      setLoading(false);
     }
   };
 
@@ -80,7 +90,7 @@ function Register() {
         onClose={() => setShowAlert(false)}
         onConfirm={handleRegister}
       />
-
+      {loading && <LoadingOverlay />}
       <Banner className="h-[800px]">
         <div className="grid grid-cols-2 max-w-4xl mx-auto shadow-2xl overflow-hidden rounded-3xl"
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
