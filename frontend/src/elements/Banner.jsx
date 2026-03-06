@@ -1,7 +1,9 @@
 
 function Banner({
-  backgroundImage = "/img/bannergif.webp",
-  overlayColor = "rgba(44,44,44,0.6)",
+  // backgroundImage = "/img/banner.gif",
+  backgroundImage = "/img/banner2.gif",
+  // backgroundImage = "/img/bannergif.webp",
+  overlayColor = "rgba(32, 32, 32, 0.6)",
   blur = "10px",
   children,
   className = "",
@@ -12,7 +14,7 @@ function Banner({
       
       {/* Imagen de fondo */}
       <div
-        className="absolute inset-0 bg-cover bg-center scale-110"
+        className="fixed top-0 left-0 w-full h-full bg-cover bg-center scale-110"
         style={{
           backgroundImage: `url(${backgroundImage})`,
           filter: `blur(${blur})`,
@@ -22,9 +24,16 @@ function Banner({
 
       {/* Overlay */}
       <div
-        className="absolute inset-0 flex items-center justify-center text-center p-5"
+        className="fixed top-0 left-0 w-full h-full bg-cover inset-0 flex items-center justify-center text-center p-5 z-1"
         style={{
           backgroundColor: overlayColor,
+          zIndex: 10,
+        }}
+      >
+      </div>
+      <div
+        className="absolute bg-cover inset-0 flex items-center justify-center text-center p-5 z-1"
+        style={{
           zIndex: 10,
         }}
       >
@@ -32,6 +41,7 @@ function Banner({
           {children}
         </div>
       </div>
+      <div className="fixed top-0 left-0 w-full h-full bg-cover bg-gradient-to-t from-black to-transparent pointer-events-none" data-aos="fade" data-aos-duration="2000" />
     </section>
   );
 }

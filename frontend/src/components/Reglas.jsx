@@ -66,7 +66,7 @@ export default function Reglas() {
   ];
 
   return (
-    <section id="reglas" className="scroll-smooth py-20 px-6 md:px-12 lg:px-20 bg-[var(--black-color)] text-[var(--white-color)] min-h-screen">
+    <section id="reglas" className="scroll-smooth py-20 px-6 md:px-12 lg:px-20 rounded-[30px] mx-2 md:mx-10 text-[var(--white-color)] min-h-screen relative z-20">
       <div className="max-w-7xl mx-auto space-y-16">
 
         <div className="text-center space-y-4">
@@ -82,7 +82,7 @@ export default function Reglas() {
           {reglasData.map((section) => (
             <div 
               key={section.id} 
-              className={`bg-white/5 rounded-2xl p-6 md:p-8 hover:bg-white/10 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 flex flex-col h-full ${section.borderColor ? `hover:border-b-4 ${section.borderColor}` : ''}`}
+              className={`bg-black/50 rounded-2xl p-6 md:p-8 hover:bg-black/80 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 flex flex-col h-full ${section.borderColor ? `hover:border-b-4 ${section.borderColor}` : ''}`}
             >
               
               <div className="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">

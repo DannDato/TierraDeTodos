@@ -128,7 +128,7 @@ export default function Timeline() {
   };
 
   return (
-    <section id="timeline" className="bg-[var(--black-color)] text-[var(--white-color)] py-24 px-6 overflow-hidden bg-minecraft">
+    <section id="timeline" className="text-[var(--white-color)] py-24 px-6 overflow-hidden bg-minecraft z-20">
       <div className="max-w-6xl mx-auto relative z-10">
       <MinecraftBackground />
 

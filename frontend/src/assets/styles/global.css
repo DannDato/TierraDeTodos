@@ -62,7 +62,7 @@ section[id] {
 
 /* Clase principal para el fondo */
 .bg-minecraft {
-  background-color: var(--black-color);
+  /* background-color: var(--black-color); */
   position: relative;
 }
 

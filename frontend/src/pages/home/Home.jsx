@@ -58,9 +58,6 @@ function Home() {
             <Button variant="primary" size="lg" href={"/login"} fullWidth={true} data-aos="fade" data-aos-duration="3000">¡Juega ya!</Button>
           </div>
         </center>
-        <div className="overlay absolute inset-0 bg-gradient-to-t from-black to-transparent pointer-events-none" data-aos="fade" data-aos-duration="2000" />
-          
-        
       </Banner>
       {/* noticias */}
       <News></News>
