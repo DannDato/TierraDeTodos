@@ -5,6 +5,8 @@ import { useState } from "react"
 import Input from "../../elements/Input" 
 import Button from "../../elements/Button"
 import Banner from "../../elements/Banner"
+import Footer from "../../components/Footer"
+import LoadingOverlay from "../../components/LoadingOverlay";
 import SocialsAuth from "../../components/SocialsAuth"
 import AlertModal from "../../elements/AlertModal";
 import { ArrowLeft, LogIn } from "lucide-react";
@@ -79,12 +81,12 @@ function Register() {
         onConfirm={handleRegister}
       />
 
-      <Banner>
+      <Banner className="h-[800px]">
         <div className="grid grid-cols-2 max-w-4xl mx-auto shadow-2xl overflow-hidden rounded-3xl"
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
         >
           {/* LADO IZQUIERDO: BIENVENIDA (Invertido respecto al login para balance visual) */}
-          <div className="col bg-[var(--black-color)] flex flex-col items-center justify-center p-10 text-[var(--white-color)]" data-aos="fade-left">
+          <div className="col bg-[var(--black-color)] flex-col items-center justify-center p-10 text-[var(--white-color)]  hidden md:flex" data-aos="fade-left">
             <a href="/" className="hover:scale-105 transition-transform duration-300">
               <img src="/img/tdt3.webp" alt="Tierra de Todos Logo" className="mb-6 w-48" />
             </a>
@@ -179,6 +181,7 @@ function Register() {
           </div>
         </div>
       </Banner>
+      <Footer />
     </>
   )
 }

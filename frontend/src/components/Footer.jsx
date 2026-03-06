@@ -14,6 +14,11 @@ function Footer() {
             <p className="text-sm md:text-base font-light text-gray-400 max-w-sm">
               El servidor de Minecraft donde la aventura, la creatividad y la comunidad se unen.
             </p>
+            <ul className="mt-6 space-y-2 text-sm font-medium text-gray-300 flex flex-row  gap-4 ">
+              <li><a href="/">Inicio</a></li>
+              <li><a href="/login">Iniciar sesión</a></li>
+              <li><a href="/register">Registrarse</a></li>
+            </ul>
           </div>
           
           <div className="flex flex-col text-center md:text-right items-center md:items-end justify-center gap-4">

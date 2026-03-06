@@ -16,7 +16,7 @@ const loadModels = async () => {
   // cargar modelos
   for (const file of files) {
 
-    if (file.endsWith('.model.js') && file !== 'loader.js') {
+    if (file.endsWith('.model.js') && file !== 'index.js') {
 
       const modelPath = path.join(__dirname, file);
       const modelUrl = pathToFileURL(modelPath).href;

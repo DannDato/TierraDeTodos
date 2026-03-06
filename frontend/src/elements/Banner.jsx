@@ -1,13 +1,14 @@
 
 function Banner({
-  backgroundImage = "/img/banner.webp",
+  backgroundImage = "/img/bannergif.webp",
   overlayColor = "rgba(44,44,44,0.6)",
   blur = "10px",
   children,
   className = "",
+  ...props
 }) {
   return (
-    <section id="inicio" className={`relative h-[600px] md:h-[800px] lg:h-[1000px] overflow-hidden ${className}`}>
+    <section id="inicio" className={`relative h-[600px] md:h-[800px] lg:h-[1000px] overflow-hidden ${className}`} {...props}>
       
       {/* Imagen de fondo */}
       <div

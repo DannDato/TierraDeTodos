@@ -51,7 +51,7 @@ export default function News() {
     <section
       id="noticias"
       className="scroll-mt-24 relative z-20 bg-[var(--white-color)] text-[var(--black-color)] 
-      md:px-24 pt-10 rounded-t-[80px] -mt-[100px] md:-mt-[250px] pb-10 overflow-hidden"
+      md:px-24 pt-10 rounded-[30px] -mt-[100px] md:-mt-[250px] pb-10 overflow-hidden mx-2 md:mx-10"
       data-aos="fade-up"
       data-aos-duration="1000"
     >
@@ -108,7 +108,7 @@ export default function News() {
           </div>
 
           {/* CONTROLES */}
-          <div className="text-center mt-4">
+          <div className="text-center mt-4 z-1 relative">
             <button
               onClick={scrollLeft}
               className="mx-4 p-3 rounded-full border border-gray-300 
