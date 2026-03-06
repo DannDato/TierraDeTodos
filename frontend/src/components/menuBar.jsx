@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import api from "../api/axios";
 import {
   Home,
   User,
@@ -11,20 +12,45 @@ import {
 } from "lucide-react";
 import AlertModal from "../elements/AlertModal"; 
 
+const iconMap = {
+  Home,
+  User,
+  Users,
+  Settings,
+  Info,
+};
+
+const fallbackMenuItems = [
+  { id: 0, name: "Inicio", icon: "Home", path: "/start", target: "_self", shortAccess: true },
+  { id: 3, name: "Cuenta", icon: "User", path: "/profile", target: "_self", shortAccess: true },
+  { id: 4, name: "Configuración", icon: "Settings", path: "/configuration", target: "_self", shortAccess: false },
+  { id: 5, name: "Acerca de", icon: "Info", path: "/aboutapp", target: "_self", shortAccess: false },
+];
+
 function MenuBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [showAlert, setShowAlert] = useState(false); 
+  const [menuItems, setMenuItems] = useState(fallbackMenuItems);
 
-  const menuItems = [
-    { id: 0, name: "Inicio", icon: Home, path: "/start", target: "_self", shortAccess: true },
-    { id: 1, name: "Usuarios", icon: Users, path: "/userscontrol", target: "_self", shortAccess: false },
-    { id: 2, name: "Usuarios", icon: Users, path: "/users", target: "_self", shortAccess: true },
-    { id: 3, name: "Cuenta", icon: User, path: "/profile", target: "_self", shortAccess: true },
-    { id: 4, name: "Configuración", icon: Settings, path: "/configuration", target: "_self", shortAccess: false },
-    { id: 5, name: "Acerca de", icon: Info, path: "/aboutapp", target: "_self", shortAccess: false },
-  ];
+  useEffect(() => {
+    const loadMenu = async () => {
+      try {
+        const { data } = await api.get("/user/menu");
+        if (Array.isArray(data?.menuItems) && data.menuItems.length > 0) {
+          setMenuItems(data.menuItems);
+        } else {
+          setMenuItems(fallbackMenuItems);
+        }
+      } catch (error) {
+        console.error("Menu load error:", error);
+        setMenuItems(fallbackMenuItems);
+      }
+    };
+
+    loadMenu();
+  }, []);
 
   const handleNavigate = (path, target) => {
     if (target === "_blank") {
@@ -35,9 +61,15 @@ function MenuBar() {
     setIsOpen(false);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
   };
 
   return (
@@ -57,7 +89,7 @@ function MenuBar() {
           {menuItems
             .filter((item) => item.shortAccess)
             .map((item) => {
-              const Icon = item.icon;
+              const Icon = iconMap[item.icon] || Menu;
               const isActive = location.pathname === item.path;
               return (
                 <button
@@ -110,7 +142,7 @@ function MenuBar() {
 
           <div className="flex flex-col gap-5">
             {menuItems.map((item) => {
-              const Icon = item.icon;
+              const Icon = iconMap[item.icon] || Menu;
               const isActive = location.pathname === item.path;
 
               return (

@@ -3,6 +3,7 @@ import { models, db } from '../../models/index.js';
 import { Op } from 'sequelize';
 import generateDeviceHash from '../../utils/generateDeviceHash.js';
 import { createAccessCode } from '../../helpers/createCodes.js';
+import { applyRolePresetPermissions } from '../../helpers/applyRolePresetPermissions.js';
 import bcrypt from 'bcrypt';
 
 export const register = async (req, res) => {
@@ -34,8 +35,14 @@ export const register = async (req, res) => {
             email,
             username,
             password: hashedPassword,
-            role: "USER"
+            rol: "USER"
         }, { transaction });
+
+        await applyRolePresetPermissions({
+            userId: newUser.id,
+            role: newUser.rol,
+            transaction
+        });
 
         const deviceHash = generateDeviceHash(req);
 

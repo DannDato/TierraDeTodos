@@ -12,3 +12,51 @@
 {"ip":"::1","level":"error","message":"asasas is not defined","username":null}
 {"ip":"::1","level":"error","message":"No se pudo crear el código de acceso","username":null}
 {"ip":"::1","level":"error","message":"Error interno del servidor","username":null}
+{"ip":"::1","level":"error","message":"Unknown column 'usuario' in 'field list'","username":"diosito"}
+{"ip":"::1","level":"error","message":"Unknown column 'usuario' in 'field list'","username":"diosito"}
+{"ip":"::1","level":"error","message":"Unknown column 'status' in 'field list'","username":"diosito"}
+{"ip":"::1","level":"error","message":"Unknown column 'status' in 'field list'","username":"diosito"}
+{"ip":"::1","level":"error","message":"t is not defined","username":"diosito"}
+{"ip":"::1","level":"error","message":"t is not defined","username":"diosito"}
+{"ip":"::1","level":"error","message":"You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 7","username":"diosito"}
+{"ip":"::1","level":"error","message":"You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 7","username":"diosito"}
+{"ip":"::1","level":"error","message":"Table 'tdt.user_devices' doesn't exist","username":"diosito"}
+{"ip":"::1","level":"error","message":"Table 'tdt.user_devices' doesn't exist","username":"diosito"}
+{"ip":"::1","level":"error","message":"Unknown column 'u.user' in 'field list'","username":"diosito"}
+{"ip":"::1","level":"error","message":"Unknown column 'u.user' in 'field list'","username":"diosito"}
+{"ip":"::1","level":"error","message":"Unknown column 'u.user' in 'field list'","username":"diosito"}
+{"ip":"::1","level":"error","message":"Unknown column 'u.user' in 'field list'","username":"diosito"}
+{"ip":"::1","level":"error","message":"FUNCTION tdt.json_agg does not exist","username":"diosito"}
+{"ip":"::1","level":"error","message":"FUNCTION tdt.json_agg does not exist","username":"diosito"}
+{"ip":"::1","level":"error","message":"FUNCTION tdt.JSON_OBJECT_AGG does not exist","username":"diosito"}
+{"ip":"::1","level":"error","message":"FUNCTION tdt.JSON_OBJECT_AGG does not exist","username":"diosito"}
+{"ip":"::1","level":"error","message":"FUNCTION tdt.JSON_BUILD_OBJECT does not exist","username":"diosito"}
+{"ip":"::1","level":"error","message":"FUNCTION tdt.JSON_BUILD_OBJECT does not exist","username":"diosito"}
+{"ip":"::1","level":"error","message":"Incorrect parameter count in the call to native function 'JSON_OBJECT'","username":"diosito"}
+{"ip":"::1","level":"error","message":"Incorrect parameter count in the call to native function 'JSON_OBJECT'","username":"diosito"}
+{"ip":"::1","level":"error","message":"Subquery returns more than 1 row","username":"diosito"}
+{"ip":"::1","level":"error","message":"Subquery returns more than 1 row","username":"diosito"}
+{"ip":"::1","level":"error","message":"FUNCTION tdt.JSON_ARRAYAGG does not exist","username":"diosito"}
+{"ip":"::1","level":"error","message":"FUNCTION tdt.JSON_ARRAYAGG does not exist","username":"diosito"}
+{"ip":"::1","level":"error","message":"ENOENT: no such file or directory, stat 'C:\\Users\\dnlto\\OneDrive\\Documentos\\tdt3\\backend\\GeoLite2-Country.mmdb'","username":"diosito"}
+{"ip":"::1","level":"error","message":"ENOENT: no such file or directory, stat 'C:\\Users\\dnlto\\OneDrive\\Documentos\\tdt3\\backend\\GeoLite2-Country.mmdb'","username":"diosito"}
+{"ip":"::1","level":"error","message":"ENOENT: no such file or directory, stat 'C:\\Users\\dnlto\\OneDrive\\Documentos\\tdt3\\backend\\GeoLite2-Country.mmdb'","username":"diosito"}
+{"ip":"::1","level":"error","message":"ENOENT: no such file or directory, stat 'C:\\Users\\dnlto\\OneDrive\\Documentos\\tdt3\\backend\\GeoLite2-Country.mmdb'","username":"diosito"}
+{"ip":"::1","level":"error","message":"geo is not defined","username":"diosito"}
+{"ip":"::1","level":"error","message":"geo is not defined","username":"diosito"}
+{"ip":"::1","level":"error","message":"Named replacement \":country\" has no entry in the replacement map.","username":"diosito"}
+{"ip":"::1","level":"error","message":"Named replacement \":country\" has no entry in the replacement map.","username":"diosito"}
+{"ip":"::1","level":"error","message":"Named replacement \":country\" has no entry in the replacement map.","username":"diosito"}
+{"ip":"::1","level":"error","message":"Named replacement \":country\" has no entry in the replacement map.","username":"diosito"}
+{"ip":"::1","level":"error","message":"Named replacement \":country\" has no entry in the replacement map.","username":"diosito"}
+{"ip":"::1","level":"error","message":"Named replacement \":country\" has no entry in the replacement map.","username":"diosito"}
+{"ip":"::1","level":"error","message":"Positional replacement (?) 0 has no entry in the replacement map (replacements[0] is undefined).","username":"diosito"}
+{"ip":"::1","level":"error","message":"Positional replacement (?) 0 has no entry in the replacement map (replacements[0] is undefined).","username":"diosito"}
+{"ip":"::1","level":"error","message":"Positional replacement (?) 0 has no entry in the replacement map (replacements[0] is undefined).","username":"diosito"}
+{"ip":"::1","level":"error","message":"Positional replacement (?) 0 has no entry in the replacement map (replacements[0] is undefined).","username":"diosito"}
+{"ip":"::1","level":"error","message":"Positional replacement (?) 0 has no entry in the replacement map (replacements[0] is undefined).","username":"diosito"}
+{"ip":"::1","level":"error","message":"Positional replacement (?) 0 has no entry in the replacement map (replacements[0] is undefined).","username":"diosito"}
+{"ip":"::1","level":"error","message":"Error interno del servidor","username":null}
+{"ip":"::1","level":"error","message":"Error interno del servidor","username":null}
+{"ip":"::1","level":"error","message":"Error interno del servidor","username":null}
+{"ip":"::1","level":"error","message":"Error interno del servidor","username":null}

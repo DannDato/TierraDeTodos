@@ -55,6 +55,15 @@ export default (sequelize, DataTypes) => {
     ]
   });
 
+  Users.associate = (models) => {
+    Users.belongsToMany(models.Permissions, {
+      through: models.UserPermissions,
+      foreignKey: 'userId',
+      otherKey: 'permissionId',
+      as: 'permissions'
+    });
+  };
+
   Users.seed = async () => {
     const validate  = await Users.findAll();
     if(validate.length > 0) return;

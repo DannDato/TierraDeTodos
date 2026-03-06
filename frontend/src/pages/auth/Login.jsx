@@ -47,6 +47,7 @@ function Login() {
       // login Directo
       if (data.token) {
         localStorage.setItem("token", data.token);
+        // localStorage.setItem("user", JSON.stringify(data.user));
         navigate("/start");
       }
     } catch (error) {
