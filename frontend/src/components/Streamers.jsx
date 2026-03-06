@@ -23,7 +23,7 @@ const streamers = [
 
 export default function Streamers() {
   return (
-    <section id="streamers" className="py-20 bg-[var(--white-color)] text-[var(--black-color)] relative overflow-hidden">
+    <section id="streamers" className="py-20 bg-[var(--white-color)] text-[var(--black-color)] relative overflow-hidden mx-2 md:mx-10 rounded-[30px]" data-aos="fade-up" data-aos-duration="1000">
       
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         

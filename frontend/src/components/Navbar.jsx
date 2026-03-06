@@ -32,9 +32,9 @@ function Navbar() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full z-50 bg-[var(--black-color)] shadow-lg">
-        <nav className="px-6 md:px-10">
-          <div className="flex items-center justify-between h-20">
+      <header className="fixed top-3 left-0 w-[95%] z-50 bg-[var(--black-color)]/80 shadow-3xl backdrop-blur-md mx-[2.5%] rounded-xl border border-black/20">
+        <nav className="px-6 md:px-10 ">
+          <div className="flex items-center justify-between h-20 ">
 
             {/* Logo */}
             <button

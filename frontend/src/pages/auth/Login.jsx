@@ -59,7 +59,7 @@ function Login() {
 
   return (
     <>
-      <Banner>
+      <Banner className="h-[800px]">
         {loading && <LoadingOverlay />}
         <div className="grid grid-cols-2 max-w-4xl mx-auto shadow-2xl overflow-hidden rounded-3xl"
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
@@ -123,7 +123,7 @@ function Login() {
           </div>
 
           {/* LADO DERECHO: BIENVENIDA */}
-          <div className="col bg-[var(--black-color)] flex flex-col items-center justify-center p-10 text-[var(--white-color)]" data-aos="fade-right">
+          <div className="col bg-[var(--black-color)] flex-col items-center justify-center p-10 text-[var(--white-color)]  hidden md:flex" data-aos="fade-right">
             <a href="/" className="hover:scale-105 transition-transform duration-300">
               <img src="/img/tdt3.webp" alt="Tierra de Todos Logo" className="mb-6 w-48" />
             </a>
