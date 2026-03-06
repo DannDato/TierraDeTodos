@@ -3,6 +3,7 @@ import { models, } from '../../models/index.js';
 import { Op } from 'sequelize';
 import generateDeviceHash from '../../utils/generateDeviceHash.js';
 import { createAccessCode } from '../../helpers/createCodes.js';
+import { CreateSession } from '../../helpers/CreateSession.js';
 import bcrypt from 'bcrypt';
 
 export const authenticate = async (req, res) => {
@@ -190,16 +191,23 @@ export const authenticate = async (req, res) => {
             await existingDevice.save();
         }
 
+        
         // Generar token JWT
         const token = jwt.sign(
             {
-                id: user.id,
+                userId: user.id,
                 username: user.username,
                 role: user.role
             },
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
+        
+        await CreateSession({
+            token,
+            userId: user.id,
+            req
+        });
 
         return res.json({ token });
     } catch (error) {

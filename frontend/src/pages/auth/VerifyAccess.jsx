@@ -40,9 +40,11 @@ function VerifyAccess() {
       error.response ? setCodigoError(error.response.data.message) : setCodigoError("Error de conexión. Por favor, inténtalo de nuevo.");
     }).finally(() => {
       setLoading(false);
+      localStorage.removeItem("tempUser");
     });
     if(data.hasOwnProperty("token")) {
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
       navigate("/start");
     }
 

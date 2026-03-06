@@ -3,6 +3,7 @@ import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
 import generateDeviceHash from '../../utils/generateDeviceHash.js';
 import { verifyAccessCode } from '../../helpers/verifyCodes.js';
+import { CreateSession } from '../../helpers/CreateSession.js';
 
 export const verifyAccess = async (req, res) => {
     const { codigo, usuario } = req.body;
@@ -69,13 +70,19 @@ export const verifyAccess = async (req, res) => {
         // Código de verificación válido, generar token JWT
         const token = jwt.sign(
             {
-                id: user.id,
+                userId: user.id,
                 username: user.username,
-                role: user.role
+                role: user.rol
             },
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
+
+        await CreateSession({
+            token,
+            userId: user.id,
+            req
+        });
 
         return res.json({ token });
     } catch (error) {
