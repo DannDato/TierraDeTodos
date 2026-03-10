@@ -24,7 +24,7 @@ export const getUserMenu = async (req, res) => {
       include: [
         {
           model: models.Permissions,
-          as: 'permission',
+          as: 'permissionRef',
           where: { active: true },
           attributes: ['key'],
           required: true
@@ -33,7 +33,7 @@ export const getUserMenu = async (req, res) => {
     });
 
     const userPermissions = userPermissionsRows
-      .map((row) => row.permission?.key)
+      .map((row) => row.permissionRef?.key)
       .filter(Boolean);
 
     const menuRows = await models.Menu.findAll({

@@ -52,7 +52,7 @@ export default (sequelize, DataTypes) => {
     }
 
   },{
-    tableName: 'UserDevices',
+    tableName: 'user_devices',
     timestamps: false,
     indexes: [
       {

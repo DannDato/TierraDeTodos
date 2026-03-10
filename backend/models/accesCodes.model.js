@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
     }
 
   },{
-    tableName: 'AccessCodes',
+    tableName: 'access_codes',
     timestamps: false
   });
 

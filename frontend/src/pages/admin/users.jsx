@@ -48,6 +48,8 @@ function Users() {
   const [availableRoles, setAvailableRoles] = useState([]);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [selectedRole, setSelectedRole] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [statusReason, setStatusReason] = useState("");
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [isSavingRole, setIsSavingRole] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
@@ -66,7 +68,7 @@ function Users() {
     try {
       setIsLoading(true);
       setLoadError("");
-      const { data } = await api.get("/user/admin/users");
+      const { data } = await api.get("/admin/users");
       setUsers(data?.users || []);
     } catch (error) {
       console.error("Error loading users:", error);
@@ -77,15 +79,27 @@ function Users() {
     }
   };
 
+  const applyUserDetailsState = (userId, data) => {
+    const detailedUser = data?.user || null;
+
+    setSelectedUserId(userId);
+    setSelectedUser(detailedUser);
+    setAvailablePermissions(data?.availablePermissions || []);
+    setAvailableRoles(data?.availableRoles || []);
+    setSelectedPermissions(detailedUser?.permissions || []);
+    setSelectedRole(detailedUser?.role || "");
+    setSelectedStatus(detailedUser?.status || "");
+  };
+
+  const loadUserDetails = async (userId) => {
+    const { data } = await api.get(`/admin/users/${userId}`);
+    applyUserDetailsState(userId, data);
+    return data;
+  };
+
   const openUserDetails = async (userId) => {
     try {
-      const { data } = await api.get(`/user/admin/users/${userId}`);
-      setSelectedUserId(userId);
-      setSelectedUser(data?.user || null);
-      setAvailablePermissions(data?.availablePermissions || []);
-      setAvailableRoles(data?.availableRoles || []);
-      setSelectedPermissions(data?.user?.permissions || []);
-      setSelectedRole(data?.user?.role || "");
+      await loadUserDetails(userId);
       setIsDetailsOpen(true);
     } catch (error) {
       console.error("Error loading user details:", error);
@@ -100,6 +114,8 @@ function Users() {
     setAvailableRoles([]);
     setSelectedPermissions([]);
     setSelectedRole("");
+    setSelectedStatus("");
+    setStatusReason("");
     setIsSavingPermissions(false);
     setIsSavingRole(false);
   };
@@ -140,7 +156,7 @@ function Users() {
 
     try {
       setIsSavingPermissions(true);
-      await api.patch(`/user/admin/users/${selectedUserId}/permissions`, {
+      await api.patch(`/admin/users/${selectedUserId}/permissions`, {
         permissionKeys: selectedPermissions,
       });
 
@@ -150,12 +166,7 @@ function Users() {
         )
       );
 
-      closeUserDetails();
-      openAlert({
-        type: "success",
-        title: "Permisos actualizados",
-        message: "Los permisos del usuario se guardaron correctamente.",
-      });
+      await loadUserDetails(selectedUserId);
     } catch (error) {
       console.error("Error saving permissions:", error);
       openAlert({
@@ -179,60 +190,69 @@ function Users() {
     });
   };
 
-  const saveRole = async () => {
-    if (!selectedUserId || !selectedRole) return;
+  const saveUserData = async () => {
+    if (!selectedUserId || !selectedRole || !selectedStatus) return;
+
+    const roleChanged = selectedRole !== selectedUser?.role;
+    const statusChanged = selectedStatus !== selectedUser?.status;
+
+    if (!roleChanged && !statusChanged) {
+      openAlert({
+        type: "info",
+        title: "Sin cambios",
+        message: "No hay cambios en rol o estatus para guardar.",
+      });
+      return;
+    }
 
     try {
       setIsSavingRole(true);
-      const { data } = await api.patch(`/user/admin/users/${selectedUserId}/role`, {
+      const { data } = await api.patch(`/admin/users/${selectedUserId}/details`, {
         role: selectedRole,
+        status: selectedStatus,
+        reason: statusReason.trim() || undefined,
       });
 
+      await loadUserDetails(selectedUserId);
+
+      const updatedStatus = statusChanged ? selectedStatus : selectedUser?.status;
+      const updatedRole = selectedRole;
       const rolePermissions = data?.permissionKeys || [];
 
       setUsers((prev) =>
         prev.map((user) =>
           user.id === selectedUserId
-            ? { ...user, role: selectedRole, permissions: rolePermissions }
+            ? {
+                ...user,
+                role: updatedRole,
+                status: updatedStatus,
+                permissions: roleChanged ? rolePermissions : user.permissions,
+              }
             : user
         )
       );
 
-      setSelectedPermissions(rolePermissions);
-      setSelectedUser((prev) =>
-        prev
-          ? {
-              ...prev,
-              role: selectedRole,
-              permissions: rolePermissions,
-            }
-          : prev
-      );
-      openAlert({
-        type: "success",
-        title: "Rol actualizado",
-        message: "El rol se actualizó y se reasignaron los permisos preset correctamente.",
-      });
+      if (statusChanged) setStatusReason("");
     } catch (error) {
-      console.error("Error saving role:", error);
+      console.error("Error saving user data:", error);
       openAlert({
         type: "error",
-        title: "Error al guardar rol",
-        message: error.response?.data?.message || "No se pudo actualizar el rol del usuario.",
+        title: "Error al guardar datos",
+        message: error.response?.data?.message || "No se pudieron actualizar los datos del usuario.",
       });
     } finally {
       setIsSavingRole(false);
     }
   };
 
-  const handleSaveRole = async () => {
-    if (!selectedUserId || !selectedRole) return;
+  const handleSaveUserData = async () => {
+    if (!selectedUserId || !selectedRole || !selectedStatus) return;
 
     openAlert({
       type: "warning",
-      title: "Confirmar cambio de rol",
-      message: "Cambiar el rol reemplazará los permisos actuales por los permisos preset del nuevo rol. ¿Deseas continuar?",
-      onConfirm: saveRole,
+      title: "Confirmar cambios de datos",
+      message: "Se guardarán los cambios de rol y estatus. Si cambias el rol, se reemplazarán los permisos actuales por los permisos preset del nuevo rol. ¿Deseas continuar?",
+      onConfirm: saveUserData,
     });
   };
 
@@ -270,11 +290,13 @@ function Users() {
       case "ACTIVE":
         return <span className={`${baseClass} text-[var(--active-color)] bg-[var(--active-color)]/10`}>ACTIVO</span>;
       case "INACTIVE":
-        return <span className={`${baseClass} text-[var(--gray-color)] bg-[var(--gray-color)]/10`}>INACTIVO</span>;
+        return <span className={`${baseClass} text-[var(--warning-color)] bg-[var(--warning-color)]/10`}>INACTIVO</span>;
       case "BANNED":
         return <span className={`${baseClass} text-[var(--danger-color)] bg-[var(--danger-color)]/10`}>BANEADO</span>;
+      case "BLOCKED":
+        return <span className={`${baseClass} text-[var(--gray-color)] bg-[var(--gray-color)]/10`}>BLOQUEADO</span>;
       default:
-        return <span className={`${baseClass} text-[var(--warning-color)] bg-[var(--warning-color)]/10`}>BLOQUEADO</span>;
+        return <span className={`${baseClass} text-[var(--gray-color)] bg-[var(--gray-color)]/10`}>{status || "N/A"}</span>;
     }
   };
 
@@ -282,6 +304,14 @@ function Users() {
     value: role,
     label: role,
   }));
+
+  const modalStatusOptions = useMemo(
+    () => ["ACTIVE", "BANNED", "INACTIVE", "BLOCKED"].map((status) => ({
+      value: status,
+      label: status,
+    })),
+    []
+  );
 
   return (
     <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
@@ -304,8 +334,14 @@ function Users() {
         selectedRole={selectedRole}
         roleOptions={modalRoleOptions}
         onRoleChange={setSelectedRole}
-        onSaveRole={handleSaveRole}
+        onSaveRole={handleSaveUserData}
         isSavingRole={isSavingRole}
+        selectedStatus={selectedStatus}
+        statusOptions={modalStatusOptions}
+        onStatusChange={setSelectedStatus}
+        statusReason={statusReason}
+        onStatusReasonChange={setStatusReason}
+        originalStatus={selectedUser?.status}
         onClose={closeUserDetails}
         isSaving={isSavingPermissions}
       />

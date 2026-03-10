@@ -84,7 +84,7 @@ function MenuBar() {
       />
 
       {/* BOTTOM BAR */}
-      <nav className="fixed bottom-0 left-0 w-full bg-[var(--white-color)] z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+      <nav className="w-full flex-shrink-0 bg-[var(--white-color)] z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div className="flex w-full justify-between h-16">
           {menuItems
             .filter((item) => item.shortAccess)

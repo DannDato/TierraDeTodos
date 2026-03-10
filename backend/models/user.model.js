@@ -59,7 +59,8 @@ export default (sequelize, DataTypes) => {
     Users.belongsToMany(models.Permissions, {
       through: models.UserPermissions,
       foreignKey: 'userId',
-      otherKey: 'permissionId',
+      otherKey: 'permission',
+      targetKey: 'key',
       as: 'permissions'
     });
   };

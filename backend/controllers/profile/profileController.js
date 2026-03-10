@@ -24,7 +24,7 @@ export const profile = async (req, res) => {
                 u.account as status,
                 (SELECT reason FROM user_status_history WHERE user = u.id ORDER BY created_at DESC LIMIT 1) AS status_reason,
                 (SELECT u2.username FROM user_status_history sh
-                    INNER JOIN users u2 on u2.id = sh.changed_by
+                    INNER JOIN Users u2 on u2.id = sh.changed_by
                     WHERE sh.user = u.id ORDER BY sh.created_at DESC LIMIT 1
                 ) AS status_changed_by,
                 (SELECT created_at FROM user_status_history WHERE user = u.id ORDER BY created_at DESC LIMIT 1) AS status_changed_at,
@@ -46,8 +46,8 @@ export const profile = async (req, res) => {
                     ),
                     '[]'
                 ) AS devices
-            FROM users u
-            LEFT JOIN userdevices ud ON ud.user = u.id
+            FROM Users u
+            LEFT JOIN user_devices ud ON ud.user = u.id
             WHERE u.id = ?
             GROUP BY u.id;
         `, {

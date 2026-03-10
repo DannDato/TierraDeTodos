@@ -3,6 +3,7 @@ import { QueryTypes } from 'sequelize';
 import { applyRolePresetPermissions } from '../../helpers/applyRolePresetPermissions.js';
 
 const ALLOWED_ROLES = ['ADMIN', 'MOD', 'POLICE', 'STREAMER', 'USER'];
+const ALLOWED_STATUSES = ['ACTIVE', 'BANNED', 'INACTIVE', 'BLOCKED'];
 
 const ensureCanManageUsers = async (req, res) => {
   if (req.user?.rol === 'ADMIN') {
@@ -12,8 +13,8 @@ const ensureCanManageUsers = async (req, res) => {
   const [permissionAccess] = await db.query(
     `
       SELECT s.key
-      FROM UserPermissions up
-      INNER JOIN Permissions s ON s.id = up.permissionId
+      FROM user_permissions up
+      INNER JOIN Permissions s ON s.key = up.permission
       WHERE up.userId = :userId
       AND s.active = 1
       AND s.key IN ('menu.users', 'menu.userscontrol')
@@ -45,8 +46,8 @@ export const getUsersAdminList = async (req, res) => {
     const permissionRows = await db.query(
       `
         SELECT up.userId, s.key
-        FROM UserPermissions up
-        INNER JOIN Permissions s ON s.id = up.permissionId
+        FROM user_permissions up
+        INNER JOIN Permissions s ON s.key = up.permission
         WHERE s.active = 1
       `,
       { type: QueryTypes.SELECT }
@@ -110,10 +111,31 @@ export const getAdminUserById = async (req, res) => {
     const assignedPermissionRows = await db.query(
       `
         SELECT s.key
-        FROM UserPermissions up
-        INNER JOIN Permissions s ON s.id = up.permissionId
+        FROM user_permissions up
+        INNER JOIN Permissions s ON s.key = up.permission
         WHERE up.userId = :userId
         AND s.active = 1
+      `,
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    const statusHistory = await db.query(
+      `
+        SELECT
+          sh.id,
+          sh.old_status AS oldStatus,
+          sh.new_status AS newStatus,
+          sh.reason,
+          sh.created_at AS createdAt,
+          sh.changed_by AS changedBy,
+          changedByUser.username AS changedByUsername
+        FROM user_status_history sh
+        LEFT JOIN Users changedByUser ON changedByUser.id = sh.changed_by
+        WHERE sh.user = :userId
+        ORDER BY sh.created_at DESC, sh.id DESC
       `,
       {
         replacements: { userId },
@@ -132,6 +154,7 @@ export const getAdminUserById = async (req, res) => {
         mojang: user.mojang,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        statusHistory,
         permissions: assignedPermissionRows.map((permission) => permission.key)
       },
       availablePermissions: allPermissions,
@@ -220,6 +243,138 @@ export const updateAdminUserRole = async (req, res) => {
   }
 };
 
+export const updateAdminUserDetails = async (req, res) => {
+  const transaction = await db.transaction();
+
+  try {
+    if (!(await ensureCanManageUsers(req, res))) {
+      await transaction.rollback();
+      return;
+    }
+
+    const userId = Number(req.params.id);
+    const { role, status, reason } = req.body || {};
+
+    if (!userId) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'ID de usuario inválido' });
+    }
+
+    if (!role || !ALLOWED_ROLES.includes(role)) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'Rol inválido' });
+    }
+
+    if (!status || !ALLOWED_STATUSES.includes(status)) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'Estatus inválido' });
+    }
+
+    const user = await models.Users.findByPk(userId, { transaction });
+    if (!user) {
+      await transaction.rollback();
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    const previousRole = user.rol;
+    const previousStatus = user.account;
+    const roleChanged = previousRole !== role;
+    const statusChanged = previousStatus !== status;
+
+    let permissionKeys = [];
+
+    if (roleChanged) {
+      user.rol = role;
+      permissionKeys = await applyRolePresetPermissions({
+        userId,
+        role,
+        transaction
+      });
+    }
+
+    if (statusChanged) {
+      user.account = status;
+
+      const historyModel = models.user_status_history || models['user_status_history'];
+      if (!historyModel) {
+        throw new Error('Modelo user_status_history no disponible');
+      }
+
+      await historyModel.create(
+        {
+          user: userId,
+          old_status: previousStatus,
+          new_status: status,
+          reason: typeof reason === 'string' && reason.trim()
+            ? reason.trim()
+            : 'Cambio realizado desde el panel de administración',
+          changed_by: req.user.id,
+          created_at: new Date()
+        },
+        { transaction }
+      );
+    }
+
+    if (roleChanged || statusChanged) {
+      await user.save({ transaction });
+    }
+
+    if (!roleChanged) {
+      const assignedPermissionRows = await db.query(
+        `
+          SELECT s.key
+          FROM user_permissions up
+          INNER JOIN Permissions s ON s.key = up.permission
+          WHERE up.userId = :userId
+          AND s.active = 1
+        `,
+        {
+          replacements: { userId },
+          type: QueryTypes.SELECT,
+          transaction
+        }
+      );
+
+      permissionKeys = assignedPermissionRows.map((permission) => permission.key);
+    }
+
+    await transaction.commit();
+
+    await req.logAction({
+      accion: 'Datos de usuario actualizados',
+      apartado: 'AdminUsers',
+      userId: req.user.id,
+      username: req.user.username,
+      valor: `targetUserId=${userId}; role=${role}; status=${status}; roleChanged=${roleChanged}; statusChanged=${statusChanged}`,
+      type: 'info'
+    });
+
+    return res.status(200).json({
+      message: roleChanged || statusChanged
+        ? 'Datos actualizados correctamente'
+        : 'No hubo cambios para guardar',
+      role,
+      status,
+      permissionKeys,
+      roleChanged,
+      statusChanged
+    });
+  } catch (error) {
+    await transaction.rollback();
+
+    await req.logAction({
+      accion: 'Error al actualizar datos de usuario',
+      apartado: 'AdminUsers',
+      userId: req.user?.id,
+      username: req.user?.username,
+      valor: error.message,
+      type: 'error'
+    });
+
+    return res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
 export const updateAdminUserPermissions = async (req, res) => {
   const transaction = await db.transaction();
 
@@ -252,7 +407,7 @@ export const updateAdminUserPermissions = async (req, res) => {
 
     const permissions = await models.Permissions.findAll({
       where: { key: uniquePermissionKeys, active: true },
-      attributes: ['id', 'key'],
+      attributes: ['key'],
       transaction
     });
 
@@ -274,7 +429,7 @@ export const updateAdminUserPermissions = async (req, res) => {
 
     if (permissions.length > 0) {
       await models.UserPermissions.bulkCreate(
-        permissions.map((permission) => ({ userId, permissionId: permission.id })),
+        permissions.map((permission) => ({ userId, permission: permission.key })),
         { transaction }
       );
     }

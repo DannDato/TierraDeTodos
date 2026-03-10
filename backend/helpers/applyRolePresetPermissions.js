@@ -26,7 +26,7 @@ export const applyRolePresetPermissions = async ({ userId, role, transaction }) 
       key: presetPermissionKeys,
       active: true
     },
-    attributes: ['id', 'key'],
+    attributes: ['key'],
     transaction
   });
 
@@ -35,7 +35,7 @@ export const applyRolePresetPermissions = async ({ userId, role, transaction }) 
   }
 
   await models.UserPermissions.bulkCreate(
-    permissions.map((permission) => ({ userId, permissionId: permission.id })),
+    permissions.map((permission) => ({ userId, permission: permission.key })),
     { transaction }
   );
 

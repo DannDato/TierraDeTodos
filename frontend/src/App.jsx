@@ -20,6 +20,8 @@ import Download from "./pages/user/download";
 // Páginas de admin
 import Users from "./pages/admin/users";
 
+import NotFound from "./pages/home/NotFound";
+
 
 const App = function App() {
   const location = useLocation();
@@ -48,6 +50,7 @@ const App = function App() {
       <Route path="/download" element={<DashboardLayout><Download /></DashboardLayout>}/>
       
       <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>}/>
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

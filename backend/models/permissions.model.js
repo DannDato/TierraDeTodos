@@ -43,7 +43,8 @@ export default (sequelize, DataTypes) => {
   Permissions.associate = (models) => {
     Permissions.belongsToMany(models.Users, {
       through: models.UserPermissions,
-      foreignKey: 'permissionId',
+      foreignKey: 'permission',
+      sourceKey: 'key',
       otherKey: 'userId',
       as: 'users'
     });
@@ -52,14 +53,16 @@ export default (sequelize, DataTypes) => {
   Permissions.seed = async () => {
     const validate = await Permissions.findAll();
     if (validate.length > 0) return;
-
     await Permissions.bulkCreate([
       { key: 'menu.start', name: 'Inicio', description: 'Permite ver Inicio', active: true },
       { key: 'menu.userscontrol', name: 'Control usuarios', description: 'Permite ver userscontrol', active: true },
       { key: 'menu.users', name: 'Usuarios', description: 'Permite ver users', active: true },
       { key: 'menu.profile', name: 'Perfil', description: 'Permite ver perfil', active: true },
       { key: 'menu.configuration', name: 'Configuración', description: 'Permite ver configuración', active: true },
-      { key: 'menu.aboutapp', name: 'Acerca de', description: 'Permite ver about app', active: true }
+      { key: 'menu.aboutapp', name: 'Acerca de', description: 'Permite ver about app', active: true },
+      //derechos de gestion
+      { key: 'view.user', name: 'Ver usuarios', description: 'Permite ver la lista de usuarios y sus detalles', active: true },
+      { key: 'edit.user', name: 'Editar usuarios', description: 'Permite modificar los datos de los usuarios, incluyendo roles y permisos', active: true }
     ]);
   };
 

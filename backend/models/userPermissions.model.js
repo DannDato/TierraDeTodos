@@ -12,18 +12,18 @@ export default (sequelize, DataTypes) => {
       allowNull: false
     },
 
-    permissionId: {
-      type: DataTypes.INTEGER,
+    permission: {
+      type: DataTypes.STRING(255),
       allowNull: false
     }
   }, {
-    tableName: 'UserPermissions',
+    tableName: 'user_permissions',
     timestamps: true,
     indexes: [
       {
         name: 'user_permissions_user_permission_unique',
         unique: true,
-        fields: ['userId', 'permissionId']
+        fields: ['userId', 'permission']
       },
       {
         name: 'user_permissions_user_index',
@@ -31,7 +31,7 @@ export default (sequelize, DataTypes) => {
       },
       {
         name: 'user_permissions_permission_index',
-        fields: ['permissionId']
+        fields: ['permission']
       }
     ]
   });
@@ -44,8 +44,9 @@ export default (sequelize, DataTypes) => {
     });
 
     UserPermissions.belongsTo(models.Permissions, {
-      foreignKey: 'permissionId',
-      as: 'permission',
+      foreignKey: 'permission',
+      targetKey: 'key',
+      as: 'permissionRef',
       onDelete: 'CASCADE'
     });
   };
@@ -60,11 +61,6 @@ export default (sequelize, DataTypes) => {
 
     if (users.length === 0 || permissions.length === 0 || presets.length === 0) return;
 
-    const permissionIdByKey = permissions.reduce((acc, permission) => {
-      acc[permission.key] = permission.id;
-      return acc;
-    }, {});
-
     const presetPermissionsByRole = presets.reduce((acc, preset) => {
       if (!acc[preset.role]) acc[preset.role] = [];
       acc[preset.role].push(preset.permissionKey);
@@ -74,10 +70,11 @@ export default (sequelize, DataTypes) => {
     for (const user of users) {
       const basePermissionKeys = presetPermissionsByRole[user.rol] || presetPermissionsByRole.USER || [];
 
+      const activePermissionKeys = new Set(permissions.map((permission) => permission.key));
+
       const rows = basePermissionKeys
-        .map((permissionKey) => permissionIdByKey[permissionKey])
-        .filter(Boolean)
-        .map((permissionId) => ({ userId: user.id, permissionId }));
+        .filter((permissionKey) => activePermissionKeys.has(permissionKey))
+        .map((permissionKey) => ({ userId: user.id, permission: permissionKey }));
 
       if (rows.length > 0) {
         await UserPermissions.bulkCreate(rows, { ignoreDuplicates: true });

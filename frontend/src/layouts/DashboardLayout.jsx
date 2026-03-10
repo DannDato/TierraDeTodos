@@ -8,12 +8,12 @@ function DashboardLayout({ children }) {
   if (!token) {return <Navigate to="/login" replace state={{ from: location.pathname }} />;}
 
   return (
-    <>
-        <main className="pb-16">
+    <div className="h-dvh flex flex-col overflow-hidden">
+        <main className="relative flex-1 min-h-0 overflow-y-auto">
           {children}
         </main>
         <MenuBar />
-    </>
+    </div>
   )
 }
 
