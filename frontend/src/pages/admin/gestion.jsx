@@ -12,7 +12,7 @@ import {
   MoreVertical
 } from "lucide-react";
 import Button from "../../elements/Button";
-import RolesManagerView from "../../components/RolesManagerView";
+import RolesManagerView from "../../components/gestion/RolesManagerView";
 
 
 function Gestion() {

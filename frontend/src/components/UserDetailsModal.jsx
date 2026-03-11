@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Button from "../elements/Button";
 import Select from "../elements/Select";
+import CloseButton from "../elements/closeButton";
 
 function UserDetailsModal({
   isOpen,
@@ -137,12 +138,7 @@ function UserDetailsModal({
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl bg-[var(--white-color)]/5 hover:bg-[var(--white-color)]/10 text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] transition-colors"
-            >
-              <X size={20} />
-            </button>
+            <CloseButton onClick={onClose} />
           </div>
         </div>
 
