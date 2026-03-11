@@ -7,7 +7,7 @@ export default function Input({
   type = "text",
   value,
   onChange,
-  error = false, // 👈 ahora false por defecto
+  error = false, 
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const inputType = type === "password" && showPassword ? "text" : type;
@@ -19,7 +19,7 @@ export default function Input({
       {label && (
         <label
           className={`text-sm font-medium text-left pl-1 transition-colors
-            ${hasError ? "text-red-500" : "text-gray-700"}
+            ${hasError ? "text-red-500" : "" + (context === "light" ? "text-gray-700" : "text-[var(--ins-text-white)]")}
           `}
         >
           {label}

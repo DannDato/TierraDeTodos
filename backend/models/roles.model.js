@@ -57,13 +57,13 @@ export default (sequelize, DataTypes) => {
     const validate = await Roles.findAll();
     if (validate.length > 0) return;
     await Roles.bulkCreate([
-      { role: 'SUPER-ADMIN', detail: 'Super Administrador', color: '#ff3b30', asignable: 'NO', active: 'YES' },
-      { role: 'ADMIN', detail: 'Administrador', color: '#ffffff', asignable: 'NO', active: 'YES' },
-      { role: 'MOD', detail: 'Moderador', color: '#ff69d9', asignable: 'YES', active: 'YES' },
-      { role: 'POLICE', detail: 'Policía', color: '#0073ff', asignable: 'YES', active: 'YES' },
-      { role: 'STREAMER', detail: 'Streamer', color: '#b17dff', asignable: 'YES', active: 'YES' },
-      { role: 'USER', detail: 'Usuario', color: '#29d096', asignable: 'YES', active: 'YES' },
-      { role: 'VIP', detail: 'Usuario VIP', color: '#ffc857', asignable: 'YES', active: 'YES' }
+      { role: 'SUPER-ADMIN', detail: 'Literalmente tiene el poder de todo, este es exclusivo de danndato', color: '#ff3b30', asignable: 'NO', active: 'YES' },
+      { role: 'ADMIN', detail: 'Tiene grandes habilidades en el sistema', color: '#ffffff', asignable: 'NO', active: 'YES' },
+      { role: 'MOD', detail: 'Se le asignan pocas responsabilidades en el sistema', color: '#ff69d9', asignable: 'YES', active: 'YES' },
+      { role: 'POLICE', detail: 'Tiene mas bien autoridad en el juego', color: '#0073ff', asignable: 'YES', active: 'YES' },
+      { role: 'STREAMER', detail: 'Puede gestionar su comunidad', color: '#b17dff', asignable: 'YES', active: 'YES' },
+      { role: 'USER', detail: 'Un simple mortal', color: '#29d096', asignable: 'YES', active: 'YES' },
+      { role: 'VIP', detail: 'Un simple mortal VIP', color: '#ffc857', asignable: 'YES', active: 'YES' }
     ]);
   };
 

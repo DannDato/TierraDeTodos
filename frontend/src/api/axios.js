@@ -41,7 +41,9 @@ api.interceptors.response.use(
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
-    }    
+    } else if (error.response?.status === 403){
+      window.location.href = '/start';
+    }
     return Promise.reject(error);
   }
 );

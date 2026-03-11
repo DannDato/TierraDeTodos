@@ -12,6 +12,8 @@ import {
   MoreVertical
 } from "lucide-react";
 import Button from "../../elements/Button";
+import RolesManagerView from "../../components/RolesManagerView";
+
 
 function Gestion() {
   const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
@@ -61,14 +63,13 @@ function Gestion() {
           </p>
         </div>
 
-        {/* CONTENEDOR PRINCIPAL */}
-        <div className="flex flex-1 gap-8 min-h-0 overflow-hidden">
+        <div className="flex flex-1 gap-8 min-h-0 overflow-hidden mt-10">
             
             {/* SIDEBAR INTERNO */}
             <div className="w-64 flex-shrink-0 flex flex-col gap-8 overflow-y-auto custom-scrollbar pb-8">
             {menuCategories.map((category, idx) => (
                 <div key={idx}>
-                <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--ins-text-dark)] mb-3 pl-4">
+                <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--ins-text-dark)] mb-3">
                     {category.title}
                 </h3>
                 <div className="flex flex-col gap-1">
@@ -115,82 +116,6 @@ function Gestion() {
   );
 }
 
-// ==========================================
-// VISTA: GESTOR DE ROLES
-// ==========================================
-function RolesManagerView() {
-  return (
-    <div className="flex flex-col h-full animate-[fadeIn_0.2s_ease-out]">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-2xl font-extrabold text-[var(--ins-text-white)]">
-            Gestión de Roles
-          </h2>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ins-text-dark)]" size={18} />
-            <input 
-              type="text" 
-              placeholder="Buscar role..." 
-              className="bg-[var(--ins-background)] border-none rounded-2xl pl-11 pr-4 py-3 text-sm text-[var(--ins-text-white)] placeholder:text-[var(--ins-text-dark)] focus:ring-2 focus:ring-[var(--secondary-color)] outline-none transition-all w-64"
-            />
-          </div>
-          <Button variant="primary" size="md" className="flex items-center gap-2 bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white">
-            <Plus size={18} /> Nuevo Role
-          </Button>
-        </div>
-      </div>
-
-      {/* Grid de Roles usando tus variables de color */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <RoleCard name="ADMIN" color="var(--admin-color)" users={3} permissions={42} description="Acceso total al sistema y configuraciones." />
-        <RoleCard name="POLICE" color="var(--police-color)" users={5} permissions={28} description="Moderación avanzada y gestión de reportes." />
-        <RoleCard name="MODERATOR" color="var(--moderator-color)" users={12} permissions={15} description="Gestión básica de usuarios y chat." />
-        <RoleCard name="VIP" color="var(--vip-color)" users={45} permissions={8} description="Usuarios con beneficios cosméticos y acceso prioritario." />
-        <RoleCard name="USER" color="var(--user-color)" users={1240} permissions={4} description="Role por defecto para nuevos jugadores." />
-      </div>
-    </div>
-  );
-}
-
-function RoleCard({ name, color, users, permissions, description }) {
-  return (
-    <div className="bg-[var(--ins-background)] rounded-2xl p-6 flex flex-col justify-between hover:bg-[var(--black-color)]/40 transition-colors">
-      <div className="flex justify-between items-start mb-4">
-        <span 
-          className="px-3 py-1 rounded-full text-xs font-bold border"
-          style={{ 
-            color: color, 
-            borderColor: `${color}40`, // 40 es opacidad en hex
-            backgroundColor: `${color}10` 
-          }}
-        >
-          {name}
-        </span>
-        <button className="text-[var(--ins-text-dark)] hover:text-[var(--ins-text-white)] transition-colors">
-          <MoreVertical size={20} />
-        </button>
-      </div>
-      <p className="text-sm text-[var(--ins-text-gray)] mb-6">{description}</p>
-      <div className="flex gap-4 border-t border-[var(--black-color)]/20 pt-4">
-        <div className="text-xs">
-          <span className="text-[var(--ins-text-dark)] block mb-1">USUARIOS</span>
-          <span className="text-[var(--ins-text-white)] font-bold">{users}</span>
-        </div>
-        <div className="text-xs">
-          <span className="text-[var(--ins-text-dark)] block mb-1">PERMISOS</span>
-          <span className="text-[var(--ins-text-white)] font-bold">{permissions}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// VISTA: GESTOR DE ESTATUS
-// ==========================================
 function StatusManagerView() {
   return (
     <div className="animate-[fadeIn_0.2s_ease-out]">
