@@ -49,8 +49,9 @@ export default (sequelize, DataTypes) => {
       { role: 'ADMIN', permissionKey: 'menu.profile', active: true },
       { role: 'ADMIN', permissionKey: 'menu.configuration', active: true },
       { role: 'ADMIN', permissionKey: 'menu.aboutapp', active: true },
-      { role: 'ADMIN', permissionKey: 'view.user', active: true },
-      { role: 'ADMIN', permissionKey: 'edit.user', active: true },
+      { role: 'ADMIN', permissionKey: 'menu.gestion', active: true },
+      { role: 'ADMIN', permissionKey: 'user.view', active: true },
+      { role: 'ADMIN', permissionKey: 'user.edit', active: true },
 
       { role: 'MOD', permissionKey: 'menu.start', active: true },
       { role: 'MOD', permissionKey: 'menu.profile', active: true },

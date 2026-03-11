@@ -5,6 +5,7 @@ import AlertModal from "../../elements/AlertModal";
 import api from "../../api/axios";
 
 function Profile() {
+  const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
   const Icon = User;
 
   const [user, setUser] = useState(null);
@@ -55,64 +56,51 @@ function Profile() {
   };
 
   const statusConfig = {
-    ACTIVE: { label: "Activo", color: "bg-emerald-600" },
-    PENDING: { label: "Pendiente", color: "bg-yellow-500" },
-    INACTIVE: { label: "Inactivo", color: "bg-gray-500" },
-    BANNED: { label: "Suspendido", color: "bg-red-600" },
+    ACTIVE: { label: "Activo" },
+    PENDING: { label: "Pendiente" },
+    INACTIVE: { label: "Inactivo" },
+    BANNED: { label: "Suspendido" },
   };
 
   if (!user) {
     return <ProfileSkeleton />;
   }
 
-  const currentStatus = statusConfig[user?.status] || {
-    label: "Desconocido",
-    color: "bg-gray-500",
+  const currentStatus = {
+    label: (statusConfig[user?.status]?.label) || "Desconocido",
+    color: user?.statusColor || "#8a8a8a",
+  };
+
+  const toRgba = (hexColor, alpha) => {
+    const normalized = typeof hexColor === "string" ? hexColor.trim().replace("#", "") : "";
+    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+      return `rgba(41, 208, 150, ${alpha})`;
+    }
+
+    const r = Number.parseInt(normalized.slice(0, 2), 16);
+    const g = Number.parseInt(normalized.slice(2, 4), 16);
+    const b = Number.parseInt(normalized.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
   const getRoleBadge = (role) => {
     const baseClass =
       "inline-flex justify-center items-center text-xs font-bold px-3 py-1 rounded-full shadow-sm w-28";
+    const safeRole = role || "N/A";
+    const roleColor = user?.roleColor || "#29d096";
 
-    const r = role?.toUpperCase();
-
-    switch (r) {
-      case "ADMIN":
-        return (
-          <span
-            className={`${baseClass} text-[var(--admin-color)] bg-[var(--admin-color)]/10 border border-[var(--admin-color)]/20`}
-          >
-            ADMIN
-          </span>
-        );
-
-      case "MODERADOR":
-        return (
-          <span
-            className={`${baseClass} text-[var(--moderator-color)] bg-[var(--moderator-color)]/10 border border-[var(--moderator-color)]/20`}
-          >
-            MODERADOR
-          </span>
-        );
-
-      case "STREAMER":
-        return (
-          <span
-            className={`${baseClass} text-[var(--streammer-color)] bg-[var(--streammer-color)]/10 border border-[var(--streammer-color)]/20`}
-          >
-            STREAMER
-          </span>
-        );
-
-      default:
-        return (
-          <span
-            className={`${baseClass} text-[var(--user-color)] bg-[var(--user-color)]/10 border border-[var(--user-color)]/20`}
-          >
-            USUARIO
-          </span>
-        );
-    }
+    return (
+      <span
+        className={baseClass}
+        style={{
+          color: roleColor,
+          backgroundColor: toRgba(roleColor, 0.12),
+          border: `1px solid ${toRgba(roleColor, 0.25)}`
+        }}
+      >
+        {safeRole}
+      </span>
+    );
   };
 
   return (
@@ -133,7 +121,7 @@ function Profile() {
           
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-              <span>{user.role}</span>
+              <span>{currentUser.role}</span>
               <span>/</span>
               <span className="text-[var(--secondary-color)]">Perfil</span>
             </div>
@@ -165,7 +153,7 @@ function Profile() {
 
         </div>
 
-        <div className="bg-white/5 rounded-2xl overflow-hidden shadow-md">
+        <div className="bg-black/20 rounded-2xl overflow-hidden shadow-md">
 
           {/* BANNER */}
           <div className="relative h-60 w-full overflow-hidden">
@@ -239,13 +227,13 @@ function Profile() {
 
               <div className="flex w-full rounded-xl overflow-hidden shadow-sm">
 
-                <div className="flex-1 bg-black/5 p-6 flex items-center justify-center">
+                <div className="flex-1 bg-white/5 p-6 flex items-center justify-center">
                   <span className="text-md font-bold uppercase tracking-wider">
                     Estatus
                   </span>
                 </div>
 
-                <div className={`flex-1 ${currentStatus.color} p-6 flex items-center justify-center`}>
+                <div className="flex-1 p-6 flex items-center justify-center" style={{ backgroundColor: toRgba(currentStatus.color, 0.85) }}>
                   <span className="text-md font-bold text-white uppercase tracking-wider">
                     {currentStatus.label}
                   </span>
@@ -253,7 +241,7 @@ function Profile() {
 
               </div>
 
-              <div className="bg-black/5 p-4 rounded-xl flex flex-col gap-2 text-sm">
+              <div className="bg-white/5 p-4 rounded-xl flex flex-col gap-2 text-sm">
                 <div>
                   <span className="font-bold">Actualizado por: </span>
                   {user.status_changed_by || "Sistema"}
@@ -290,7 +278,7 @@ function Profile() {
                   className={`p-4 rounded-xl flex items-center justify-between ${
                     device.isCurrent
                       ? "bg-[var(--secondary-color)]/10"
-                      : "bg-black/5"
+                      : "bg-white/5"
                   }`}
                 >
 
@@ -366,7 +354,7 @@ function Profile() {
 /* COMPONENTE INFO */
 function InfoCard({ title, value }) {
   return (
-    <div className="bg-black/5 p-4 rounded-xl flex-1">
+    <div className="bg-white/5 p-4 rounded-xl flex-1">
       <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-wider block">
         {title}
       </span>

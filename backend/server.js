@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes.js'
 import adminRoutes from './routes/adminRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 import { db, loadModels, models } from './models/index.js'
+import { logAction } from "./helpers/logger.js";
 import injectLogAction from "./middlewares/injectLogAction.js";
 import secureDelay from "./middlewares/secureDelay.js";
 
@@ -20,7 +21,8 @@ app.use((req, res, next) => {
 });
 
 // conexion a la bd 
-let messageDb=''
+let dbConnection = false;
+let dbMessage=''
 try {
     await loadModels();
     await db.authenticate();
@@ -39,9 +41,11 @@ try {
             await model.seed();
         }
     }
-    messageDb = 'Conexión a la base de datos exitosa';
+    dbConnection = true;
+    dbMessage = 'Base de datos conectada correctamente';
 } catch (error) {
-    messageDb = 'Error al conectar a la base de datos'+error.message;
+    dbConnection = false;
+    dbMessage = `Error al conectar a la base de datos: ${error.message}`;
 }
 
 // carpeta publica
@@ -75,7 +79,35 @@ const port = process.env.PORT || 3000;
 
 app.listen(port, ()=> {
     console.clear();
-    console.log(messageDb);
-    console.log(`Servidor iniciado en ${process.env.NODE_ENV}`);
-    console.log(`El servidor esta funcionando en ${process.env.BACKEND_URL}:${port}/`);
+    console.log("\n\n____________________________________________________________________\n");
+    let type= !dbConnection ? 'error' : 'info';
+    logAction({
+        accion: dbMessage,
+        apartado: 'Server',
+        query: 'N/A',
+        tabla: 'N/A',
+        condicion: 'N/A',
+        valor: 'N/A',
+        type: type
+    });
+    logAction({
+        accion: `Servidor iniciado en ${process.env.NODE_ENV}`,
+        apartado: 'Server',
+        query: 'N/A',
+        tabla: 'N/A',
+        condicion: 'N/A',
+        valor: 'N/A',
+        type: type
+    });
+    logAction({
+        accion: `El servidor esta funcionando en ${process.env.BACKEND_URL}:${port}/`,
+        apartado: 'Server',
+        query: 'N/A',
+        tabla: 'N/A',
+        condicion: 'N/A',
+        valor: 'N/A',
+        type: type
+    });
+    
+    
 });

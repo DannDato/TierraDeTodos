@@ -19,6 +19,7 @@ import Reports from "./pages/user/Reports";
 import Download from "./pages/user/download";
 // Páginas de admin
 import Users from "./pages/admin/users";
+import Gestion from "./pages/admin/gestion";
 
 import NotFound from "./pages/home/NotFound";
 
@@ -48,6 +49,7 @@ const App = function App() {
       <Route path="/start" element={<DashboardLayout><Start /></DashboardLayout>}/>
       <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>}/>
       <Route path="/download" element={<DashboardLayout><Download /></DashboardLayout>}/>
+      <Route path="/gestion" element={<DashboardLayout><Gestion /></DashboardLayout>}/>
       
       <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>}/>
       <Route path="*" element={<NotFound />} />

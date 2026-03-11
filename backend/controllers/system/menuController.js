@@ -67,15 +67,6 @@ export const getUserMenu = async (req, res) => {
       })
       .filter(Boolean);
 
-    await req.logAction({
-      accion: 'Menu dinámico cargado',
-      apartado: 'Menu',
-      userId: req.user.id,
-      username: req.user.username,
-      valor: `items=${menuItems.length}`,
-      type: 'info'
-    });
-
     return res.status(200).json({
       menuItems,
       permissions: userPermissions

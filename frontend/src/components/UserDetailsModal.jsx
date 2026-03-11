@@ -20,7 +20,7 @@ function UserDetailsModal({
   onTogglePermission,
   onSavePermissions,
   
-  // Props de Rol
+  // Props de Role
   selectedRole,
   roleOptions,
   onRoleChange,
@@ -50,6 +50,35 @@ function UserDetailsModal({
     () => [...(availablePermissions || [])].sort((a, b) => a.name.localeCompare(b.name)),
     [availablePermissions]
   );
+  const selectedRoleOption = useMemo(
+    () => (roleOptions || []).find((option) => option.value === selectedRole) || null,
+    [roleOptions, selectedRole]
+  );
+
+  const selectedStatusOption = useMemo(
+    () => (statusOptions || []).find((option) => option.value === selectedStatus) || null,
+    [statusOptions, selectedStatus]
+  );
+
+  const statusColorMap = useMemo(() => {
+    const map = {};
+    for (const option of statusOptions || []) {
+      if (option?.value && option?.color) map[option.value] = option.color;
+    }
+    return map;
+  }, [statusOptions]);
+
+  const toRgba = (hexColor, alpha) => {
+    const normalized = typeof hexColor === "string" ? hexColor.trim().replace("#", "") : "";
+    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+      return `rgba(41, 208, 150, ${alpha})`;
+    }
+
+    const r = Number.parseInt(normalized.slice(0, 2), 16);
+    const g = Number.parseInt(normalized.slice(2, 4), 16);
+    const b = Number.parseInt(normalized.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
 
   const statusHistory = user?.statusHistory || [];
 
@@ -57,43 +86,18 @@ function UserDetailsModal({
 
   const userInitial = user?.username ? user.username.charAt(0).toUpperCase() : "?";
   const currentStatus = selectedStatus || user.status || "INACTIVE";
+  const currentStatusColor = statusColorMap[currentStatus] || "#8a8a8a";
 
   const getStatusTone = (status) => {
-    switch (status) {
-      case "ACTIVE":
-        return {
-          text: "text-[var(--active-color)]",
-          bg: "bg-[var(--active-color)]/10",
-          dot: "bg-[var(--active-color)]",
-        };
-      case "INACTIVE":
-        return {
-          text: "text-[var(--warning-color)]",
-          bg: "bg-[var(--warning-color)]/10",
-          dot: "bg-[var(--warning-color)]",
-        };
-      case "BANNED":
-        return {
-          text: "text-[var(--danger-color)]",
-          bg: "bg-[var(--danger-color)]/10",
-          dot: "bg-[var(--danger-color)]",
-        };
-      case "BLOCKED":
-        return {
-          text: "text-[var(--gray-color)]",
-          bg: "bg-[var(--gray-color)]/10",
-          dot: "bg-[var(--gray-color)]",
-        };
-      default:
-        return {
-          text: "text-[var(--ins-text-gray)]",
-          bg: "bg-[var(--white-color)]/10",
-          dot: "bg-[var(--ins-text-gray)]",
-        };
-    }
+    const color = statusColorMap[status] || "#8a8a8a";
+    return {
+      color,
+      textStyle: { color },
+      bgStyle: { backgroundColor: toRgba(color, 0.12) },
+      dotStyle: { backgroundColor: color },
+      borderStyle: { border: `1px solid ${toRgba(color, 0.25)}` }
+    };
   };
-
-  const currentStatusTone = getStatusTone(currentStatus);
 
   return (
     // Contenedor principal fijo al viewport util, respetando el alto del menubar
@@ -119,8 +123,11 @@ function UserDetailsModal({
                   {user.username}
                 </h2>
                 <div className="flex items-center gap-3 mt-2">
-                  <span className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${currentStatusTone.bg} ${currentStatusTone.text}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${currentStatusTone.dot}`}></span>
+                  <span
+                    className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider"
+                    style={{ color: currentStatusColor, backgroundColor: toRgba(currentStatusColor, 0.12) }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: currentStatusColor }}></span>
                     {currentStatus}
                   </span>
                   <span className="text-xs text-[var(--ins-text-gray)] flex items-center gap-1 font-mono">
@@ -169,8 +176,8 @@ function UserDetailsModal({
         {/* Contenedor pestaña */}
         <div className="flex-1 min-h-0 p-8 pt-4 overflow-y-auto custom-scrollbar">          
           {activeTab === "data" ? (
-            <div className="space-y-4 animate-[fadeIn_0.3s_ease-out]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4 animate-[fadeIn_0.3s_ease-out] ">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
                 <InfoRow icon={<Mail size={18} />} label="Correo Electrónico" value={user.email} />
                 <InfoRow 
                   icon={<Calendar size={18} />} 
@@ -178,19 +185,31 @@ function UserDetailsModal({
                   value={user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"} 
                 />
                 
-                <div className="rounded-2xl bg-[var(--white-color)]/5 p-5 flex flex-col justify-center relative z-20">
+                <div className="rounded-2xl bg-black/20 p-5 flex flex-col justify-center relative z-20">
                   <p className="text-xs font-bold uppercase tracking-wider text-[var(--ins-text-gray)] mb-3 flex items-center gap-2">
-                    <ShieldCheck size={14} /> Nivel de Rol
+                    <ShieldCheck size={14} /> Nivel de rol
                   </p>
                   <Select
                     value={selectedRole}
                     onChange={onRoleChange}
                     options={roleOptions}
-                    placeholder="Selecciona un rol"
+                    placeholder="Selecciona un role"
                   />
+                  {selectedRoleOption?.color && (
+                    <span
+                      className="inline-flex w-fit mt-3 text-xs font-bold px-3 py-1 rounded-full"
+                      style={{
+                        color: selectedRoleOption.color,
+                        backgroundColor: toRgba(selectedRoleOption.color, 0.12),
+                        border: `1px solid ${toRgba(selectedRoleOption.color, 0.25)}`
+                      }}
+                    >
+                      {selectedRoleOption.label}
+                    </span>
+                  )}
                 </div>
 
-                <div className="rounded-2xl bg-[var(--white-color)]/5 p-5 flex flex-col justify-center relative z-20">
+                <div className="rounded-2xl bg-black/20 p-5 flex flex-col justify-center relative z-20">
                   <p className="text-xs font-bold uppercase tracking-wider text-[var(--ins-text-gray)] mb-3 flex items-center gap-2">
                     <Activity size={14} /> Estatus de Cuenta
                   </p>
@@ -200,14 +219,26 @@ function UserDetailsModal({
                     options={statusOptions || []}
                     placeholder="Selecciona estatus"
                   />
+                  {selectedStatusOption?.color && (
+                    <span
+                      className="inline-flex w-fit mt-3 text-xs font-bold px-3 py-1 rounded-full"
+                      style={{
+                        color: selectedStatusOption.color,
+                        backgroundColor: toRgba(selectedStatusOption.color, 0.12),
+                        border: `1px solid ${toRgba(selectedStatusOption.color, 0.25)}`
+                      }}
+                    >
+                      {selectedStatusOption.label}
+                    </span>
+                  )}
                 </div>
               </div>
 
               {selectedStatus && originalStatus && selectedStatus !== originalStatus && (
-                <div className="rounded-2xl bg-[var(--white-color)]/5 p-5 flex flex-col gap-2">
+                <div className="rounded-2xl bg-black/20 p-5 flex flex-col gap-2">
                   <p className="text-xs font-bold uppercase tracking-wider text-[var(--ins-text-gray)] flex items-center gap-2">
                     <Activity size={14} /> Motivo del cambio de estatus
-                    <span className={`ml-1 font-mono ${getStatusTone(selectedStatus).text}`}>{originalStatus} → {selectedStatus}</span>
+                    <span className="ml-1 font-mono" style={{ color: getStatusTone(selectedStatus).color }}>{originalStatus} → {selectedStatus}</span>
                   </p>
                   <textarea
                     value={statusReason || ""}
@@ -252,10 +283,10 @@ function UserDetailsModal({
                             <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
                               {entry.createdAt ? new Date(entry.createdAt).toLocaleString() : "N/A"}
                             </td>
-                            <td className={`px-5 py-3 font-mono whitespace-nowrap ${getStatusTone(entry.oldStatus).text}`}>
+                            <td className="px-5 py-3 font-mono whitespace-nowrap" style={{ color: getStatusTone(entry.oldStatus).color }}>
                               {entry.oldStatus || "N/A"}
                             </td>
-                            <td className={`px-5 py-3 font-mono whitespace-nowrap ${getStatusTone(entry.newStatus).text}`}>
+                            <td className="px-5 py-3 font-mono whitespace-nowrap" style={{ color: getStatusTone(entry.newStatus).color }}>
                               {entry.newStatus || "N/A"}
                             </td>
                             <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
@@ -354,7 +385,7 @@ function UserDetailsModal({
 
 function InfoRow({ icon, label, value }) {
   return (
-    <div className="rounded-2xl bg-[var(--white-color)]/5 p-4 flex items-start gap-4 hover:bg-[var(--white-color)]/10 transition-colors">
+    <div className="rounded-2xl bg-black/20 p-4 flex items-start gap-4 hover:bg-[var(--white-color)]/10 transition-colors">
       <div className="p-2.5 bg-[var(--black-color)]/30 rounded-xl text-[var(--ins-text-gray)]">
         {icon}
       </div>

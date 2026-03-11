@@ -9,8 +9,7 @@ export default (sequelize, DataTypes) => {
 
     key: {
       type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
+      allowNull: false
     },
 
     name: {
@@ -60,9 +59,10 @@ export default (sequelize, DataTypes) => {
       { key: 'menu.profile', name: 'Perfil', description: 'Permite ver perfil', active: true },
       { key: 'menu.configuration', name: 'Configuración', description: 'Permite ver configuración', active: true },
       { key: 'menu.aboutapp', name: 'Acerca de', description: 'Permite ver about app', active: true },
+      { key: 'menu.gestion', name: 'Gestión', description: 'Permite ver gestión de sistema', active: true },
       //derechos de gestion
-      { key: 'view.user', name: 'Ver usuarios', description: 'Permite ver la lista de usuarios y sus detalles', active: true },
-      { key: 'edit.user', name: 'Editar usuarios', description: 'Permite modificar los datos de los usuarios, incluyendo roles y permisos', active: true }
+      { key: 'user.view', name: 'Ver usuarios', description: 'Permite ver la lista de usuarios y sus detalles', active: true },
+      { key: 'user.edit', name: 'Editar usuarios', description: 'Permite modificar los datos de los usuarios, incluyendo roles y permisos', active: true }
     ]);
   };
 

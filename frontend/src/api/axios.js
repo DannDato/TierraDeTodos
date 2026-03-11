@@ -24,17 +24,24 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor de respuesta para manejar errores globales (como el Timeout)
+// Interceptor de respuesta para manejar errores globales (como el Timeout y Auth)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // en caso de que se tarde el backend en responder
     if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
       error.message = "El servidor está tardando demasiado en responder. Revisa tu conexión.";
     }
-    // Si el error es 401 (Token expirado o inválido) podrías limpiar el localStorage aquí
+    // si ya no esta loggeado lo redirecciona
     if (error.response?.status === 401) {
+      // Limpiamos el token para que el frontend no intente usarlo más
       localStorage.removeItem("token");
-    }
+      localStorage.removeItem("user"); 
+      // redirigir al login
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }    
     return Promise.reject(error);
   }
 );

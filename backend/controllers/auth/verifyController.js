@@ -72,7 +72,7 @@ export const verifyAccess = async (req, res) => {
             {
                 userId: user.id,
                 username: user.username,
-                role: user.rol
+                role: user.role
             },
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
@@ -83,8 +83,15 @@ export const verifyAccess = async (req, res) => {
             userId: user.id,
             req
         });
-
-        return res.json({ token });
+        let jsonResponse={
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                role: user.role
+            }
+        }
+        return res.json(jsonResponse);
     } catch (error) {
         console.error("VERIFY ACCESS ERROR:", error);
         await req.logAction({

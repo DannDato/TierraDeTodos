@@ -35,12 +35,12 @@ export const register = async (req, res) => {
             email,
             username,
             password: hashedPassword,
-            rol: "USER"
+            role: "USER"
         }, { transaction });
 
         await applyRolePresetPermissions({
             userId: newUser.id,
-            role: newUser.rol,
+            role: newUser.role,
             transaction
         });
 

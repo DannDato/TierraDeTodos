@@ -14,25 +14,19 @@ import api from "../../api/axios";
 import UserDetailsModal from "../../components/UserDetailsModal";
 import AlertModal from "../../elements/AlertModal";
 
-const roleOptions = [
-  { value: "TODOS", label: "Rol: Todos" },
-  { value: "ADMIN", label: "Admin" },
-  { value: "MOD", label: "Moderador" },
-  { value: "POLICE", label: "Policía" },
-  { value: "STREAMER", label: "Streamer" },
-  { value: "USER", label: "Usuario" },
-];
-
-const statusOptions = [
-  { value: "TODOS", label: "Estatus: Todos" },
-  { value: "ACTIVE", label: "Activo" },
-  { value: "INACTIVE", label: "Inactivo" },
-  { value: "BANNED", label: "Baneado" },
-  { value: "BLOCKED", label: "Bloqueado" },
-];
+// const roleOptions = [
+//   { value: "TODOS", label: "Role: Todos" },
+//   { value: "MOD", label: "Moderador" },
+//   { value: "POLICE", label: "Policía" },
+//   { value: "STREAMER", label: "Streamer" },
+//   { value: "USER", label: "Usuario" },
+// ];
 
 function Users() {
-  const currentUser = { role: "ADMIN" };
+  const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
+  
+  const roleOptionsDefault = [{ value: "TODOS", label: "Role: Todos", color: null }];
+  const statusOptionsDefault = [{ value: "TODOS", label: "Estatus: Todos", color: null }];
 
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,12 +34,15 @@ function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("TODOS");
   const [statusFilter, setStatusFilter] = useState("TODOS");
+  const [roleOptions, setRoleOptions] = useState(roleOptionsDefault);
+  const [statusOptions, setStatusOptions] = useState(statusOptionsDefault);
 
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [availablePermissions, setAvailablePermissions] = useState([]);
   const [availableRoles, setAvailableRoles] = useState([]);
+  const [availableStatuses, setAvailableStatuses] = useState([]);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [selectedRole, setSelectedRole] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -64,15 +61,36 @@ function Users() {
     loadUsers();
   }, []);
 
+
   const loadUsers = async () => {
     try {
       setIsLoading(true);
       setLoadError("");
       const { data } = await api.get("/admin/users");
       setUsers(data?.users || []);
+
+      const dynamicRoleOptions = Array.isArray(data?.allRoles)
+        ? data.allRoles.map((role) => ({
+            value: role?.role,
+            label: role?.detail || role?.role,
+            color: role?.color || null,
+          }))
+        : [];
+
+      const dynamicStatusOptions = Array.isArray(data?.allStatuses)
+        ? data.allStatuses.map((s) => ({
+            value: s?.status,
+            label: s?.detail || s?.status,
+            color: s?.color || null,
+          }))
+        : [];
+
+      setRoleOptions([...roleOptionsDefault, ...dynamicRoleOptions]);
+      setStatusOptions([...statusOptionsDefault, ...dynamicStatusOptions]);
     } catch (error) {
       console.error("Error loading users:", error);
       setUsers([]);
+      setRoleOptions(roleOptionsDefault);
       setLoadError(error.response?.data?.message || "No se pudieron cargar los usuarios.");
     } finally {
       setIsLoading(false);
@@ -86,13 +104,14 @@ function Users() {
     setSelectedUser(detailedUser);
     setAvailablePermissions(data?.availablePermissions || []);
     setAvailableRoles(data?.availableRoles || []);
+    setAvailableStatuses(data?.availableStatuses || []);
     setSelectedPermissions(detailedUser?.permissions || []);
     setSelectedRole(detailedUser?.role || "");
     setSelectedStatus(detailedUser?.status || "");
   };
 
   const loadUserDetails = async (userId) => {
-    const { data } = await api.get(`/admin/users/${userId}`);
+    const { data } = await api.get(`/admin/user/${userId}`);
     applyUserDetailsState(userId, data);
     return data;
   };
@@ -106,12 +125,38 @@ function Users() {
     }
   };
 
+  const banUserbyId = async (userId,userRole) => {
+    console.log(`Intentando banear al usuario con ID ${userId} y rol ${userRole}`);
+    try {
+      await api.patch(`/admin/user/${userId}/details`, {
+        status: "BANNED",
+        reason: "Baneado por moderación desde panel admin",
+        role:userRole
+      });
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === userId
+            ? { ...user, status: "BANNED", statusColor: statusColorMap["BANNED"] || user.statusColor || null }
+            : user
+        )
+      );
+    } catch (error) {
+      console.error("Error banning user:", error);
+      openAlert({
+        type: "error",
+        title: "Error al banear usuario",
+        message: error.response?.data?.message || "No se pudo banear al usuario.",
+      });
+    }
+  }
+
   const closeUserDetails = () => {
     setIsDetailsOpen(false);
     setSelectedUserId(null);
     setSelectedUser(null);
     setAvailablePermissions([]);
     setAvailableRoles([]);
+    setAvailableStatuses([]);
     setSelectedPermissions([]);
     setSelectedRole("");
     setSelectedStatus("");
@@ -156,7 +201,7 @@ function Users() {
 
     try {
       setIsSavingPermissions(true);
-      await api.patch(`/admin/users/${selectedUserId}/permissions`, {
+      await api.patch(`/admin/user/${selectedUserId}/permissions`, {
         permissionKeys: selectedPermissions,
       });
 
@@ -207,7 +252,7 @@ function Users() {
 
     try {
       setIsSavingRole(true);
-      const { data } = await api.patch(`/admin/users/${selectedUserId}/details`, {
+      const { data } = await api.patch(`/admin/user/${selectedUserId}/details`, {
         role: selectedRole,
         status: selectedStatus,
         reason: statusReason.trim() || undefined,
@@ -225,7 +270,11 @@ function Users() {
             ? {
                 ...user,
                 role: updatedRole,
+                roleColor:
+                  availableRoles.find((item) => item?.role === updatedRole)?.color || user.roleColor || null,
                 status: updatedStatus,
+                statusColor:
+                  availableStatuses.find((item) => item?.status === updatedStatus)?.color || user.statusColor || null,
                 permissions: roleChanged ? rolePermissions : user.permissions,
               }
             : user
@@ -268,49 +317,113 @@ function Users() {
     });
   }, [users, searchTerm, roleFilter, statusFilter]);
 
-  const getRoleBadge = (role) => {
-    const baseClass = "inline-flex justify-center items-center text-xs font-bold px-3 py-1 rounded-full shadow-sm w-28";
-    switch (role) {
-      case "ADMIN":
-        return <span className={`${baseClass} text-[var(--admin-color)] bg-[var(--black-color)]/10`}>ADMIN</span>;
-      case "MOD":
-        return <span className={`${baseClass} text-[var(--moderator-color)] bg-[var(--moderator-color)]/10`}>MODERADOR</span>;
-      case "STREAMER":
-        return <span className={`${baseClass} text-[var(--streammer-color)] bg-[var(--streammer-color)]/10`}>STREAMER</span>;
-      case "POLICE":
-        return <span className={`${baseClass} text-[var(--secondary-color)] bg-[var(--secondary-color)]/10`}>POLICÍA</span>;
-      default:
-        return <span className={`${baseClass} text-[var(--user-color)] bg-[var(--user-color)]/10`}>USUARIO</span>;
+  const toRgba = (hexColor, alpha) => {
+    const normalized = typeof hexColor === "string" ? hexColor.trim().replace("#", "") : "";
+    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+      return `rgba(41, 208, 150, ${alpha})`;
     }
+
+    const r = Number.parseInt(normalized.slice(0, 2), 16);
+    const g = Number.parseInt(normalized.slice(2, 4), 16);
+    const b = Number.parseInt(normalized.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
-  const getStatusBadge = (status) => {
-    const baseClass = "inline-flex justify-center items-center text-xs font-bold px-3 py-1 rounded-full shadow-sm w-28";
-    switch (status) {
-      case "ACTIVE":
-        return <span className={`${baseClass} text-[var(--active-color)] bg-[var(--active-color)]/10`}>ACTIVO</span>;
-      case "INACTIVE":
-        return <span className={`${baseClass} text-[var(--warning-color)] bg-[var(--warning-color)]/10`}>INACTIVO</span>;
-      case "BANNED":
-        return <span className={`${baseClass} text-[var(--danger-color)] bg-[var(--danger-color)]/10`}>BANEADO</span>;
-      case "BLOCKED":
-        return <span className={`${baseClass} text-[var(--gray-color)] bg-[var(--gray-color)]/10`}>BLOQUEADO</span>;
-      default:
-        return <span className={`${baseClass} text-[var(--gray-color)] bg-[var(--gray-color)]/10`}>{status || "N/A"}</span>;
+  const roleColorMap = useMemo(() => {
+    const map = {};
+
+    for (const option of roleOptions) {
+      if (option?.value && option.value !== "TODOS" && option?.color) {
+        map[option.value] = option.color;
+      }
     }
+
+    for (const option of availableRoles) {
+      if (option?.role && option?.color) {
+        map[option.role] = option.color;
+      }
+    }
+
+    if (selectedUser?.role && selectedUser?.roleColor) {
+      map[selectedUser.role] = selectedUser.roleColor;
+    }
+
+    return map;
+  }, [roleOptions, availableRoles, selectedUser]);
+
+  const statusColorMap = useMemo(() => {
+    const map = {};
+    for (const option of statusOptions) {
+      if (option?.value && option.value !== "TODOS" && option?.color) {
+        map[option.value] = option.color;
+      }
+    }
+    for (const option of availableStatuses) {
+      if (option?.status && option?.color) {
+        map[option.status] = option.color;
+      }
+    }
+    if (selectedUser?.status && selectedUser?.statusColor) {
+      map[selectedUser.status] = selectedUser.statusColor;
+    }
+    return map;
+  }, [statusOptions, availableStatuses, selectedUser]);
+
+  const getRoleBadge = (role, roleColor) => {
+    const baseClass = "inline-flex justify-center items-center text-xs font-bold px-3 py-1 rounded-full shadow-sm w-28";
+    const safeRole = role || "N/A";
+    const color = roleColor || roleColorMap[role] || "#29d096";
+
+    return (
+      <span
+        className={baseClass}
+        style={{
+          color,
+          backgroundColor: toRgba(color, 0.12),
+          border: `1px solid ${toRgba(color, 0.25)}`
+        }}
+      >
+        {safeRole}
+      </span>
+    );
   };
 
-  const modalRoleOptions = availableRoles.map((role) => ({
-    value: role,
-    label: role,
-  }));
+  const getStatusBadge = (status, statusColor) => {
+    const baseClass = "inline-flex justify-center items-center text-xs font-bold px-3 py-1 rounded-full shadow-sm w-28";
+    const safeStatus = status || "N/A";
+    const color = statusColor || statusColorMap[status] || "#8a8a8a";
+    return (
+      <span
+        className={baseClass}
+        style={{
+          color,
+          backgroundColor: toRgba(color, 0.12),
+          border: `1px solid ${toRgba(color, 0.25)}`
+        }}
+      >
+        {safeStatus}
+      </span>
+    );
+  };
+
+  const modalRoleOptions = useMemo(
+    () =>
+      (availableRoles || []).map((role) => ({
+        value: role?.role,
+        label: role?.detail || role?.role,
+        color: role?.color || null,
+      })),
+    [availableRoles]
+  );
 
   const modalStatusOptions = useMemo(
-    () => ["ACTIVE", "BANNED", "INACTIVE", "BLOCKED"].map((status) => ({
-      value: status,
-      label: status,
-    })),
-    []
+    () =>
+      (availableStatuses || []).map((s) => ({
+        value: s?.status,
+        label: s?.detail || s?.status,
+        color: s?.color || null,
+      })),
+    [availableStatuses]
   );
 
   return (
@@ -364,14 +477,14 @@ function Users() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* <div className="flex items-center gap-3">
             <Button variant="primary" size="sm" className="flex items-center gap-2 ">
               <LogOut size={16} /> Exportar CSV
             </Button>
-          </div>
+          </div> */}
         </div>
 
-        <div className="bg-white/5 rounded-3xl overflow-hidden shadow-md p-6">
+        <div className="bg-black/20 rounded-3xl overflow-hidden shadow-md p-6">
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
               <Input
@@ -395,7 +508,7 @@ function Users() {
                 <tr className="bg-black/10 text-sm text-[var(--ins-text-gray)]">
                   <th className="py-4 px-4 font-bold uppercase tracking-wider">Jugador</th>
                   <th className="py-4 px-4 font-bold uppercase tracking-wider">Email</th>
-                  <th className="py-4 px-4 font-bold uppercase tracking-wider">Rol</th>
+                  <th className="py-4 px-4 font-bold uppercase tracking-wider">rol</th>
                   <th className="py-4 px-4 font-bold uppercase tracking-wider">Estatus</th>
                   <th className="py-4 px-4 font-bold uppercase tracking-wider">Última Conexión</th>
                   <th className="py-4 px-4 font-bold uppercase tracking-wider text-right">Acciones</th>
@@ -440,9 +553,9 @@ function Users() {
                         {(u.email || "").replace(/(.{2})(.*)(?=@)/, "$1***")}
                       </td>
 
-                      <td className="py-4 px-4">{getRoleBadge(u.role)}</td>
+                      <td className="py-4 px-4">{getRoleBadge(u.role, u.roleColor)}</td>
 
-                      <td className="py-4 px-4">{getStatusBadge(u.status)}</td>
+                      <td className="py-4 px-4">{getStatusBadge(u.status, u.statusColor)}</td>
 
                       <td className="py-4 px-4 text-xs text-[var(--gray-color)]">
                         <div>
@@ -461,7 +574,7 @@ function Users() {
                             <Eye size={18} />
                           </button>
                           <button className="p-2 hover:bg-white rounded-full text-gray-500 hover:text-red-500 transition-colors" title="Banear/Suspender">
-                            <Ban size={18} />
+                            <Ban size={18} onClick={()=> banUserbyId(u.id,u.role)}/>
                           </button>
                           <button className="p-2 hover:bg-white rounded-full text-gray-500 hover:text-blue-500 transition-colors" title="Enviar Mensaje">
                             <Mail size={18} />

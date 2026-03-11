@@ -2,47 +2,33 @@ import { db, models } from '../../models/index.js';
 import { QueryTypes } from 'sequelize';
 import { applyRolePresetPermissions } from '../../helpers/applyRolePresetPermissions.js';
 
-const ALLOWED_ROLES = ['ADMIN', 'MOD', 'POLICE', 'STREAMER', 'USER'];
-const ALLOWED_STATUSES = ['ACTIVE', 'BANNED', 'INACTIVE', 'BLOCKED'];
+const getAssignableStatuses = async (transaction) => {
+  return models.UserStatuses.findAll({
+    attributes: ['status', 'detail', 'color'],
+    where: { asignable: 'YES', active: 'YES' },
+    order: [['status', 'ASC']],
+    ...(transaction ? { transaction } : {})
+  });
+};
 
-const ensureCanManageUsers = async (req, res) => {
-  if (req.user?.rol === 'ADMIN') {
-    return true;
-  }
-
-  const [permissionAccess] = await db.query(
-    `
-      SELECT s.key
-      FROM user_permissions up
-      INNER JOIN Permissions s ON s.key = up.permission
-      WHERE up.userId = :userId
-      AND s.active = 1
-      AND s.key IN ('menu.users', 'menu.userscontrol')
-      LIMIT 1
-    `,
-    {
-      replacements: { userId: req.user?.id },
-      type: QueryTypes.SELECT
-    }
-  );
-
-  if (!permissionAccess) {
-    res.status(403).json({ message: 'No autorizado para administrar usuarios' });
-    return false;
-  }
-
-  return true;
+const getAssignableRoles = async (transaction) => {
+  return models.Roles.findAll({
+    attributes: ['role', 'detail', 'color'],
+    where: { asignable: 'YES', active: 'YES' },
+    order: [['role', 'ASC']],
+    ...(transaction ? { transaction } : {})
+  });
 };
 
 export const getUsersAdminList = async (req, res) => {
   try {
-    if (!(await ensureCanManageUsers(req, res))) return;
-
+    //buscar todos los usuarios para listarlos
     const users = await models.Users.findAll({
-      attributes: ['id', 'username', 'email', 'rol', 'account', 'createdAt', 'updatedAt'],
+      attributes: ['id', 'username', 'email', 'role', 'account', 'createdAt', 'updatedAt'],
       order: [['id', 'ASC']]
     });
 
+    // Obtener los permisos de todos los usuarios en una sola consulta
     const permissionRows = await db.query(
       `
         SELECT up.userId, s.key
@@ -53,24 +39,61 @@ export const getUsersAdminList = async (req, res) => {
       { type: QueryTypes.SELECT }
     );
 
+    // Organizar los permisos por userId para facil acceso
     const permissionsByUserId = permissionRows.reduce((acc, row) => {
       if (!acc[row.userId]) acc[row.userId] = [];
       acc[row.userId].push(row.key);
       return acc;
     }, {});
 
+    const allRoles = await getAssignableRoles();
+    const allStatuses = await getAssignableStatuses();
+    const rolesCatalog = await models.Roles.findAll({
+      attributes: ['role', 'color'],
+      where: { active: 'YES' }
+    });
+    const statusesCatalog = await models.UserStatuses.findAll({
+      attributes: ['status', 'color'],
+      where: { active: 'YES' }
+    });
+    const roleColorMap = rolesCatalog.reduce((acc, roleItem) => {
+      acc[roleItem.role] = roleItem.color;
+      return acc;
+    }, {});
+    const statusColorMap = statusesCatalog.reduce((acc, s) => {
+      acc[s.status] = s.color;
+      return acc;
+    }, {});
+
+    // Formatear la respuesta con los datos de usuario y sus permisos
     const data = users.map((user) => ({
       id: user.id,
       username: user.username,
       email: user.email,
-      role: user.rol,
+      role: user.role,
+      roleColor: roleColorMap[user.role] || null,
       status: user.account,
+      statusColor: statusColorMap[user.account] || null,
       lastConnection: user.updatedAt,
       createdAt: user.createdAt,
+      
       permissions: permissionsByUserId[user.id] || []
     }));
 
-    return res.status(200).json({ users: data });
+    return res.status(200).json({
+      users: data,
+      allRoles: allRoles.map((role) => ({
+        role: role.role,
+        detail: role.detail,
+        color: role.color
+      })),
+      allStatuses: allStatuses.map((s) => ({
+        status: s.status,
+        detail: s.detail,
+        color: s.color
+      }))
+    });
+
   } catch (error) {
     await req.logAction({
       accion: 'Error al listar usuarios admin',
@@ -80,34 +103,40 @@ export const getUsersAdminList = async (req, res) => {
       valor: error.message,
       type: 'error'
     });
-
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
 export const getAdminUserById = async (req, res) => {
   try {
-    if (!(await ensureCanManageUsers(req, res))) return;
-
+    //validacion inicial
     const userId = Number(req.params.id);
-    if (!userId) {
-      return res.status(400).json({ message: 'ID de usuario inválido' });
-    }
+    if (!userId) {return res.status(400).json({ message: 'ID de usuario inválido' });}
 
+    //buscar el usuario por ID
     const user = await models.Users.findByPk(userId, {
-      attributes: ['id', 'username', 'email', 'rol', 'account', 'uuid', 'mojang', 'createdAt', 'updatedAt']
+      attributes: ['id', 'username', 'email', 'role', 'account', 'uuid', 'mojang', 'createdAt', 'updatedAt']
+    });
+    if (!user) {return res.status(404).json({ message: 'Usuario no encontrado' });}
+
+    //registrar la accion de revision de usuario
+    req.logAction({
+      accion: 'Revision de usuario por ID',
+      apartado: 'Usuarios',
+      userId: req.user?.id,
+      username: req.user?.username,
+      valor: `ID de usuario: ${userId}`,
+      type: 'info'
     });
 
-    if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
-    }
-
+    //obtener una lista de todos los permisos activos para mostrar en el admin
     const allPermissions = await models.Permissions.findAll({
       where: { active: true },
       attributes: ['id', 'key', 'name', 'description'],
       order: [['name', 'ASC']]
     });
 
+    //obtener los permisos asignados al usuario
     const assignedPermissionRows = await db.query(
       `
         SELECT s.key
@@ -122,6 +151,7 @@ export const getAdminUserById = async (req, res) => {
       }
     );
 
+    //obtener el historial de cambios de estado del usuario
     const statusHistory = await db.query(
       `
         SELECT
@@ -143,13 +173,23 @@ export const getAdminUserById = async (req, res) => {
       }
     );
 
+    const [roleRecord, statusRecord, assignableRoles, assignableStatuses] = await Promise.all([
+      models.Roles.findOne({ attributes: ['color'], where: { role: user.role, active: 'YES' } }),
+      models.UserStatuses.findOne({ attributes: ['color'], where: { status: user.account, active: 'YES' } }),
+      getAssignableRoles(),
+      getAssignableStatuses()
+    ]);
+
+    //formatear la respuesta con todos los datos obtenidos anteriormente
     return res.status(200).json({
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.rol,
+        role: user.role,
+        roleColor: roleRecord?.color || null,
         status: user.account,
+        statusColor: statusRecord?.color || null,
         uuid: user.uuid,
         mojang: user.mojang,
         createdAt: user.createdAt,
@@ -158,8 +198,18 @@ export const getAdminUserById = async (req, res) => {
         permissions: assignedPermissionRows.map((permission) => permission.key)
       },
       availablePermissions: allPermissions,
-      availableRoles: ALLOWED_ROLES
+      availableRoles: assignableRoles.map((role) => ({
+        role: role.role,
+        detail: role.detail,
+        color: role.color
+      })),
+      availableStatuses: assignableStatuses.map((s) => ({
+        status: s.status,
+        detail: s.detail,
+        color: s.color
+      }))
     });
+
   } catch (error) {
     await req.logAction({
       accion: 'Error al obtener usuario admin',
@@ -175,46 +225,51 @@ export const getAdminUserById = async (req, res) => {
 };
 
 export const updateAdminUserRole = async (req, res) => {
+  //iniciamos transacción para hacer rollback en caso de error y evitar cambios parciales en la base de datos
   const transaction = await db.transaction();
-
   try {
-    if (!(await ensureCanManageUsers(req, res))) {
-      await transaction.rollback();
-      return;
-    }
-
     const userId = Number(req.params.id);
     const { role } = req.body || {};
-
+    //primero se valida el usuario y el role enviado antes de hacer cualquier cambio
     if (!userId) {
       await transaction.rollback();
       return res.status(400).json({ message: 'ID de usuario inválido' });
     }
 
-    if (!role || !ALLOWED_ROLES.includes(role)) {
-      await transaction.rollback();
-      return res.status(400).json({ message: 'Rol inválido' });
-    }
-
+    //buscar el usuario por ID para validar que exista antes de intentar actualizarlo
     const user = await models.Users.findByPk(userId, { transaction });
     if (!user) {
       await transaction.rollback();
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
+    // Si se envía un role diferente al actual, validar que sea un role permitido
+    if (user.role !== role) {
+      const assignableRoles = await getAssignableRoles(transaction);
+      const assignableRoleSet = new Set(assignableRoles.map((item) => item.role));
 
-    user.rol = role;
+      if (!role || !assignableRoleSet.has(role)) {
+        await transaction.rollback();
+        return res.status(400).json({ message: 'Asignación de role inválida' });
+      }
+    }
+
+    //si el role es valido y el usuario existe, se actualiza el role del usuario
+  user.role = role;
     await user.save({ transaction });
 
+    //se aplican permisos preset asociados al nuevo role
     const appliedPermissions = await applyRolePresetPermissions({
       userId,
       role,
       transaction
     });
 
+    //se realiza la transaccion a la bd
     await transaction.commit();
 
+    //registramos log
     await req.logAction({
-      accion: 'Rol de usuario actualizado con preset de permisos',
+      accion: 'Role de usuario actualizado con preset de permisos',
       apartado: 'AdminUsers',
       userId: req.user.id,
       username: req.user.username,
@@ -222,16 +277,18 @@ export const updateAdminUserRole = async (req, res) => {
       type: 'info'
     });
 
+    //responser
     return res.status(200).json({
-      message: 'Rol actualizado correctamente',
+      message: 'Role actualizado correctamente',
       role,
       permissionKeys: appliedPermissions
     });
+
   } catch (error) {
     await transaction.rollback();
 
     await req.logAction({
-      accion: 'Error al actualizar rol de usuario',
+      accion: 'Error al actualizar role de usuario',
       apartado: 'AdminUsers',
       userId: req.user?.id,
       username: req.user?.username,
@@ -244,14 +301,10 @@ export const updateAdminUserRole = async (req, res) => {
 };
 
 export const updateAdminUserDetails = async (req, res) => {
+  //iniciamos transacción para hacer rollback en caso de error y evitar cambios parciales en la base de datos
   const transaction = await db.transaction();
 
   try {
-    if (!(await ensureCanManageUsers(req, res))) {
-      await transaction.rollback();
-      return;
-    }
-
     const userId = Number(req.params.id);
     const { role, status, reason } = req.body || {};
 
@@ -260,12 +313,9 @@ export const updateAdminUserDetails = async (req, res) => {
       return res.status(400).json({ message: 'ID de usuario inválido' });
     }
 
-    if (!role || !ALLOWED_ROLES.includes(role)) {
-      await transaction.rollback();
-      return res.status(400).json({ message: 'Rol inválido' });
-    }
-
-    if (!status || !ALLOWED_STATUSES.includes(status)) {
+    const assignableStatusList = await getAssignableStatuses(transaction);
+    const assignableStatusSet = new Set(assignableStatusList.map((s) => s.status));
+    if (!status || !assignableStatusSet.has(status)) {
       await transaction.rollback();
       return res.status(400).json({ message: 'Estatus inválido' });
     }
@@ -275,8 +325,19 @@ export const updateAdminUserDetails = async (req, res) => {
       await transaction.rollback();
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
+    // Si se envía un role diferente al actual, validar que sea un role permitido
+    const actualRole = user.role;
+    if (actualRole !== role) {
+      const assignableRoles = await getAssignableRoles(transaction);
+      const assignableRoleSet = new Set(assignableRoles.map((item) => item.role));
 
-    const previousRole = user.rol;
+      if (!role || !assignableRoleSet.has(role)) {
+        await transaction.rollback();
+        return res.status(400).json({ message: 'Asignación de role inválida' });
+      }
+    }
+
+    const previousRole = user.role;
     const previousStatus = user.account;
     const roleChanged = previousRole !== role;
     const statusChanged = previousStatus !== status;
@@ -284,7 +345,7 @@ export const updateAdminUserDetails = async (req, res) => {
     let permissionKeys = [];
 
     if (roleChanged) {
-      user.rol = role;
+      user.role = role;
       permissionKeys = await applyRolePresetPermissions({
         userId,
         role,
@@ -379,11 +440,6 @@ export const updateAdminUserPermissions = async (req, res) => {
   const transaction = await db.transaction();
 
   try {
-    if (!(await ensureCanManageUsers(req, res))) {
-      await transaction.rollback();
-      return;
-    }
-
     const userId = Number(req.params.id);
     const { permissionKeys } = req.body || {};
 

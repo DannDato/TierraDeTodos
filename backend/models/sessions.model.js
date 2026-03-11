@@ -15,8 +15,7 @@ export default (sequelize, DataTypes) => {
 
     jwt:{
       type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
+      allowNull: false
     },
 
     ip:{

@@ -9,8 +9,7 @@ export default (sequelize, DataTypes) => {
 
     key: {
       type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
+      allowNull: false
     },
 
     name: {
@@ -131,6 +130,17 @@ export default (sequelize, DataTypes) => {
         shortAccess: false,
         orderIndex: 6,
         required_permissions: ['menu.aboutapp'],
+        active: true
+      },
+      {
+        key: 'menu.gestion',
+        name: 'Gestión',
+        icon: 'MonitorCog',
+        path: '/gestion',
+        target: '_self',
+        shortAccess: true,
+        orderIndex: 7,
+        required_permissions: ['menu.gestion'],
         active: true
       }
     ]);

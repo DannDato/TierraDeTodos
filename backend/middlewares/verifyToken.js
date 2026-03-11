@@ -34,6 +34,14 @@ export const verifyToken = async (req, res, next) => {
     });
 
     if (!session) {
+      req.logAction({
+        accion: `Sesión inválida o revocada`,
+        apartado: 'AuthMiddleware',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `Token: ${token}`,
+        type: 'error'
+      });
       return res.status(401).json({ message: "Sesión inválida o revocada" });
     }
 
@@ -43,8 +51,15 @@ export const verifyToken = async (req, res, next) => {
     next();
 
   } catch (error) {
-
-    return res.status(403).json({ message: "JWT no válido" });
+    req.logAction({
+      accion: `Error de autenticación: ${error.message}`,
+      apartado: 'AuthMiddleware',
+      userId: req.user?.id,
+      username: req.user?.username,
+      valor: `Token: ${token}`,
+      type: 'error'
+    });
+    return res.status(401).json({ message: "Sesión inválida o fallida" });
 
   }
 

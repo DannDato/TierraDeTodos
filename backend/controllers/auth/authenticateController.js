@@ -131,7 +131,8 @@ export const authenticate = async (req, res) => {
             accion: "Login exitoso",
             apartado: "Login",
             userId: user.id,
-            username: user.username
+            username: user.username,
+            valor: req.ip
         });
         //limpiar intentos fallidos 
         await models.Attempts.destroy({
@@ -209,7 +210,15 @@ export const authenticate = async (req, res) => {
             req
         });
 
-        return res.json({ token });
+        let jsonResponse={
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                role: user.role
+            }
+        }
+        return res.json(jsonResponse);
     } catch (error) {
         console.error("AUTH ERROR:", error);
         await req.logAction({

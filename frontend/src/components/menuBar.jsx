@@ -1,30 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../api/axios";
-import {
-  Home,
-  User,
-  Users,
-  Menu,
-  Settings,
-  Info,
-  LogOut, 
-} from "lucide-react";
+import * as Icons from "lucide-react";
 import AlertModal from "../elements/AlertModal"; 
 
-const iconMap = {
-  Home,
-  User,
-  Users,
-  Settings,
-  Info,
-};
 
 const fallbackMenuItems = [
   { id: 0, name: "Inicio", icon: "Home", path: "/start", target: "_self", shortAccess: true },
   { id: 3, name: "Cuenta", icon: "User", path: "/profile", target: "_self", shortAccess: true },
-  { id: 4, name: "Configuración", icon: "Settings", path: "/configuration", target: "_self", shortAccess: false },
-  { id: 5, name: "Acerca de", icon: "Info", path: "/aboutapp", target: "_self", shortAccess: false },
 ];
 
 function MenuBar() {
@@ -89,7 +72,7 @@ function MenuBar() {
           {menuItems
             .filter((item) => item.shortAccess)
             .map((item) => {
-              const Icon = iconMap[item.icon] || Menu;
+              const Icon = Icons[item.icon] || Icons.Menu;
               const isActive = location.pathname === item.path;
               return (
                 <button
@@ -112,7 +95,7 @@ function MenuBar() {
             onClick={() => setIsOpen(true)}
             className="flex-1 flex flex-col items-center justify-center text-black/70 hover:text-[var(--secondary-color)] transition-all duration-300"
           >
-            <Menu size={22} />
+            <Icons.Menu size={22} />
             <span className="text-xs mt-1">Menu</span>
           </button>
         </div>
@@ -142,7 +125,7 @@ function MenuBar() {
 
           <div className="flex flex-col gap-5">
             {menuItems.map((item) => {
-              const Icon = iconMap[item.icon] || Menu;
+              const Icon = Icons[item.icon] || Icons.Menu;
               const isActive = location.pathname === item.path;
 
               return (
@@ -171,7 +154,7 @@ function MenuBar() {
             }}
             className="flex items-center gap-3 w-full py-3 px-4 rounded-xl text-[var(--cancel-color)] hover:bg-[var(--cancel-color)]/10 transition-all duration-200 font-semibold"
           >
-            <LogOut size={20} />
+            <Icons.LogOut size={20} />
             <span>Cerrar Sesión</span>
           </button>
         </div>

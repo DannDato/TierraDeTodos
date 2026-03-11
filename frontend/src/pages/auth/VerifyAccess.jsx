@@ -44,7 +44,8 @@ function VerifyAccess() {
     });
     if(data.hasOwnProperty("token")) {
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("username", data.user.username);
+      localStorage.setItem("role", data.user.role);
       navigate("/start");
     }
 

@@ -68,7 +68,7 @@ export default (sequelize, DataTypes) => {
     }, {});
 
     for (const user of users) {
-      const basePermissionKeys = presetPermissionsByRole[user.rol] || presetPermissionsByRole.USER || [];
+      const basePermissionKeys = presetPermissionsByRole[user.role] || presetPermissionsByRole.USER || [];
 
       const activePermissionKeys = new Set(permissions.map((permission) => permission.key));
 
