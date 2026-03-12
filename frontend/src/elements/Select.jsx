@@ -29,23 +29,6 @@ const Select = ({
   }, []);
 
   return (
-    // <select
-    //   className={`px-4 py-3 border-b border-[var(--white-color)] text-sm font-medium text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] shadow-sm cursor-pointer ${className}`}
-    //   value={value}
-    //   onChange={onChange}
-    // >
-    //   {placeholder && (
-    //     <option value="">{placeholder}</option>
-    //   )}
-
-    //   {options.map((option) => (
-    //     <option key={option.value} value={option.value} className="bg-[var(--ins-background-color)]">
-    //       {option.label}
-    //     </option>
-    //   ))}
-    // </select>
-
-    // Se hizo asi porque el anterior no se puede modificar el estilo de cada option, y se necesita un fondo oscuro para el dropdown
 
     <div className="relative w-60 " ref={selectRef}>
       <div
@@ -61,7 +44,7 @@ const Select = ({
             <div
               key={option.value}
               onClick={() => handleSelect(option)}
-              className="px-4 py-2 text-sm cursor-pointer hover:bg-white/10 transition"
+              className="px-4 py-2 text-sm cursor-pointer hover:bg-white/10 transition z-50"
             >
               {option.label}
             </div>

@@ -35,11 +35,11 @@ export const checkPermissions = (requiredPermissions = []) => {
 
       if (!permissionAccess) {
         await req.logAction({
-          accion: 'Sin permisos',
+          accion: `Permisos requeridos: ${normalizedPermissions.join(', ')}`,
           apartado: '',
           userId: req.user?.id,
           username: req.user?.username,
-          valor: `Permisos requeridos: ${normalizedPermissions.join(', ')}`,
+          valor: `Acceso denegado. Permisos insuficientes.`,
           type: 'error'
         });
 

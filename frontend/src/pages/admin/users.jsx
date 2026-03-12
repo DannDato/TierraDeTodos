@@ -10,7 +10,9 @@ import {
 import Button from "../../elements/Button";
 import Input from "../../elements/Input";
 import Select from "../../elements/Select";
+
 import api from "../../api/axios";
+
 import UserDetailsModal from "../../components/UserDetailsModal";
 import AlertModal from "../../elements/AlertModal";
 
@@ -72,7 +74,7 @@ function Users() {
       const dynamicRoleOptions = Array.isArray(data?.allRoles)
         ? data.allRoles.map((role) => ({
             value: role?.role,
-            label: role?.detail || role?.role,
+            label: role?.role || role?.detail,
             color: role?.color || null,
           }))
         : [];
@@ -410,7 +412,7 @@ function Users() {
     () =>
       (availableRoles || []).map((role) => ({
         value: role?.role,
-        label: role?.detail || role?.role,
+        label: role?.role || role?.detail,
         color: role?.color || null,
       })),
     [availableRoles]
@@ -462,7 +464,7 @@ function Users() {
       <div className="flex-row w-full max-w-7xl px-4 md:mx-10 mx-0">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
               <span>{currentUser.role}</span>
               <span>/</span>
               <span className="text-[var(--secondary-color)]">Usuarios</span>
@@ -493,7 +495,7 @@ function Users() {
                 context="dark"
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--white-color)] pointer-events-none" size={20} />
             </div>
 
             <div className="flex gap-4">
@@ -543,7 +545,12 @@ function Users() {
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-[var(--ins-text-dark)] rounded-full flex items-center justify-center shadow-sm overflow-hidden shrink-0">
-                            <User size={20} className="text-[var(--ins-text-gray)]" />
+                            <button
+                              onClick={() => openUserDetails(u.id)}
+                            >
+
+                              <User size={20} className="text-[var(--ins-text-gray)]" />
+                            </button>
                           </div>
                           <span className="font-bold text-[var(--ins-text-white)]">{u.username}</span>
                         </div>

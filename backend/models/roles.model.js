@@ -44,13 +44,9 @@ export default (sequelize, DataTypes) => {
     ]
   });
 
-  Roles.associate = (models) => {
-    Roles.belongsToMany(models.Users, {
-      through: models.Users,
-      foreignKey: 'roleId',
-      otherKey: 'userId',
-      as: 'users'
-    });
+  Roles.associate = () => {
+    // Relacion por texto: Users.role <-> Roles.role.
+    // No definimos FK Sequelize para evitar acoplar a roleId.
   };
 
   Roles.seed = async () => {

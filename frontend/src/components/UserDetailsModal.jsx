@@ -356,9 +356,9 @@ function UserDetailsModal({
         </div>
 
         <div className="flex-shrink-0 px-8 py-5 bg-[var(--black-color)]/20 border-t border-[var(--white-color)]/10 flex items-center justify-end gap-3 backdrop-blur-md">
-          <Button variant="secondary" size="md" onClick={onClose} className="hover:bg-[var(--white-color)]/10 border-[var(--white-color)]/10">
+          {/* <Button variant="secondary" size="md" onClick={onClose} className="hover:bg-[var(--white-color)]/10 border-[var(--white-color)]/10">
             Cancelar
-          </Button>
+          </Button> */}
 
           {activeTab === "data" ? (
             <Button variant="primary" size="md" onClick={onSaveRole} disabled={isSavingRole} className="shadow-lg shadow-[var(--secondary-color)]/20">

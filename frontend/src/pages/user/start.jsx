@@ -135,7 +135,7 @@ function Start() {
         {/* ENCABEZADO */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
               <span>Tierra de Todos</span>
               <span>/</span>
               <span className="text-[var(--secondary-color)]">Inicio</span>
@@ -252,7 +252,7 @@ function Start() {
               <div className="absolute -top-24 -right-24 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
               
               <div className="w-full mb-3 relative z-10">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">¿Aún no lo instalas?</span>
+                <span className="text-xs font-bold text-[var(--white-color)] uppercase tracking-widest">¿Aún no lo instalas?</span>
               </div>
               
               <div className="w-full relative z-10">
@@ -295,7 +295,7 @@ function Start() {
                 Únete a Discord
               </Button>
 
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-gray-400">
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-[var(--white-color)]">
                 <Server size={14} /> Servidor en línea • 124 Jugadores
               </div>
             </div>
@@ -318,7 +318,7 @@ function Start() {
                     <span className={`px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded-md ${getBadgeColor(article.type)}`}>
                       {article.type}
                     </span>
-                    <span className="text-xs text-gray-400 font-medium">{article.date}</span>
+                    <span className="text-xs text-[var(--white-color)] font-medium">{article.date}</span>
                   </div>
                   <h3 className="text-lg font-bold text-[var(--ins-text-white)] mb-2 leading-tight group-hover:text-[var(--secondary-color)] transition-colors">
                     {article.title}

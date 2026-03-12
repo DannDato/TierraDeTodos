@@ -9,6 +9,9 @@ const router = express.Router();
 
 //rutas para gestion de sistema
 router.get('/roles', verifyToken, checkPermissions(['gest.roles']), ctrlGestion.getRoles);
+router.post('/roles', verifyToken, checkPermissions(['gest.roles']), ctrlGestion.createRole);
+router.put('/roles/:id', verifyToken, checkPermissions(['gest.roles']), ctrlGestion.updateRole);
+router.delete('/roles/:id', verifyToken, checkPermissions(['gest.roles']), ctrlGestion.deleteRole);
 
 // Rutas para administración de usuarios
 router.get('/users', verifyToken, checkPermissions(['menu.users']), ctrlUsers.getUsersAdminList);

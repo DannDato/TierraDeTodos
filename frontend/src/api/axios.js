@@ -42,7 +42,7 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     } else if (error.response?.status === 403){
-      window.location.href = '/start';
+      // window.location.href = '/start';
     }
     return Promise.reject(error);
   }

@@ -2,13 +2,14 @@ import {
   Search,
   Plus,
   MoreVertical,
-  X,
   Save,
+  Trash2,
 } from "lucide-react";
 import Button from "../../elements/Button";
 import Input from "../../elements/Input";
 import Select from "../../elements/Select";
 import CloseButton from "../../elements/closeButton";
+import AlertModal from "../../elements/AlertModal";
 
 import { useState, useEffect, useRef } from "react";
 import LoadingOverlay from "../LoadingOverlay";
@@ -17,8 +18,16 @@ import api from "../../api/axios";
 function RolesManagerView() {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "info",
+    title: "Aviso",
+    message: "",
+  });
+  const pendingActionRef = useRef(null);
 
   useEffect(() => {
       loadRoles();
@@ -38,9 +47,135 @@ function RolesManagerView() {
     }
   };
 
-  const handleSaveRole = async (updatedRole) => {
-    console.log("Guardando datos del rol:", updatedRole);
-    setSelectedRole(null);
+  const openAlert = ({ type = "info", title = "Aviso", message = "", onConfirm = null }) => {
+    pendingActionRef.current = onConfirm;
+    setAlertConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+    });
+  };
+
+  const closeAlert = () => {
+    pendingActionRef.current = null;
+    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const handleAlertConfirm = async () => {
+    const action = pendingActionRef.current;
+    closeAlert();
+    if (typeof action === "function") {
+      await action();
+    }
+  };
+
+  const openNewRoleModal = () => {
+    setSelectedRole({
+      id: null,
+      role: "",
+      detail: "",
+      color: "#29d096",
+      asignable: "YES",
+      active: "YES",
+      users: 0,
+      permissions: 0,
+    });
+  };
+
+  const requestDeleteRole = (roleData) => {
+    openAlert({
+      type: "warning",
+      title: "Eliminar role",
+      message: `Se eliminará el role ${roleData?.role || ""}. Esta acción no se puede deshacer.`,
+      onConfirm: () => handleDeleteRole(roleData),
+    });
+  };
+
+  const handleDeleteRole = async (roleData) => {
+    if (!roleData?.id) return;
+
+    try {
+      setIsSaving(true);
+      await api.delete(`/admin/roles/${roleData.id}`);
+      await loadRoles();
+      if (selectedRole?.id === roleData.id) {
+        setSelectedRole(null);
+      }
+      openAlert({
+        type: "success",
+        title: "Role eliminado",
+        message: "El role se eliminó correctamente.",
+      });
+    } catch (error) {
+      console.error("Error eliminando role:", error);
+      openAlert({
+        type: "error",
+        title: "No se pudo eliminar",
+        message: error.response?.data?.message || "No se pudo eliminar el role.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveRole = async (formData) => {
+    const normalizedRole = String(formData?.role || "").trim().toUpperCase();
+    const normalizedDetail = String(formData?.detail || "").trim();
+
+    if (!normalizedRole || !normalizedDetail) {
+      openAlert({
+        type: "warning",
+        title: "Campos incompletos",
+        message: "Role y descripción son obligatorios.",
+      });
+      return;
+    }
+
+    const payload = {
+      role: normalizedRole,
+      detail: normalizedDetail,
+      color: formData?.color || "#29d096",
+      asignable: formData?.asignable || "YES",
+      active: formData?.active || "YES",
+    };
+
+    const actionText = formData?.id ? "actualizar" : "crear";
+
+    openAlert({
+      type: "warning",
+      title: `Confirmar ${actionText}`,
+      message: `Se va a ${actionText} el role ${normalizedRole}.`,
+      onConfirm: async () => {
+        try {
+          setIsSaving(true);
+
+          if (formData?.id) {
+            await api.put(`/admin/roles/${formData.id}`, payload);
+          } else {
+            await api.post(`/admin/roles`, payload);
+          }
+
+          await loadRoles();
+          setSelectedRole(null);
+
+          openAlert({
+            type: "success",
+            title: "Role guardado",
+            message: "Los cambios del role se guardaron correctamente.",
+          });
+        } catch (error) {
+          console.error("Error guardando role:", error);
+          openAlert({
+            type: "error",
+            title: "No se pudo guardar",
+            message: error.response?.data?.message || "No se pudo guardar el role.",
+          });
+        } finally {
+          setIsSaving(false);
+        }
+      },
+    });
   };
 
   const filteredRoles = roles.filter((role) => {
@@ -54,7 +189,15 @@ function RolesManagerView() {
 
   return (
     <div className="flex flex-col h-full animate-[fadeIn_0.2s_ease-out]">
-      {loading && <LoadingOverlay />}
+      {(loading || isSaving) && <LoadingOverlay />}
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={closeAlert}
+        onConfirm={handleAlertConfirm}
+      />
       
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -72,20 +215,36 @@ function RolesManagerView() {
             />
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--ins-text-white)]/50 pointer-events-none" size={20} />
           </div>
-          <Button variant="primary" size="md" className="flex items-center gap-2 bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white">
+          <Button
+            variant="primary"
+            size="md"
+            className="flex items-center gap-2 bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+            onClick={openNewRoleModal}
+          >
             <Plus size={18} /> Nuevo Rol
           </Button>
         </div>
       </div>
 
       {/* Grid de Roles */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filteredRoles.map((role) => {
-          return (
-            <RoleCard key={role.id} role={role} onOpenDetails={setSelectedRole} />
-          );
-        })}
-      </div>
+      {filteredRoles.length === 0 ? (
+        <div className="rounded-2xl bg-[var(--black-color)]/20 py-12 text-center text-[var(--ins-text-gray)]">
+          No hay roles para mostrar.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filteredRoles.map((role) => {
+            return (
+              <RoleCard
+                key={role.id}
+                role={role}
+                onOpenDetails={setSelectedRole}
+                onDeleteRole={requestDeleteRole}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Renderizado Condicional del Modal */}
       {selectedRole && (
@@ -93,13 +252,15 @@ function RolesManagerView() {
           roleData={selectedRole}
           onClose={() => setSelectedRole(null)}
           onSave={handleSaveRole}
+          onDelete={requestDeleteRole}
+          isSaving={isSaving}
         />
       )}
     </div>
   );
 }
 
-function RoleCard({ role, onOpenDetails }) {
+function RoleCard({ role, onOpenDetails, onDeleteRole }) {
   const { id, role: name, color, users, permissions, detail } = role;
 
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -154,7 +315,7 @@ function RoleCard({ role, onOpenDetails }) {
             </button>
             <button
               onClick={() => {
-                console.log("Eliminar rol", id);
+                onDeleteRole(role);
                 setOptionsOpen(false);
               }}
               className="w-full text-left px-4 py-2 text-[var(--cancel-color)] hover:bg-[var(--cancel-color)]/10 transition-colors"
@@ -184,7 +345,7 @@ function RoleCard({ role, onOpenDetails }) {
 }
 
 
-function RoleDetailModal({ roleData, onClose, onSave }) {
+function RoleDetailModal({ roleData, onClose, onSave, onDelete, isSaving }) {
   // Estado local para manejar los cambios antes de guardarlos
   const [formData, setFormData] = useState({
     id: roleData?.id || null,
@@ -195,9 +356,22 @@ function RoleDetailModal({ roleData, onClose, onSave }) {
     active: roleData?.active || "YES",
   });
 
+  useEffect(() => {
+    setFormData({
+      id: roleData?.id || null,
+      role: roleData?.role || "",
+      detail: roleData?.detail || "",
+      color: roleData?.color || "#29d096",
+      asignable: roleData?.asignable || "YES",
+      active: roleData?.active || "YES",
+    });
+  }, [roleData]);
+
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const isNewRole = !formData.id;
 
   return (
     <div className="fixed inset-0 bg-[var(--black-color)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out]">
@@ -209,14 +383,14 @@ function RoleDetailModal({ roleData, onClose, onSave }) {
         <div className="px-8 py-6  flex items-center justify-between bg-[var(--black-color)]/10">
           <div>
             <h3 className="text-2xl font-extrabold text-[var(--ins-text-white)] flex items-center gap-3">
-              Editar Rol
+              {isNewRole ? "Nuevo Rol" : "Editar Rol"}
               <span 
                 className="w-3 h-3 rounded-full" 
                 style={{ backgroundColor: formData.color, boxShadow: `0 0 10px ${formData.color}80` }}
               ></span>
             </h3>
             <p className="text-sm text-[var(--ins-text-gray)] mt-1">
-              ID interno: #{formData.id}
+              {isNewRole ? "Crea un nuevo role para el sistema" : `ID interno: #${formData.id}`}
             </p>
           </div>
           <CloseButton onClick={onClose} />
@@ -229,7 +403,7 @@ function RoleDetailModal({ roleData, onClose, onSave }) {
             <Input
               label="Nombre del Rol"
               value={formData.role}
-              onChange={(e) => handleChange("role", e.target.value)}
+              onChange={(e) => handleChange("role", e.target.value.toUpperCase())}
               placeholder="Ej. SUPER-ADMIN"
             />
             
@@ -272,11 +446,13 @@ function RoleDetailModal({ roleData, onClose, onSave }) {
               <label className="text-sm font-bold text-[var(--ins-text-gray)] ml-1">¿Es Asignable?</label>
               <Select
                 value={formData.asignable}
-                onChange={(e) => handleChange("asignable", e.target.value)}
+                onChange={(val) => handleChange("asignable", val)}
                 className="w-full"
+                options={[
+                  { value: "YES", label: "SÍ" },
+                  { value: "NO", label: "NO" }
+                ]}
               >
-                <option value="YES">SÍ (YES)</option>
-                <option value="NO">NO (NO)</option>
               </Select>
             </div>
 
@@ -284,11 +460,13 @@ function RoleDetailModal({ roleData, onClose, onSave }) {
               <label className="text-sm font-bold text-[var(--ins-text-gray)] ml-1">Estado</label>
               <Select
                 value={formData.active}
-                onChange={(e) => handleChange("active", e.target.value)}
+                onChange={(val) => handleChange("active", val)}
                 className="w-full"
+                options={[
+                  { value: "YES", label: "SÍ" },
+                  { value: "NO", label: "NO" }
+                ]}
               >
-                <option value="YES">Activo (YES)</option>
-                <option value="NO">Inactivo (NO)</option>
               </Select>
             </div>
           </div>
@@ -296,22 +474,39 @@ function RoleDetailModal({ roleData, onClose, onSave }) {
         </div>
 
         {/* Footer con Botones */}
-        <div className="px-8 py-6 border-t border-[var(--black-color)]/20 flex items-center justify-end gap-4 bg-[var(--black-color)]/10">
-          <Button
+        <div className="px-8 py-6 border-t border-[var(--black-color)]/20 flex items-center justify-between gap-4 bg-[var(--black-color)]/10">
+          <div>
+            {!isNewRole && (
+              <Button
+                variant="cancel"
+                className="text-[var(--danger-color)] border border-[var(--danger-color)]/30 hover:bg-[var(--danger-color)]/10 flex items-center gap-2"
+                onClick={() => onDelete(formData)}
+                disabled={isSaving}
+              >
+                <Trash2 size={16} />
+                Eliminar
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+          {/* <Button
             variant="secondary"
             className="text-[var(--ins-text-gray)] hover:text-white"
             onClick={onClose}
+            disabled={isSaving}
           >
             Cancelar
-          </Button>
+          </Button> */}
           <Button
             variant="primary"
             className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white flex items-center gap-2"
             onClick={() => onSave(formData)}
+            disabled={isSaving}
           >
             <Save size={18} />
-            Guardar Cambios
+            {isNewRole ? "Crear Role" : "Guardar Cambios"}
           </Button>
+          </div>
         </div>
 
       </div>

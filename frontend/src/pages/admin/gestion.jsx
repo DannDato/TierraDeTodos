@@ -48,7 +48,7 @@ function Gestion() {
     <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
       <div className="flex flex-col h-full animate-[fadeIn_0.3s_ease-out] p-8 max-w-[1400px] mx-auto w-full bg-[var(--ins-background)]">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
             <span>{currentUser.role}</span>
             <span>/</span>
             <span className="text-[var(--secondary-color)]">Usuarios</span>
