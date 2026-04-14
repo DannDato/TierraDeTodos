@@ -8,7 +8,7 @@ export default (sequelize, DataTypes) => {
     },
 
     role: {
-      type: DataTypes.ENUM('ADMIN', 'MOD', 'POLICE', 'STREAMER', 'USER'),
+      type: DataTypes.ENUM('SUPER-ADMIN', 'ADMIN', 'MOD', 'POLICE', 'STREAMER', 'USER', 'VIP'),
       allowNull: false
     },
 
@@ -39,10 +39,7 @@ export default (sequelize, DataTypes) => {
   });
 
   PresetPermissions.seed = async () => {
-    const validate = await PresetPermissions.findAll();
-    if (validate.length > 0) return;
-
-    await PresetPermissions.bulkCreate([
+    const seedPresetPermissions = [
       { role: 'ADMIN', permissionKey: 'menu.start', active: true },
       { role: 'ADMIN', permissionKey: 'menu.users', active: true },
       { role: 'ADMIN', permissionKey: 'menu.userscontrol', active: true },
@@ -50,6 +47,9 @@ export default (sequelize, DataTypes) => {
       { role: 'ADMIN', permissionKey: 'menu.configuration', active: true },
       { role: 'ADMIN', permissionKey: 'menu.aboutapp', active: true },
       { role: 'ADMIN', permissionKey: 'menu.gestion', active: true },
+      { role: 'ADMIN', permissionKey: 'gest.roles', active: true },
+      { role: 'ADMIN', permissionKey: 'gest.permissions', active: true },
+      { role: 'ADMIN', permissionKey: 'gest.statuses', active: true },
       { role: 'ADMIN', permissionKey: 'user.view', active: true },
       { role: 'ADMIN', permissionKey: 'user.edit', active: true },
 
@@ -70,7 +70,18 @@ export default (sequelize, DataTypes) => {
       { role: 'USER', permissionKey: 'menu.profile', active: true },
       { role: 'USER', permissionKey: 'menu.aboutapp', active: true },
       { role: 'USER', permissionKey: 'menu.configuration', active: true }
-    ]);
+    ];
+
+    const existing = await PresetPermissions.findAll({ attributes: ['role', 'permissionKey'] });
+    const existingKeys = new Set(existing.map((preset) => `${preset.role}::${preset.permissionKey}`));
+
+    const missingPresetPermissions = seedPresetPermissions.filter(
+      (preset) => !existingKeys.has(`${preset.role}::${preset.permissionKey}`)
+    );
+
+    if (missingPresetPermissions.length > 0) {
+      await PresetPermissions.bulkCreate(missingPresetPermissions);
+    }
   };
 
   return PresetPermissions;

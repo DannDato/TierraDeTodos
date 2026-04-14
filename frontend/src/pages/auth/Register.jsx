@@ -90,7 +90,7 @@ function Register() {
         onClose={() => setShowAlert(false)}
         onConfirm={handleRegister}
       />
-      {loading && <LoadingOverlay />}
+      <LoadingOverlay isVisible={loading} />
       <Banner className="h-[800px]">
         <div className="grid grid-cols-2 max-w-4xl mx-auto shadow-2xl overflow-hidden rounded-3xl"
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}

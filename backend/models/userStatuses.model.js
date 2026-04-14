@@ -47,14 +47,20 @@ export default (sequelize, DataTypes) => {
   });
 
   UserStatuses.seed = async () => {
-    const validate = await UserStatuses.findAll();
-    if (validate.length > 0) return;
-    await UserStatuses.bulkCreate([
+    const seedStatuses = [
       { status: 'ACTIVE',   detail: 'Activo',     color: '#29d096', asignable: 'YES', active: 'YES' },
       { status: 'INACTIVE', detail: 'Inactivo',   color: '#ffc857', asignable: 'YES', active: 'YES' },
       { status: 'BANNED',   detail: 'Baneado',    color: '#ff3b30', asignable: 'YES', active: 'YES' },
       { status: 'BLOCKED',  detail: 'Bloqueado',  color: '#8a8a8a', asignable: 'YES', active: 'YES' },
-    ]);
+    ];
+
+    const existing = await UserStatuses.findAll({ attributes: ['status'] });
+    const existingStatuses = new Set(existing.map((item) => item.status));
+
+    const missingStatuses = seedStatuses.filter((item) => !existingStatuses.has(item.status));
+    if (missingStatuses.length > 0) {
+      await UserStatuses.bulkCreate(missingStatuses);
+    }
   };
 
   return UserStatuses;

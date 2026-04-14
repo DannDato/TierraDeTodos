@@ -53,7 +53,7 @@ function VerifyAccess() {
   return (
     <>
       <Banner>
-        {loading && <LoadingOverlay />}
+        <LoadingOverlay isVisible={loading} />
         <div className="grid grid-cols-2 max-w-xl mx-auto"
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
         >

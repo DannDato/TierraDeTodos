@@ -1,9 +1,12 @@
-import { 
+import {
   Search,
   Plus,
   MoreVertical,
   Save,
   Trash2,
+  ShieldCheck,
+  Activity,
+  Info,
 } from "lucide-react";
 import Button from "../../elements/Button";
 import Input from "../../elements/Input";
@@ -19,7 +22,10 @@ function RolesManagerView() {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
+  const [availablePermissions, setAvailablePermissions] = useState([]);
+  const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
@@ -71,6 +77,8 @@ function RolesManagerView() {
   };
 
   const openNewRoleModal = () => {
+    setAvailablePermissions([]);
+    setSelectedPermissions([]);
     setSelectedRole({
       id: null,
       role: "",
@@ -80,6 +88,77 @@ function RolesManagerView() {
       active: "YES",
       users: 0,
       permissions: 0,
+    });
+  };
+
+  const openRoleDetails = async (roleData) => {
+    setSelectedRole(roleData);
+
+    if (!roleData?.id) {
+      setAvailablePermissions([]);
+      setSelectedPermissions([]);
+      return;
+    }
+
+    try {
+      const { data } = await api.get(`/admin/roles/${roleData.id}/permissions`);
+      setAvailablePermissions(data?.availablePermissions || []);
+      setSelectedPermissions(data?.permissionKeys || []);
+    } catch (error) {
+      openAlert({
+        type: "error",
+        title: "No se pudieron cargar permisos",
+        message: error.response?.data?.message || "No se pudieron cargar los permisos del role.",
+      });
+      setAvailablePermissions([]);
+      setSelectedPermissions([]);
+    }
+  };
+
+  const handleToggleRolePermission = (permissionKey) => {
+    setSelectedPermissions((prev) =>
+      prev.includes(permissionKey)
+        ? prev.filter((key) => key !== permissionKey)
+        : [...prev, permissionKey]
+    );
+  };
+
+  const handleSaveRolePermissions = async () => {
+    if (!selectedRole?.id) {
+      openAlert({
+        type: "warning",
+        title: "Role sin guardar",
+        message: "Primero guarda el role para poder configurar permisos preset.",
+      });
+      return;
+    }
+
+    openAlert({
+      type: "warning",
+      title: "Actualizar permisos del role",
+      message: `Se actualizarán los permisos preset del role ${selectedRole.role} y se sincronizarán sus usuarios.`,
+      onConfirm: async () => {
+        try {
+          setIsSavingPermissions(true);
+          await api.patch(`/admin/roles/${selectedRole.id}/permissions`, {
+            permissionKeys: selectedPermissions,
+          });
+          await loadRoles();
+          openAlert({
+            type: "success",
+            title: "Permisos actualizados",
+            message: "Los permisos preset del role se guardaron correctamente.",
+          });
+        } catch (error) {
+          openAlert({
+            type: "error",
+            title: "No se pudo guardar",
+            message: error.response?.data?.message || "No se pudieron guardar los permisos del role.",
+          });
+        } finally {
+          setIsSavingPermissions(false);
+        }
+      },
     });
   };
 
@@ -161,15 +240,15 @@ function RolesManagerView() {
 
           openAlert({
             type: "success",
-            title: "Role guardado",
-            message: "Los cambios del role se guardaron correctamente.",
+            title: "Rol guardado",
+            message: "Se ha guardado correctamente.",
           });
         } catch (error) {
-          console.error("Error guardando role:", error);
+          console.error("Error guardando rol:", error);
           openAlert({
             type: "error",
             title: "No se pudo guardar",
-            message: error.response?.data?.message || "No se pudo guardar el role.",
+            message: error.response?.data?.message || "No se pudo guardar el rol.",
           });
         } finally {
           setIsSaving(false);
@@ -189,7 +268,7 @@ function RolesManagerView() {
 
   return (
     <div className="flex flex-col h-full animate-[fadeIn_0.2s_ease-out]">
-      {(loading || isSaving) && <LoadingOverlay />}
+      <LoadingOverlay isVisible={loading || isSaving || isSavingPermissions} />
       <AlertModal
         isOpen={alertConfig.isOpen}
         type={alertConfig.type}
@@ -198,14 +277,14 @@ function RolesManagerView() {
         onClose={closeAlert}
         onConfirm={handleAlertConfirm}
       />
-      
+
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-2xl font-extrabold text-[var(--ins-text-white)]">
             Gestión de Roles
           </h2>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <div className="relative">
             <Input
@@ -238,7 +317,7 @@ function RolesManagerView() {
               <RoleCard
                 key={role.id}
                 role={role}
-                onOpenDetails={setSelectedRole}
+                onOpenDetails={openRoleDetails}
                 onDeleteRole={requestDeleteRole}
               />
             );
@@ -254,6 +333,11 @@ function RolesManagerView() {
           onSave={handleSaveRole}
           onDelete={requestDeleteRole}
           isSaving={isSaving}
+          availablePermissions={availablePermissions}
+          selectedPermissions={selectedPermissions}
+          onTogglePermission={handleToggleRolePermission}
+          onSavePermissions={handleSaveRolePermissions}
+          isSavingPermissions={isSavingPermissions}
         />
       )}
     </div>
@@ -283,12 +367,12 @@ function RoleCard({ role, onOpenDetails, onDeleteRole }) {
       onDoubleClick={() => onOpenDetails(role)}
     >
       <div className="flex justify-between items-start mb-4 relative">
-        <span 
+        <span
           className="px-3 py-1 rounded-full text-xs font-bold border"
-          style={{ 
-            color: color, 
+          style={{
+            color: color,
             borderColor: `${color}40`,
-            backgroundColor: `${color}10` 
+            backgroundColor: `${color}10`
           }}
         >
           {name}
@@ -345,7 +429,20 @@ function RoleCard({ role, onOpenDetails, onDeleteRole }) {
 }
 
 
-function RoleDetailModal({ roleData, onClose, onSave, onDelete, isSaving }) {
+function RoleDetailModal({
+  roleData,
+  onClose,
+  onSave,
+  onDelete,
+  isSaving,
+  availablePermissions,
+  selectedPermissions,
+  onTogglePermission,
+  onSavePermissions,
+  isSavingPermissions,
+}) {
+  const [activeTab, setActiveTab] = useState("data");
+
   // Estado local para manejar los cambios antes de guardarlos
   const [formData, setFormData] = useState({
     id: roleData?.id || null,
@@ -357,6 +454,7 @@ function RoleDetailModal({ roleData, onClose, onSave, onDelete, isSaving }) {
   });
 
   useEffect(() => {
+    setActiveTab("data");
     setFormData({
       id: roleData?.id || null,
       role: roleData?.role || "",
@@ -372,105 +470,202 @@ function RoleDetailModal({ roleData, onClose, onSave, onDelete, isSaving }) {
   };
 
   const isNewRole = !formData.id;
+  const orderedPermissions = [...(availablePermissions || [])].sort((a, b) =>
+    String(a?.name || "").localeCompare(String(b?.name || ""))
+  );
 
   return (
     <div className="fixed inset-0 bg-[var(--black-color)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out]">
-      
+
       {/* Contenedor del Modal */}
       <div className="bg-[var(--ins-background)] rounded-[2rem] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        
+
         {/* Header del modal */}
         <div className="px-8 py-6  flex items-center justify-between bg-[var(--black-color)]/10">
           <div>
             <h3 className="text-2xl font-extrabold text-[var(--ins-text-white)] flex items-center gap-3">
               {isNewRole ? "Nuevo Rol" : "Editar Rol"}
-              <span 
-                className="w-3 h-3 rounded-full" 
+              <span
+                className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: formData.color, boxShadow: `0 0 10px ${formData.color}80` }}
               ></span>
             </h3>
             <p className="text-sm text-[var(--ins-text-gray)] mt-1">
-              {isNewRole ? "Crea un nuevo role para el sistema" : `ID interno: #${formData.id}`}
+              {isNewRole ? "Crea un nuevo rol para el sistema" : `ID interno: #${formData.id}`}
             </p>
           </div>
           <CloseButton onClick={onClose} />
         </div>
 
+        {!isNewRole && (
+          <div className="flex-shrink-0 px-8 pt-5 pb-2">
+            <div className="inline-flex p-1 space-x-1 bg-[var(--black-color)]/40 rounded-xl">
+              <button
+                onClick={() => setActiveTab("data")}
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                  activeTab === "data"
+                    ? "bg-[var(--white-color)]/10 text-[var(--ins-text-white)] shadow-sm"
+                    : "text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-[var(--white-color)]/5"
+                }`}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Activity size={16} className={activeTab === "data" ? "text-[var(--secondary-color)]" : ""} />
+                  Datos del Rol
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("permissions")}
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                  activeTab === "permissions"
+                    ? "bg-[var(--white-color)]/10 text-[var(--ins-text-white)] shadow-sm"
+                    : "text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-[var(--white-color)]/5"
+                }`}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <ShieldCheck size={16} className={activeTab === "permissions" ? "text-[var(--streammer-color)]" : ""} />
+                  Permisos
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Cuerpo del formulario */}
-        <div className="p-8 overflow-y-auto custom-scrollbar flex flex-col gap-6">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="Nombre del Rol"
-              value={formData.role}
-              onChange={(e) => handleChange("role", e.target.value.toUpperCase())}
-              placeholder="Ej. SUPER-ADMIN"
-            />
-            
-            <div className="flex gap-4">
-              <div className="flex-1">
+        <div className="p-8 overflow-y-auto custom-scrollbar flex flex-col gap-10">
+
+          {(isNewRole || activeTab === "data") && (
+            <>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input
-                  label="Color Hexadecimal"
-                  value={formData.color}
-                  onChange={(e) => handleChange("color", e.target.value)}
-                  placeholder="#FFFFFF"
+                  label="Nombre del Rol"
+                  value={formData.role}
+                  onChange={(e) => handleChange("role", e.target.value.toUpperCase())}
+                  placeholder="Ej. SUPER-ADMIN"
                 />
+
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Input
+                      label="Color Hexadecimal"
+                      value={formData.color}
+                      onChange={(e) => handleChange("color", e.target.value)}
+                      placeholder="#FFFFFF"
+                    />
+                  </div>
+                  <div className="w-12 mt-7 flex-shrink-0 flex items-center justify-center">
+                    <label
+                      className="relative w-10 h-10 rounded-xl border-2 border-[var(--black-color)]/40 cursor-pointer block overflow-hidden transition-transform hover:scale-105"
+                      style={{ backgroundColor: formData.color }}
+                      title="Elegir color"
+                    >
+                      <input
+                        type="color"
+                        value={formData.color}
+                        onChange={(e) => handleChange("color", e.target.value)}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
-              <div className="w-12 mt-7 flex-shrink-0 flex items-center justify-center">
-                <label 
-                  className="relative w-10 h-10 rounded-xl border-2 border-[var(--black-color)]/40 cursor-pointer block overflow-hidden transition-transform hover:scale-105"
-                  style={{ backgroundColor: formData.color }}
-                  title="Elegir color"
-                >
-                  <input
-                    type="color"
-                    value={formData.color}
-                    onChange={(e) => handleChange("color", e.target.value)}
-                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                  />
-                </label>
+
+              <Input
+                label="Descripción Detallada"
+                value={formData.detail}
+                onChange={(e) => handleChange("detail", e.target.value)}
+                placeholder="Describe qué hace este rol..."
+                context="dark"
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-bold text-[var(--ins-text-gray)] ml-1">¿Es Asignable?</label>
+                  <Select
+                    value={formData.asignable}
+                    onChange={(val) => handleChange("asignable", val)}
+                    className="w-full"
+                    options={[
+                      { value: "YES", label: "SÍ" },
+                      { value: "NO", label: "NO" }
+                    ]}
+                  >
+                  </Select>
+                </div>
+
+                <div className="flex flex-col gap-2 mb-20">
+                  <label className="text-sm font-bold text-[var(--ins-text-gray)] ml-1">Activo</label>
+                  <Select
+                    value={formData.active}
+                    onChange={(val) => handleChange("active", val)}
+                    className="w-full"
+                    options={[
+                      { value: "YES", label: "SÍ" },
+                      { value: "NO", label: "NO" }
+                    ]}
+                  >
+                  </Select>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <Input
-            label="Descripción Detallada"
-            value={formData.detail}
-            onChange={(e) => handleChange("detail", e.target.value)}
-            placeholder="Describe qué hace este rol..."
-            // Si tu componente Input soporta textarea, puedes agregarlo aquí. Si no, funciona como texto normal.
-          />
+            </>
+          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-[var(--ins-text-gray)] ml-1">¿Es Asignable?</label>
-              <Select
-                value={formData.asignable}
-                onChange={(val) => handleChange("asignable", val)}
-                className="w-full"
-                options={[
-                  { value: "YES", label: "SÍ" },
-                  { value: "NO", label: "NO" }
-                ]}
-              >
-              </Select>
-            </div>
+          {!isNewRole && activeTab === "permissions" && (
+            <div className="space-y-3 animate-[fadeIn_0.3s_ease-out]">
+              {orderedPermissions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-[var(--ins-text-gray)] bg-[var(--black-color)]/20 rounded-2xl">
+                  <Info size={32} className="mb-3 opacity-50" />
+                  <p className="text-sm font-medium">No hay permisos disponibles para asignar.</p>
+                </div>
+              ) : (
+                orderedPermissions.map((permission) => {
+                  const enabled = selectedPermissions.includes(permission.key);
 
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-[var(--ins-text-gray)] ml-1">Estado</label>
-              <Select
-                value={formData.active}
-                onChange={(val) => handleChange("active", val)}
-                className="w-full"
-                options={[
-                  { value: "YES", label: "SÍ" },
-                  { value: "NO", label: "NO" }
-                ]}
-              >
-              </Select>
+                  return (
+                    <div
+                      key={permission.key}
+                      className={`group flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 ${
+                        enabled
+                          ? "bg-[var(--secondary-color)]/5 border-[var(--secondary-color)]/30"
+                          : "bg-[var(--white-color)]/5 border-[var(--white-color)]/5 hover:border-[var(--white-color)]/10 hover:bg-[var(--white-color)]/10"
+                      }`}
+                    >
+                      <div className="pr-4">
+                        <h4 className={`text-sm font-bold transition-colors ${enabled ? "text-[var(--ins-text-white)]" : "text-[var(--ins-text-gray)] group-hover:text-[var(--ins-text-white)]"}`}>
+                          {permission.name}
+                        </h4>
+                        <p className="text-[10px] font-mono mt-1 px-1.5 py-0.5 rounded bg-[var(--black-color)]/30 inline-block text-[var(--ins-text-gray)]">
+                          {permission.key}
+                        </p>
+                        {permission.description && (
+                          <p className="text-xs text-[var(--ins-text-gray)] mt-2 leading-relaxed">
+                            {permission.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => onTogglePermission(permission.key)}
+                        className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors duration-300 ${
+                          enabled ? "bg-[var(--secondary-color)] shadow-[0_0_10px_var(--secondary-color)]" : "bg-[var(--black-color)]/50 "
+                        }`}
+                        type="button"
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-[var(--white-color)] transition-transform duration-300 shadow-sm ${
+                            enabled ? "translate-x-6" : "translate-x-1 opacity-70"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  );
+                })
+              )}
             </div>
-          </div>
-          
+          )}
+
         </div>
 
         {/* Footer con Botones */}
@@ -500,11 +695,13 @@ function RoleDetailModal({ roleData, onClose, onSave, onDelete, isSaving }) {
           <Button
             variant="primary"
             className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white flex items-center gap-2"
-            onClick={() => onSave(formData)}
-            disabled={isSaving}
+            onClick={activeTab === "permissions" && !isNewRole ? onSavePermissions : () => onSave(formData)}
+            disabled={activeTab === "permissions" && !isNewRole ? isSavingPermissions : isSaving}
           >
             <Save size={18} />
-            {isNewRole ? "Crear Role" : "Guardar Cambios"}
+            {activeTab === "permissions" && !isNewRole
+              ? (isSavingPermissions ? "Guardando permisos..." : "Guardar Permisos")
+              : (isNewRole ? "Crear Rol" : "Guardar Cambios")}
           </Button>
           </div>
         </div>

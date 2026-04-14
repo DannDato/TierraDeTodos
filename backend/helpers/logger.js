@@ -38,7 +38,7 @@ async function ensureLogTable(fecha) {
         accion VARCHAR(255) NULL,
         apartado VARCHAR(255) NULL,
         tabla VARCHAR(255) NULL,
-        query ENUM('select','insert','update','delete','click') NULL,
+        query ENUM('select','insert','update','delete','click','N/A') NULL,
         condicion MEDIUMTEXT NULL,
         valor VARCHAR(255) NULL,
         old_data LONGTEXT NULL,
@@ -57,7 +57,7 @@ async function ensureLogTable(fecha) {
 export async function logAction({
   accion,
   apartado,
-  query = '',
+  query = '' || 'N/A',
   tabla = '',
   condicion = '',
   valor = '',

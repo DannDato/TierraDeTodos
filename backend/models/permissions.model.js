@@ -50,9 +50,7 @@ export default (sequelize, DataTypes) => {
   };
 
   Permissions.seed = async () => {
-    const validate = await Permissions.findAll();
-    if (validate.length > 0) return;
-    await Permissions.bulkCreate([
+    const seedPermissions = [
       { key: 'menu.start', name: 'Inicio', description: 'Permite ver Inicio', active: true },
       { key: 'menu.userscontrol', name: 'Control usuarios', description: 'Permite ver userscontrol', active: true },
       { key: 'menu.users', name: 'Usuarios', description: 'Permite ver users', active: true },
@@ -61,9 +59,21 @@ export default (sequelize, DataTypes) => {
       { key: 'menu.aboutapp', name: 'Acerca de', description: 'Permite ver about app', active: true },
       { key: 'menu.gestion', name: 'Gestión', description: 'Permite ver gestión de sistema', active: true },
       //derechos de gestion
+      { key: 'gest.roles', name: 'Gestionar roles', description: 'Permite crear, editar y eliminar roles', active: true },
+      { key: 'gest.permissions', name: 'Gestionar permisos', description: 'Permite crear, editar y eliminar permisos', active: true },
+      { key: 'gest.statuses', name: 'Gestionar estatus', description: 'Permite crear, editar y eliminar estatus', active: true },
       { key: 'user.view', name: 'Ver usuarios', description: 'Permite ver la lista de usuarios y sus detalles', active: true },
       { key: 'user.edit', name: 'Editar usuarios', description: 'Permite modificar los datos de los usuarios, incluyendo roles y permisos', active: true }
-    ]);
+    ];
+
+    const existing = await Permissions.findAll({ attributes: ['key'] });
+    const existingKeys = new Set(existing.map((permission) => permission.key));
+
+    const missingPermissions = seedPermissions.filter((permission) => !existingKeys.has(permission.key));
+
+    if (missingPermissions.length > 0) {
+      await Permissions.bulkCreate(missingPermissions);
+    }
   };
 
   return Permissions;

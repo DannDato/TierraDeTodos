@@ -52,9 +52,6 @@ export default (sequelize, DataTypes) => {
   };
 
   UserPermissions.seed = async () => {
-    const validate = await UserPermissions.findAll();
-    if (validate.length > 0) return;
-
     const users = await sequelize.models.Users.findAll();
     const permissions = await sequelize.models.Permissions.findAll({ where: { active: true } });
     const presets = await sequelize.models.PresetPermissions.findAll({ where: { active: true } });
@@ -67,6 +64,11 @@ export default (sequelize, DataTypes) => {
       return acc;
     }, {});
 
+    const existingRows = await UserPermissions.findAll({ attributes: ['userId', 'permission'] });
+    const existingAssignments = new Set(
+      existingRows.map((row) => `${row.userId}::${row.permission}`)
+    );
+
     for (const user of users) {
       const basePermissionKeys = presetPermissionsByRole[user.role] || presetPermissionsByRole.USER || [];
 
@@ -74,11 +76,31 @@ export default (sequelize, DataTypes) => {
 
       const rows = basePermissionKeys
         .filter((permissionKey) => activePermissionKeys.has(permissionKey))
+        .filter((permissionKey) => !existingAssignments.has(`${user.id}::${permissionKey}`))
         .map((permissionKey) => ({ userId: user.id, permission: permissionKey }));
 
       if (rows.length > 0) {
-        await UserPermissions.bulkCreate(rows, { ignoreDuplicates: true });
+        await UserPermissions.bulkCreate(rows);
+
+        for (const row of rows) {
+          existingAssignments.add(`${row.userId}::${row.permission}`);
+        }
       }
+    }
+
+    const danndato = users.find((user) => user.username === 'danndato');
+    if (!danndato) return;
+
+    const adminRoutePermissions = ['gest.roles', 'gest.permissions', 'gest.statuses', 'menu.users', 'menu.userscontrol', 'user.view', 'user.edit'];
+    const activePermissionKeys = new Set(permissions.map((permission) => permission.key));
+
+    const missingDanndatoPermissions = adminRoutePermissions
+      .filter((permissionKey) => activePermissionKeys.has(permissionKey))
+      .filter((permissionKey) => !existingAssignments.has(`${danndato.id}::${permissionKey}`))
+      .map((permissionKey) => ({ userId: danndato.id, permission: permissionKey }));
+
+    if (missingDanndatoPermissions.length > 0) {
+      await UserPermissions.bulkCreate(missingDanndatoPermissions);
     }
   };
 

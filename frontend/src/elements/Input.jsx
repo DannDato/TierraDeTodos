@@ -7,7 +7,7 @@ export default function Input({
   type = "text",
   value,
   onChange,
-  error = false, 
+  error = false,
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const inputType = type === "password" && showPassword ? "text" : type;
@@ -34,16 +34,13 @@ export default function Input({
           placeholder={placeholder}
           className={`w-full px-4 py-3 outline-none transition
             ${type === "password" ? "pr-12" : ""}
-            placeholder-[var(--white-color)]/20
+            ${context === "light" ? "placeholder-[var(--black-color)]/20" : "placeholder-[var(--white-color)]/40"}
             ${
-              hasError
-                ? "border-b border-red-500 text-red-500 placeholder-red-400"
-                : context === "light"
-                ? "text-gray-900 border-b bg-transparent"
-                : "text-[var(--white-color)] border-b border-[var(--ins-text-gray)] bg-transparent "
+              hasError ? "border-b border-red-500 text-red-500 placeholder-red-400" :
+              context === "light" ? "text-gray-900 border-b bg-transparent" :
+              "text-[var(--white-color)] border-b border-[var(--ins-text-gray)] bg-transparent "
             }
-
-            focus:border-b-[var(--secondary-color)] 
+            focus:border-b-[var(--secondary-color)]
           `}
         />
 

@@ -1,18 +1,15 @@
 import { useState } from "react";
-import { 
-  ShieldCheck, 
-  Key, 
-  Activity, 
-  Settings, 
+import {
+  ShieldCheck,
+  Key,
+  Activity,
+  Settings,
   Database,
   Smartphone,
-  ShieldAlert,
-  Search,
-  Plus,
-  MoreVertical
 } from "lucide-react";
-import Button from "../../elements/Button";
 import RolesManagerView from "../../components/gestion/RolesManagerView";
+import PermissionsManagerView from "../../components/gestion/PermissionsManagerView";
+import StatusManagerView from "../../components/gestion/StatusManagerView";
 
 
 function Gestion() {
@@ -25,7 +22,6 @@ function Gestion() {
       items: [
         { id: "roles", label: "Gestión de Roles", icon: <ShieldCheck size={18} /> },
         { id: "permissions", label: "Catálogo de Permisos", icon: <Key size={18} /> },
-        { id: "presets", label: "Presets por Role", icon: <ShieldAlert size={18} /> },
       ]
     },
     {
@@ -64,7 +60,7 @@ function Gestion() {
         </div>
 
         <div className="flex flex-1 gap-8 min-h-0 overflow-hidden mt-10">
-            
+
             {/* SIDEBAR INTERNO */}
             <div className="w-64 flex-shrink-0 flex flex-col gap-8 overflow-y-auto custom-scrollbar pb-8">
             {menuCategories.map((category, idx) => (
@@ -80,8 +76,8 @@ function Gestion() {
                         key={item.id}
                         onClick={() => setActiveSection(item.id)}
                         className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-colors duration-200 ${
-                            isActive 
-                            ? "bg-[var(--black-color)]/20 text-[var(--ins-text-white)]" 
+                            isActive
+                            ? "bg-[var(--black-color)]/20 text-[var(--ins-text-white)]"
                             : "text-[var(--ins-text-gray)] hover:bg-[var(--black-color)]/10 hover:text-[var(--ins-text-white)]"
                         }`}
                         >
@@ -102,57 +98,12 @@ function Gestion() {
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                 {activeSection === "roles" && <RolesManagerView />}
                 {activeSection === "status" && <StatusManagerView />}
-                {activeSection === "permissions" && (
-                <div className="flex flex-col items-center justify-center h-full text-[var(--ins-text-dark)]">
-                    <Key size={48} className="mb-4 opacity-50" />
-                    <p className="font-bold">Módulo de Permisos en construcción...</p>
-                </div>
-                )}
+                {activeSection === "permissions" && <PermissionsManagerView />}
             </div>
             </div>
         </div>
         </div>
     </section>
-  );
-}
-
-function StatusManagerView() {
-  return (
-    <div className="animate-[fadeIn_0.2s_ease-out]">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-2xl font-extrabold text-[var(--ins-text-white)]">
-            Catálogo de Estatus
-          </h2>
-        </div>
-        <Button variant="primary" size="md" className="flex items-center gap-2 bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white">
-          <Plus size={18} /> Agregar Estatus
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatusCard name="ACTIVE" colorClass="text-[var(--active-color)] bg-[var(--active-color)]/10 border-[var(--active-color)]/20" dotClass="bg-[var(--active-color)]" desc="El usuario tiene acceso total a la plataforma." />
-        <StatusCard name="INACTIVE" colorClass="text-[var(--warning-color)] bg-[var(--warning-color)]/10 border-[var(--warning-color)]/20" dotClass="bg-[var(--warning-color)]" desc="Cuenta deshabilitada temporalmente o sin confirmar." />
-        <StatusCard name="BANNED" colorClass="text-[var(--danger-color)] bg-[var(--danger-color)]/10 border-[var(--danger-color)]/20" dotClass="bg-[var(--danger-color)]" desc="Acceso revocado permanentemente por infracciones." />
-      </div>
-    </div>
-  );
-}
-
-function StatusCard({ name, colorClass, dotClass, desc }) {
-  return (
-    <div className="bg-[var(--ins-background)] rounded-2xl p-6 hover:bg-[var(--black-color)]/40 transition-colors">
-      <div className="flex items-center justify-between mb-4">
-        <span className={`flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full border ${colorClass}`}>
-          <span className={`w-2 h-2 rounded-full animate-pulse ${dotClass}`}></span>
-          {name}
-        </span>
-        <button className="text-[var(--ins-text-dark)] hover:text-[var(--ins-text-white)]">
-          <MoreVertical size={20} />
-        </button>
-      </div>
-      <p className="text-sm text-[var(--ins-text-gray)] leading-relaxed">{desc}</p>
-    </div>
   );
 }
 

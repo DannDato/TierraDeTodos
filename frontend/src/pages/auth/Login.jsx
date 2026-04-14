@@ -25,11 +25,11 @@ function Login() {
 
   const handleLogin = async (event) => {
     event.preventDefault();
-    
+
     // Validaciones básicas
     if (!usuario) return setUsuarioError("El usuario es obligatorio");
     if (!password) return setPasswordError("La contraseña es obligatoria");
-    
+
     setUsuarioError(false);
     setPasswordError(false);
     setLoading(true);
@@ -62,7 +62,7 @@ function Login() {
   return (
     <>
       <Banner className="h-[800px]">
-        {loading && <LoadingOverlay />}
+        <LoadingOverlay isVisible={loading} />
         <div className="grid grid-cols-2 max-w-4xl mx-auto shadow-2xl overflow-hidden rounded-3xl"
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
         >
@@ -81,7 +81,7 @@ function Login() {
                 id="usuario"
                 value={usuario}
                 onChange={(e) => setUsuario(e.target.value)}
-                placeholder="Ingresa tu usuario"
+                placeholder="ej: detonador700xD"
                 type="text"
                 error={usuarioError}
               />
@@ -93,13 +93,13 @@ function Login() {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Ingresa tu contraseña"
+                placeholder=""
                 type="password"
                 error={passwordError}
               />
 
               <div className="flex justify-end">
-                <a href="/forgot-password" 
+                <a href="/forgot-password"
                    className="text-xs font-semibold text-[var(--ins-text-dark)] hover:text-[var(--secondary-color)] transition-colors">
                   ¿Olvidaste tu contraseña?
                 </a>
@@ -129,11 +129,11 @@ function Login() {
             <a href="/" className="hover:scale-105 transition-transform duration-300">
               <img src="/img/tdt3.webp" alt="Tierra de Todos Logo" className="mb-6 w-48" />
             </a>
-            
+
             <p className="text-sm font-light mb-10 text-center leading-relaxed opacity-90">
               Si no tienes una cuenta, puedes crear una fácilmente. Únete a nuestra comunidad y comienza tu aventura en <span className="text-[var(--secondary-color)] font-bold">Tierra de Todos 3</span> hoy mismo.
             </p>
-            
+
             <div className="grid w-full gap-3 grid-cols-1 md:grid-cols-2">
               <Button variant="ghost" href="/" className="flex items-center justify-center gap-2 border-none hover:bg-white/10">
                 <ArrowLeft size={16} /> Volver al inicio

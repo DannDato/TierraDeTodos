@@ -109,7 +109,7 @@ export default (sequelize, DataTypes) => {
         password: '$2b$10$rQgptFOsAm1mZtZbRMEnreQBuWqs6VOdweNey4jwHqXkMmeeIrqrO',
         displayName: 'HackerPro99',
         uuid: '550e8400-e29b-41d4-a716-446655440003',
-        mojang: 'CRACKED', // O 'NO_PREMIUM', según como lo manejes en tu DB
+        mojang: 'NO-PREMIUM',
         account: 'BANNED'
       },
       // 5. Un usuario normal, pero inactivo (quizás no ha verificado su correo)
@@ -120,7 +120,7 @@ export default (sequelize, DataTypes) => {
         password: '$2b$10$rQgptFOsAm1mZtZbRMEnreQBuWqs6VOdweNey4jwHqXkMmeeIrqrO',
         displayName: 'LazyMiner',
         uuid: '550e8400-e29b-41d4-a716-446655440004',
-        mojang: 'CRACKED',
+        mojang: 'NO-PREMIUM',
         account: 'INACTIVE'
       },
       // 6. Un usuario normal completamente estándar

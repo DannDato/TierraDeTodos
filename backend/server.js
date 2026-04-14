@@ -2,7 +2,7 @@
 import express from 'express'
 import cors from 'cors'
 // importando rutas del proyecto
-import homeRoutes from './routes/homeRoutes.js' 
+import homeRoutes from './routes/homeRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import adminRoutes from './routes/adminRoutes.js'
 import userRoutes from './routes/userRoutes.js'
@@ -11,7 +11,7 @@ import { logAction } from "./helpers/logger.js";
 import injectLogAction from "./middlewares/injectLogAction.js";
 import secureDelay from "./middlewares/secureDelay.js";
 
-// Crear la app 
+// Crear la app
 const app = express()
 
 // res.locals hace que la variable esté disponible en TODAS las vistas automáticamente
@@ -20,7 +20,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// conexion a la bd 
+// conexion a la bd
 let dbConnection = false;
 let dbMessage=''
 try {
@@ -108,6 +108,6 @@ app.listen(port, ()=> {
         valor: 'N/A',
         type: type
     });
-    
-    
+
+
 });
