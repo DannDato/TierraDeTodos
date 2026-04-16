@@ -23,6 +23,13 @@ class ProfileController {
                 u.createdAt,
                 u.updatedAt,
                 u.mojang,
+                (
+                    SELECT upi.img
+                    FROM user_profile_images upi
+                    WHERE upi.userId = u.id
+                    ORDER BY upi.id DESC
+                    LIMIT 1
+                ) AS avatarUrl,
                 u.account as status,
                 (SELECT us.color FROM UserStatuses us WHERE us.status = u.account AND us.active = 'YES' LIMIT 1) AS statusColor,
                 (SELECT reason FROM user_status_history WHERE user = u.id ORDER BY created_at DESC LIMIT 1) AS status_reason,

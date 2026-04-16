@@ -11,7 +11,7 @@ const handleError =  async function handleError(res, req, error, accion, transac
         type: 'error'
     })
     : null;
-    return res ? res.status(500).json({ message: 'Error interno del servidor' }): false;
+    return res ? res.status(500).json({ message: `Error interno del servidor: ${process.env.NODE_ENV === 'development' ? error.message : ''}` }): false;
 }
 
 export default handleError;

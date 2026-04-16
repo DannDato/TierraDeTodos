@@ -25,7 +25,7 @@ const logger = winston.createLogger({
           level === 'fatal'  ? chalk.bold.bgRed.white(level.toUpperCase()) :
           level === 'success'? chalk.bold.cyan(level.toUpperCase()) :
           chalk.bold.gray(level.toUpperCase());
-        
+
         const messageStyled = chalk.gray(message);
         const ipStyled = chalk.blue(ip || 'N/A');
         return `[${levelStyled}] [${ipStyled}] ${messageStyled}`;

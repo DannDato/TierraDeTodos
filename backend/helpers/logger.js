@@ -112,14 +112,14 @@ export async function logAction({
     if (type === 'error') {
       logger.error({
         level: type,
-        message: `${accion}`,
+        message: `${accion} [ ${process.env.NODE_ENV === 'development' ? `${valor}` : ''} ]`,
         username,
         ip
       });
     }else{
       logger.log({
         level: type,
-        message: `${accion}`,
+        message: `${accion} [ ${process.env.NODE_ENV === 'development' ? `${valor}` : ''} ]`,
         username,
         ip
       });

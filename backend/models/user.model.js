@@ -61,6 +61,11 @@ export default (sequelize, DataTypes) => {
       targetKey: 'key',
       as: 'permissions'
     });
+
+    Users.hasMany(models.UserProfileImages, {
+      foreignKey: 'userId',
+      as: 'profileImages'
+    });
   };
 
   Users.seed = async () => {
