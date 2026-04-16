@@ -12,6 +12,7 @@ class StatusController {
           us.color,
           us.asignable,
           us.active,
+          us.immutable,
           (SELECT COUNT(id) FROM Users WHERE account = us.status) AS users
         FROM user_statuses us
         ORDER BY us.status ASC
@@ -69,7 +70,8 @@ class StatusController {
           detail: normalizedDetail,
           color,
           asignable,
-          active
+          active,
+          immutable: false
         },
         { transaction }
       );
@@ -92,6 +94,7 @@ class StatusController {
         color: createdStatus.color,
         asignable: createdStatus.asignable,
         active: createdStatus.active,
+        immutable: createdStatus.immutable,
         users: 0
       });
     } catch (error) {
@@ -115,6 +118,11 @@ class StatusController {
       if (!statusRecord) {
         await transaction.rollback();
         return res.status(404).json({ message: 'Estatus no encontrado' });
+      }
+
+      if (statusRecord.immutable) {
+        await transaction.rollback();
+        return res.status(403).json({ message: 'No se puede modificar un estatus protegido del sistema' });
       }
 
       const nextStatus = String(status || statusRecord.status).trim().toUpperCase();
@@ -199,7 +207,8 @@ class StatusController {
         detail: statusRecord.detail,
         color: statusRecord.color,
         asignable: statusRecord.asignable,
-        active: statusRecord.active
+        active: statusRecord.active,
+        immutable: statusRecord.immutable
       });
     } catch (error) {
       handleError(res, req, error, 'Error al actualizar estatus', transaction);
@@ -223,9 +232,9 @@ class StatusController {
         return res.status(404).json({ message: 'Estatus no encontrado' });
       }
 
-      if (statusRecord.status === 'ACTIVE' || statusRecord.status === 'INACTIVE') {
+      if (statusRecord.immutable) {
         await transaction.rollback();
-        return res.status(400).json({ message: 'No se puede eliminar un estatus base del sistema' });
+        return res.status(403).json({ message: 'No se puede eliminar un estatus protegido del sistema' });
       }
 
       const usersUsingStatus = await models.Users.count({
