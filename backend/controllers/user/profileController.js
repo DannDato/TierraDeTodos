@@ -30,8 +30,29 @@ class ProfileController {
                     ORDER BY upi.id DESC
                     LIMIT 1
                 ) AS avatarUrl,
+                (
+                    SELECT upi.pos_x
+                    FROM user_profile_images upi
+                    WHERE upi.userId = u.id
+                    ORDER BY upi.id DESC
+                    LIMIT 1
+                ) AS avatarPosX,
+                (
+                    SELECT upi.pos_y
+                    FROM user_profile_images upi
+                    WHERE upi.userId = u.id
+                    ORDER BY upi.id DESC
+                    LIMIT 1
+                ) AS avatarPosY,
+                (
+                    SELECT upi.zoom
+                    FROM user_profile_images upi
+                    WHERE upi.userId = u.id
+                    ORDER BY upi.id DESC
+                    LIMIT 1
+                ) AS avatarZoom,
                 u.account as status,
-                (SELECT us.color FROM UserStatuses us WHERE us.status = u.account AND us.active = 'YES' LIMIT 1) AS statusColor,
+                (SELECT us.color FROM user_statuses us WHERE us.status = u.account AND us.active = 'YES' LIMIT 1) AS statusColor,
                 (SELECT reason FROM user_status_history WHERE user = u.id ORDER BY created_at DESC LIMIT 1) AS status_reason,
                 (SELECT u2.username FROM user_status_history sh
                     INNER JOIN Users u2 on u2.id = sh.changed_by

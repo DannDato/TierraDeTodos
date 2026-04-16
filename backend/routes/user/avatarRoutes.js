@@ -8,5 +8,7 @@ const router = express.Router();
 
 
 router.post("/avatar",verifyToken,uploadsCheck({type: "image",field: "avatar",maxSizeMb: 5,}),ctrlAvatar.uploadAvatar);
+router.patch("/avatar/position", verifyToken, ctrlAvatar.updateAvatarPosition);
+router.delete("/avatar", verifyToken, ctrlAvatar.deleteAvatar);
 
 export default router;

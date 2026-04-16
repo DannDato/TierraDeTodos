@@ -12,10 +12,15 @@ function Profile() {
 
   const [isFlipped, setIsFlipped] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
+  const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
+  const [isSavingAvatarPosition, setIsSavingAvatarPosition] = useState(false);
+  const [showDeleteAvatarAlert, setShowDeleteAvatarAlert] = useState(false);
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [logoutMode, setLogoutMode] = useState("current");
+  const [avatarDraft, setAvatarDraft] = useState({ posX: 50, posY: 50, zoom: 1 });
   const avatarInputRef = useRef(null);
 
   useEffect(() => {
@@ -63,7 +68,82 @@ function Profile() {
 
   const triggerAvatarPicker = () => {
     if (isUploadingAvatar) return;
+    setIsAvatarMenuOpen(false);
     avatarInputRef.current?.click();
+  };
+
+  const getAvatarPositionFromUser = (userValue) => {
+    const posX = Number(userValue?.avatarPosX);
+    const posY = Number(userValue?.avatarPosY);
+    const zoom = Number(userValue?.avatarZoom);
+
+    return {
+      posX: Number.isFinite(posX) ? posX : 50,
+      posY: Number.isFinite(posY) ? posY : 50,
+      zoom: Number.isFinite(zoom) ? zoom : 1,
+    };
+  };
+
+  const openAvatarEditor = () => {
+    if (!user?.avatarUrl) return;
+    setAvatarDraft(getAvatarPositionFromUser(user));
+    setIsAvatarMenuOpen(false);
+    setIsAvatarEditorOpen(true);
+  };
+
+  const handleAvatarClick = () => {
+    if (isUploadingAvatar || isSavingAvatarPosition) return;
+    if (!avatarPreview) {
+      triggerAvatarPicker();
+      return;
+    }
+    setIsAvatarMenuOpen((prev) => !prev);
+  };
+
+  const handleDeleteAvatar = async () => {
+    try {
+      setShowDeleteAvatarAlert(false);
+      setIsAvatarMenuOpen(false);
+      await api.delete("/user/avatar");
+      setUser((prev) => ({
+        ...prev,
+        avatarUrl: null,
+        avatarPosX: 50,
+        avatarPosY: 50,
+        avatarZoom: 1,
+      }));
+      setIsAvatarEditorOpen(false);
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || "No se pudo eliminar el avatar";
+      window.alert(message);
+    }
+  };
+
+  const requestDeleteAvatar = () => {
+    setIsAvatarMenuOpen(false);
+    setShowDeleteAvatarAlert(true);
+  };
+
+  const saveAvatarPosition = async () => {
+    try {
+      setIsSavingAvatarPosition(true);
+      const { data } = await api.patch("/user/avatar/position", avatarDraft);
+      const avatar = data?.avatar;
+
+      setUser((prev) => ({
+        ...prev,
+        avatarPosX: avatar?.pos_x ?? avatarDraft.posX,
+        avatarPosY: avatar?.pos_y ?? avatarDraft.posY,
+        avatarZoom: avatar?.zoom ?? avatarDraft.zoom,
+      }));
+
+      setIsAvatarEditorOpen(false);
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || "No se pudo guardar el encuadre";
+      window.alert(message);
+    } finally {
+      setIsSavingAvatarPosition(false);
+    }
   };
 
   const handleAvatarInputChange = async (event) => {
@@ -93,7 +173,19 @@ function Profile() {
 
       const uploadedUrl = data?.avatar?.img;
       if (uploadedUrl) {
-        setUser((prev) => ({ ...prev, avatarUrl: uploadedUrl }));
+        setUser((prev) => ({
+          ...prev,
+          avatarUrl: uploadedUrl,
+          avatarPosX: data?.avatar?.pos_x ?? 50,
+          avatarPosY: data?.avatar?.pos_y ?? 50,
+          avatarZoom: data?.avatar?.zoom ?? 1,
+        }));
+        setAvatarDraft({
+          posX: data?.avatar?.pos_x ?? 50,
+          posY: data?.avatar?.pos_y ?? 50,
+          zoom: data?.avatar?.zoom ?? 1,
+        });
+        setIsAvatarEditorOpen(true);
       }
     } catch (err) {
       const message = err.response?.data?.message || err.message || "No se pudo subir el avatar";
@@ -120,6 +212,13 @@ function Profile() {
   };
 
   const avatarPreview = user?.avatarUrl || user?.mc_skin_head || null;
+  const avatarPosX = Number.isFinite(Number(user?.avatarPosX)) ? Number(user?.avatarPosX) : 50;
+  const avatarPosY = Number.isFinite(Number(user?.avatarPosY)) ? Number(user?.avatarPosY) : 50;
+  const avatarZoom = Number.isFinite(Number(user?.avatarZoom)) ? Number(user?.avatarZoom) : 1;
+  const avatarImageStyle = {
+    objectPosition: `${avatarPosX}% ${avatarPosY}%`,
+    transform: `scale(${avatarZoom})`,
+  };
 
   const toRgba = (hexColor, alpha) => {
     const normalized = typeof hexColor === "string" ? hexColor.trim().replace("#", "") : "";
@@ -161,6 +260,15 @@ function Profile() {
         message={logoutMode === "all" ? "Estas a punto de cerrar sesión en todos los dispositivos." : "Estas a punto de cerrar sesión."}
         onClose={() => setShowAlert(false)}
         onConfirm={handleLogout}
+      />
+
+      <AlertModal
+        isOpen={showDeleteAvatarAlert}
+        type="warning"
+        title="Eliminar avatar"
+        message="Estas a punto de borrar tu avatar y esta accion no se puede deshacer."
+        onClose={() => setShowDeleteAvatarAlert(false)}
+        onConfirm={handleDeleteAvatar}
       />
 
       <div className="w-full max-w-7xl px-4 md:px-8 text-[var(--ins-text-white)]">
@@ -288,29 +396,59 @@ function Profile() {
                     {/* MUGSHOT & NAME AREA */}
                     <div className="flex items-center gap-5 mb-4">
                       {/* Marco de piedra Minecraft (Ref 1) */}
-                      <button
-                        type="button"
-                        onClick={triggerAvatarPicker}
-                        className="minecraft-mugshot w-24 h-28 rounded flex-shrink-0 flex items-center justify-center p-1.5 overflow-hidden relative"
-                        title="Subir imagen de perfil"
-                        disabled={isUploadingAvatar}
-                      >
-                        {avatarPreview ? (
-                          <img
-                            src={avatarPreview}
-                            alt="Skin Head"
-                            className="w-full h-full object-contain scale-110"
-                            style={{imageRendering: 'pixelated'}}
-                          />
-                        ) : (
-                          <UserFallbackIcon size={60} className="text-[var(--gray-color)]" />
-                        )}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={handleAvatarClick}
+                          className="minecraft-mugshot w-28 h-36 rounded flex-shrink-0 flex items-center justify-center p-1.5 overflow-hidden relative"
+                          title="Subir imagen de perfil"
+                          disabled={isUploadingAvatar || isSavingAvatarPosition}
+                        >
+                          {avatarPreview ? (
+                            <img
+                              src={avatarPreview}
+                              alt="Skin Head"
+                              className="w-full h-full object-cover"
+                              style={{ imageRendering: 'pixelated', ...avatarImageStyle }}
+                            />
+                          ) : (
+                            <UserFallbackIcon size={60} className="text-[var(--gray-color)]" />
+                          )}
 
-                        <span className="absolute inset-x-0 bottom-0 bg-black/45 text-white text-[9px] py-0.5 flex items-center justify-center gap-1">
-                          <Upload size={10} />
-                          {isUploadingAvatar ? "Subiendo..." : "Subir"}
-                        </span>
-                      </button>
+                          {!avatarPreview && (
+                            <span className="absolute inset-x-0 bottom-0 bg-black/45 text-white text-[9px] py-0.5 flex items-center justify-center gap-1">
+                              <Upload size={10} />
+                              {isUploadingAvatar ? "Subiendo..." : "Subir"}
+                            </span>
+                          )}
+                        </button>
+
+                        {avatarPreview && isAvatarMenuOpen && (
+                          <div className="absolute z-20 top-[calc(100%+6px)] left-0 rounded-lg border border-black/30 bg-[var(--ins-background)] shadow-lg overflow-hidden text-xs min-w-[120px]">
+                            <button
+                              type="button"
+                              onClick={openAvatarEditor}
+                              className="block w-full px-3 py-2 text-left text-white hover:bg-white/10"
+                            >
+                              Mover
+                            </button>
+                            <button
+                              type="button"
+                              onClick={triggerAvatarPicker}
+                              className="block w-full px-3 py-2 text-left text-white hover:bg-white/10"
+                            >
+                              Cambiar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={requestDeleteAvatar}
+                              className="block w-full px-3 py-2 text-left text-red-300 hover:bg-red-500/20"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
                       <div className="flex-1 space-y-2.5">
                         {/* Nombre completo con línea base (Ref 1) */}
@@ -513,6 +651,87 @@ function Profile() {
         </div>
 
       </div>
+
+      {isAvatarEditorOpen && avatarPreview && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-[#151515] border border-white/10 p-5 space-y-4">
+            <h3 className="text-lg font-bold text-white">Ajustar avatar</h3>
+
+            <div className="mx-auto w-40 h-48 minecraft-mugshot rounded overflow-hidden p-1.5">
+              <img
+                src={avatarPreview}
+                alt="Vista previa avatar"
+                className="w-full h-full object-cover"
+                style={{
+                  imageRendering: "pixelated",
+                  objectPosition: `${avatarDraft.posX}% ${avatarDraft.posY}%`,
+                  transform: `scale(${avatarDraft.zoom})`,
+                }}
+              />
+            </div>
+
+            <div className="space-y-3 text-sm text-white">
+              <label className="block">
+                <span className="text-xs text-white/70">Horizontal ({Math.round(avatarDraft.posX)}%)</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={avatarDraft.posX}
+                  onChange={(e) => setAvatarDraft((prev) => ({ ...prev, posX: Number(e.target.value) }))}
+                  className="w-full"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-xs text-white/70">Vertical ({Math.round(avatarDraft.posY)}%)</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={avatarDraft.posY}
+                  onChange={(e) => setAvatarDraft((prev) => ({ ...prev, posY: Number(e.target.value) }))}
+                  className="w-full"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-xs text-white/70">Zoom ({avatarDraft.zoom.toFixed(2)}x)</span>
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.01"
+                  value={avatarDraft.zoom}
+                  onChange={(e) => setAvatarDraft((prev) => ({ ...prev, zoom: Number(e.target.value) }))}
+                  className="w-full"
+                />
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="cancel"
+                size="sm"
+                onClick={() => setIsAvatarEditorOpen(false)}
+                disabled={isSavingAvatarPosition}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={saveAvatarPosition}
+                disabled={isSavingAvatarPosition}
+              >
+                {isSavingAvatarPosition ? "Guardando..." : "Listo"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

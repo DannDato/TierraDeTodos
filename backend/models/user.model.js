@@ -62,7 +62,7 @@ export default (sequelize, DataTypes) => {
       as: 'permissions'
     });
 
-    Users.hasMany(models.UserProfileImages, {
+    Users.hasMany(models.user_profile_images, {
       foreignKey: 'userId',
       as: 'profileImages'
     });

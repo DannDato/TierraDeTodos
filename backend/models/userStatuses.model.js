@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
 
-  const UserStatuses = sequelize.define('UserStatuses', {
+  const UserStatuses = sequelize.define('user_statuses', {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -35,7 +35,7 @@ export default (sequelize, DataTypes) => {
       defaultValue: 'YES'
     }
   }, {
-    tableName: 'UserStatuses',
+    tableName: 'user_statuses',
     timestamps: false,
     indexes: [
       {

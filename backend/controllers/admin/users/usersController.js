@@ -4,7 +4,7 @@ import { applyRolePresetPermissions } from '../../../helpers/applyRolePresetPerm
 
 class UsersController {
   async getAssignableStatuses(transaction) {
-    return models.UserStatuses.findAll({
+    return models.user_statuses.findAll({
       attributes: ['status', 'detail', 'color'],
       where: { asignable: 'YES', active: 'YES' },
       order: [['status', 'ASC']],
@@ -51,7 +51,7 @@ class UsersController {
         attributes: ['role', 'color'],
         where: { active: 'YES' }
       });
-      const statusesCatalog = await models.UserStatuses.findAll({
+      const statusesCatalog = await models.user_statuses.findAll({
         attributes: ['status', 'color'],
         where: { active: 'YES' }
       });
@@ -196,7 +196,7 @@ class UsersController {
 
       const [roleRecord, statusRecord, assignableRoles, assignableStatuses] = await Promise.all([
         models.Roles.findOne({ attributes: ['color'], where: { role: user.role, active: 'YES' } }),
-        models.UserStatuses.findOne({ attributes: ['color'], where: { status: user.account, active: 'YES' } }),
+        models.user_statuses.findOne({ attributes: ['color'], where: { status: user.account, active: 'YES' } }),
         this.getAssignableRoles(),
         this.getAssignableStatuses()
       ]);
