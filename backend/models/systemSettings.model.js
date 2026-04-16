@@ -1,0 +1,342 @@
+export default (sequelize, DataTypes) => {
+  const SystemSettings = sequelize.define('SystemSettings', {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+
+    key: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+
+    groupKey: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    label: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    description: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    type: {
+      type: DataTypes.ENUM('boolean', 'number', 'string', 'enum'),
+      allowNull: false,
+      defaultValue: 'string',
+    },
+
+    value: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+
+    defaultValue: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+
+    options: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null,
+    },
+
+    updatedBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+  }, {
+    tableName: 'SystemSettings',
+    timestamps: true,
+    indexes: [
+      {
+        name: 'system_settings_key_unique',
+        unique: true,
+        fields: ['key'],
+      },
+      {
+        name: 'system_settings_group_index',
+        fields: ['groupKey'],
+      },
+    ],
+  });
+
+  SystemSettings.seed = async () => {
+    const defaults = [
+      {
+        key: 'security.secureDelayMs',
+        groupKey: 'security',
+        label: 'Secure Delay (ms)',
+        description: 'Retardo de respuestas para endurecer ataques por timing.',
+        type: 'number',
+        value: '500',
+        defaultValue: '500',
+      },
+      {
+        key: 'security.maxFailedAttemptsIpLogin',
+        groupKey: 'security',
+        label: 'Max intentos fallidos por IP (login)',
+        description: 'Numero maximo de intentos fallidos por IP en ventana corta.',
+        type: 'number',
+        value: '20',
+        defaultValue: '20',
+      },
+      {
+        key: 'security.maxFailedAttemptsUserLogin',
+        groupKey: 'security',
+        label: 'Max intentos fallidos por usuario (login)',
+        description: 'Numero maximo de intentos fallidos por usuario en ventana corta.',
+        type: 'number',
+        value: '5',
+        defaultValue: '5',
+      },
+      {
+        key: 'security.maxFailedAttemptsUserVerify',
+        groupKey: 'security',
+        label: 'Max intentos fallidos por usuario (verify-code)',
+        description: 'Limite para verificacion de codigo de dispositivo.',
+        type: 'number',
+        value: '5',
+        defaultValue: '5',
+      },
+      {
+        key: 'security.blockWindowMinutes',
+        groupKey: 'security',
+        label: 'Ventana de bloqueo (minutos)',
+        description: 'Tiempo de ventana para contar intentos fallidos.',
+        type: 'number',
+        value: '5',
+        defaultValue: '5',
+      },
+      {
+        key: 'security.registrationEnabled',
+        groupKey: 'security',
+        label: 'Registro habilitado',
+        description: 'Permite nuevos registros desde frontend.',
+        type: 'boolean',
+        value: 'true',
+        defaultValue: 'true',
+      },
+      {
+        key: 'security.requireDeviceVerificationMode',
+        groupKey: 'security',
+        label: 'Modo de verificacion de dispositivo',
+        description: 'Controla cuando se exige codigo por dispositivo.',
+        type: 'enum',
+        value: 'NEW_ONLY',
+        defaultValue: 'NEW_ONLY',
+        options: ['ALWAYS', 'NEW_ONLY', 'DISABLED'],
+      },
+      {
+        key: 'sessions.jwtDurationHours',
+        groupKey: 'sessions',
+        label: 'Duracion JWT (horas)',
+        description: 'Tiempo de expiracion de sesion JWT.',
+        type: 'number',
+        value: '24',
+        defaultValue: '24',
+      },
+      {
+        key: 'sessions.maxActiveSessionsPerUser',
+        groupKey: 'sessions',
+        label: 'Max sesiones activas por usuario',
+        description: '0 significa sin limite.',
+        type: 'number',
+        value: '1',
+        defaultValue: '1',
+      },
+      {
+        key: 'sessions.revokeSessionsOnPasswordChange',
+        groupKey: 'sessions',
+        label: 'Revocar sesiones al cambiar password',
+        description: 'Seguridad adicional al actualizar credenciales.',
+        type: 'boolean',
+        value: 'true',
+        defaultValue: 'true',
+      },
+      {
+        key: 'sessions.revokeSessionsOnCriticalStatus',
+        groupKey: 'sessions',
+        label: 'Revocar sesiones por estatus critico',
+        description: 'Aplica al bloquear o banear cuenta.',
+        type: 'boolean',
+        value: 'true',
+        defaultValue: 'true',
+      },
+      {
+        key: 'sessions.accessCodeExpirationMinutes',
+        groupKey: 'sessions',
+        label: 'Expiracion de codigo (minutos)',
+        description: 'Validez de codigos de verificacion de dispositivo.',
+        type: 'number',
+        value: '10',
+        defaultValue: '10',
+      },
+      {
+        key: 'devices.defaultNewDeviceStatus',
+        groupKey: 'devices',
+        label: 'Estatus por defecto de nuevo dispositivo',
+        description: 'Estado inicial para nuevos dispositivos detectados.',
+        type: 'enum',
+        value: 'PENDING',
+        defaultValue: 'PENDING',
+        options: ['PENDING', 'AUTHORIZED', 'DENIED'],
+      },
+      {
+        key: 'devices.sharedDeviceThreshold',
+        groupKey: 'devices',
+        label: 'Umbral de riesgo por dispositivo compartido',
+        description: 'Numero de usuarios distintos para marcar riesgo.',
+        type: 'number',
+        value: '2',
+        defaultValue: '2',
+      },
+      {
+        key: 'devices.highRiskAction',
+        groupKey: 'devices',
+        label: 'Accion por dispositivo de alto riesgo',
+        description: 'Comportamiento automatico al detectar uso compartido.',
+        type: 'enum',
+        value: 'ALERT_ONLY',
+        defaultValue: 'ALERT_ONLY',
+        options: ['ALERT_ONLY', 'FORCE_PENDING', 'FORCE_DENIED'],
+      },
+      {
+        key: 'devices.allowlistEnabled',
+        groupKey: 'devices',
+        label: 'Allowlist de dispositivos habilitada',
+        description: 'Permite excepciones manuales de dispositivos confiables.',
+        type: 'boolean',
+        value: 'false',
+        defaultValue: 'false',
+      },
+      {
+        key: 'audit.logLevel',
+        groupKey: 'audit',
+        label: 'Nivel de log',
+        description: 'Nivel minimo de logging operativo.',
+        type: 'enum',
+        value: 'info',
+        defaultValue: 'info',
+        options: ['info', 'warn', 'error'],
+      },
+      {
+        key: 'audit.retentionDays',
+        groupKey: 'audit',
+        label: 'Retencion de auditoria (dias)',
+        description: 'Dias sugeridos para conservar logs.',
+        type: 'number',
+        value: '90',
+        defaultValue: '90',
+      },
+      {
+        key: 'audit.maskSensitiveData',
+        groupKey: 'audit',
+        label: 'Enmascarar datos sensibles',
+        description: 'Ocultar IP y datos sensibles por defecto en UI.',
+        type: 'boolean',
+        value: 'true',
+        defaultValue: 'true',
+      },
+      {
+        key: 'audit.exportEnabled',
+        groupKey: 'audit',
+        label: 'Exportacion de auditoria habilitada',
+        description: 'Permite exportar bitacoras desde panel admin.',
+        type: 'boolean',
+        value: 'true',
+        defaultValue: 'true',
+      },
+      {
+        key: 'operations.maintenanceMode',
+        groupKey: 'operations',
+        label: 'Modo mantenimiento',
+        description: 'Bloquea accesos no administrativos cuando esta activo.',
+        type: 'boolean',
+        value: 'false',
+        defaultValue: 'false',
+      },
+      {
+        key: 'operations.maintenanceMessage',
+        groupKey: 'operations',
+        label: 'Mensaje de mantenimiento',
+        description: 'Texto mostrado cuando el sistema esta en mantenimiento.',
+        type: 'string',
+        value: 'Sistema en mantenimiento programado.',
+        defaultValue: 'Sistema en mantenimiento programado.',
+      },
+      {
+        key: 'operations.adminBanner',
+        groupKey: 'operations',
+        label: 'Banner administrativo global',
+        description: 'Mensaje operativo visible solo para administradores.',
+        type: 'string',
+        value: '',
+        defaultValue: '',
+      },
+      {
+        key: 'operations.featureGestionEnabled',
+        groupKey: 'operations',
+        label: 'Modulo Gestion habilitado',
+        description: 'Permite habilitar o deshabilitar el modulo de gestion.',
+        type: 'boolean',
+        value: 'true',
+        defaultValue: 'true',
+      },
+      {
+        key: 'launcher.sessionTokenTtlMinutes',
+        groupKey: 'launcher',
+        label: 'TTL token de sesion launcher (min)',
+        description: 'Tiempo de validez de token de juego.',
+        type: 'number',
+        value: '5',
+        defaultValue: '5',
+      },
+      {
+        key: 'launcher.reconnectWindowMinutes',
+        groupKey: 'launcher',
+        label: 'Ventana de reconexion (min)',
+        description: 'Permite reconexion sin nuevo token en esta ventana.',
+        type: 'number',
+        value: '3',
+        defaultValue: '3',
+      },
+      {
+        key: 'launcher.singleUseTokenStrict',
+        groupKey: 'launcher',
+        label: 'Token de un solo uso estricto',
+        description: 'Invalida cualquier reuso del token de acceso al server.',
+        type: 'boolean',
+        value: 'true',
+        defaultValue: 'true',
+      },
+      {
+        key: 'launcher.doubleValidationAction',
+        groupKey: 'launcher',
+        label: 'Accion ante doble validacion',
+        description: 'Comportamiento cuando un token se valida dos veces.',
+        type: 'enum',
+        value: 'INVALIDATE_BOTH',
+        defaultValue: 'INVALIDATE_BOTH',
+        options: ['INVALIDATE_BOTH', 'KEEP_FIRST'],
+      },
+    ];
+
+    for (const row of defaults) {
+      await SystemSettings.findOrCreate({
+        where: { key: row.key },
+        defaults: row,
+      });
+    }
+  };
+
+  return SystemSettings;
+};

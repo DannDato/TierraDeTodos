@@ -2,17 +2,18 @@
 import { db } from '../../models/index.js';
 import generateDeviceHash from '../../utils/generateDeviceHash.js';
 
-export const profile = async (req, res) => {
+class ProfileController {
+  profile = async (req, res) => {
     try {
         const user = req.user.id;
-        const hashDevice = generateDeviceHash(req);        
+        const hashDevice = generateDeviceHash(req);
         let ip = req.ip || req.headers['x-forwarded-for'];
-        if(process.env.NODE_ENV === 'development'){ip='148.202.104.78';} 
+        if(process.env.NODE_ENV === 'development'){ip='148.202.104.78';}
         const response = await fetch(`http://ip-api.com/json/${ip}`);
         const data = await response.json();
         const country = data.countryCode;
         const userData = await db.query(`
-            SELECT 
+            SELECT
                 u.username,
                 u.role,
                 (SELECT r.color FROM Roles r WHERE r.role = u.role AND r.active = 'YES' LIMIT 1) AS roleColor,
@@ -76,4 +77,8 @@ export const profile = async (req, res) => {
             message: 'Error interno del servidor'
         });
     }
-};
+  };
+}
+
+const ctrlProfile = new ProfileController();
+export { ctrlProfile };

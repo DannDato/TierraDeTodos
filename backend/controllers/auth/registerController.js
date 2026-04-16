@@ -6,7 +6,8 @@ import { createAccessCode } from '../../helpers/createCodes.js';
 import { applyRolePresetPermissions } from '../../helpers/applyRolePresetPermissions.js';
 import bcrypt from 'bcrypt';
 
-export const register = async (req, res) => {
+class RegisterController {
+  register = async (req, res) => {
     const { email, password, username } = req.body;
 
     const transaction = await db.transaction();
@@ -80,4 +81,8 @@ export const register = async (req, res) => {
             message: 'Error interno del servidor'
         });
     }
-};
+  };
+}
+
+const ctrlRegister = new RegisterController();
+export { ctrlRegister };

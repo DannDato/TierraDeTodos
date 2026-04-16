@@ -6,7 +6,8 @@ import { createAccessCode } from '../../helpers/createCodes.js';
 import { CreateSession } from '../../helpers/CreateSession.js';
 import bcrypt from 'bcrypt';
 
-export const authenticate = async (req, res) => {
+class AuthenticateController {
+  authenticate = async (req, res) => {
     const { usuario, password } = req.body;
     
     try {
@@ -153,6 +154,29 @@ export const authenticate = async (req, res) => {
 
         // Registrar dispositivo
         const deviceHash = generateDeviceHash(req);
+        const deniedDevice = await models.UserDevices.findOne({
+            where: {
+                user: user.id,
+                device_hash: deviceHash,
+                authorized: "DENIED"
+            }
+        });
+
+        if (deniedDevice) {
+            await req.logAction({
+                accion: "Intento de login bloqueado por dispositivo denegado",
+                apartado: "Login",
+                userId: user.id,
+                username: user.username,
+                valor: `deviceHash=${deviceHash}; ip=${req.ip}`,
+                type: "warn"
+            });
+
+            return res.status(403).json({
+                message: "Tu dispositivo ha sido bloqueado. Contacta a un administrador."
+            });
+        }
+
         const existingDevice = await models.UserDevices.findOne({
             where: {
                 user: user.id,
@@ -231,4 +255,8 @@ export const authenticate = async (req, res) => {
             message: "Error interno del servidor"
         });
     }
-};
+  };
+}
+
+const ctrlAuthenticate = new AuthenticateController();
+export { ctrlAuthenticate };

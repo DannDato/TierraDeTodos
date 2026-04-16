@@ -5,7 +5,8 @@ import generateDeviceHash from '../../utils/generateDeviceHash.js';
 import { verifyAccessCode } from '../../helpers/verifyCodes.js';
 import { CreateSession } from '../../helpers/CreateSession.js';
 
-export const verifyAccess = async (req, res) => {
+class VerifyController {
+  verifyAccess = async (req, res) => {
     const { codigo, usuario } = req.body;
     try {
         if (!codigo || !usuario) {
@@ -103,4 +104,8 @@ export const verifyAccess = async (req, res) => {
             message: `Error interno del servidor`
         });
     }
+  };
 }
+
+const ctrlVerify = new VerifyController();
+export { ctrlVerify };

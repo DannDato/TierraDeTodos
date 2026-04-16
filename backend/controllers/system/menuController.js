@@ -17,7 +17,8 @@ const normalizePermissions = (requiredPermissions) => {
   return [];
 };
 
-export const getUserMenu = async (req, res) => {
+class MenuController {
+  getUserMenu = async (req, res) => {
   try {
     const userPermissionsRows = await models.UserPermissions.findAll({
       where: { userId: req.user.id },
@@ -85,4 +86,8 @@ export const getUserMenu = async (req, res) => {
       message: 'Error interno del servidor'
     });
   }
-};
+  };
+}
+
+const ctrlMenu = new MenuController();
+export { ctrlMenu };

@@ -2,10 +2,7 @@
 import express from 'express'
 import cors from 'cors'
 // importando rutas del proyecto
-import homeRoutes from './routes/homeRoutes.js'
-import authRoutes from './routes/authRoutes.js'
-import adminRoutes from './routes/adminRoutes.js'
-import userRoutes from './routes/userRoutes.js'
+import routes from './routes/index.js'
 import { db, loadModels, models } from './models/index.js'
 import { logAction } from "./helpers/logger.js";
 import injectLogAction from "./middlewares/injectLogAction.js";
@@ -67,10 +64,7 @@ app.use(express.urlencoded({extended: true}))
 app.use(express.json());
 
 // Routing
-app.use(`${process.env.FOLDER || ''}/`, homeRoutes)
-app.use(`${process.env.FOLDER || ''}/auth`, authRoutes)
-app.use(`${process.env.FOLDER || ''}/user`, userRoutes)
-app.use(`${process.env.FOLDER || ''}/admin`, adminRoutes)
+app.use(process.env.FOLDER || '', routes)
 
 
 // Definir como se ha iniciado el proeycto

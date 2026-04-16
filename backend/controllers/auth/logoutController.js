@@ -1,8 +1,9 @@
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
 
-export const logout = async (req, res) => {
-  const { allDevices = false } = req.body || {};
+class LogoutController {
+  logout = async (req, res) => {
+    const { allDevices = false } = req.body || {};
 
   try {
     let affectedRows = 0;
@@ -66,4 +67,8 @@ export const logout = async (req, res) => {
       message: 'Error interno del servidor'
     });
   }
-};
+  };
+}
+
+const ctrlLogout = new LogoutController();
+export { ctrlLogout };

@@ -1,9 +1,8 @@
-import { db, models } from '../../models/index.js';
+import { db, models } from '../../../models/index.js';
 import { QueryTypes } from 'sequelize';
-import { applyRolePresetPermissions } from '../../helpers/applyRolePresetPermissions.js';
+import { applyRolePresetPermissions } from '../../../helpers/applyRolePresetPermissions.js';
 
-class UsersAdminController {
-  //metodos internos para usar con el this
+class UsersController {
   async getAssignableStatuses(transaction) {
     return models.UserStatuses.findAll({
       attributes: ['status', 'detail', 'color'],
@@ -12,6 +11,7 @@ class UsersAdminController {
       ...(transaction ? { transaction } : {})
     });
   }
+
   async getAssignableRoles(transaction) {
     return models.Roles.findAll({
       attributes: ['role', 'detail', 'color'],
@@ -21,17 +21,13 @@ class UsersAdminController {
     });
   }
 
- 
-  // controladores 
   getUsersAdminList = async (req, res) => {
     try {
-      //buscar todos los usuarios para listarlos
       const users = await models.Users.findAll({
         attributes: ['id', 'username', 'email', 'role', 'account', 'createdAt', 'updatedAt'],
         order: [['id', 'ASC']]
       });
 
-      // Obtener los permisos de todos los usuarios en una sola consulta
       const permissionRows = await db.query(
         `
           SELECT up.userId, s.key
@@ -42,17 +38,15 @@ class UsersAdminController {
         { type: QueryTypes.SELECT }
       );
 
-      // Organizar los permisos por userId para facil acceso
       const permissionsByUserId = permissionRows.reduce((acc, row) => {
         if (!acc[row.userId]) acc[row.userId] = [];
         acc[row.userId].push(row.key);
         return acc;
       }, {});
 
-      // Usar 'this' para llamar a los métodos internos de la clase
       const allRoles = await this.getAssignableRoles();
       const allStatuses = await this.getAssignableStatuses();
-      
+
       const rolesCatalog = await models.Roles.findAll({
         attributes: ['role', 'color'],
         where: { active: 'YES' }
@@ -61,7 +55,7 @@ class UsersAdminController {
         attributes: ['status', 'color'],
         where: { active: 'YES' }
       });
-      
+
       const roleColorMap = rolesCatalog.reduce((acc, roleItem) => {
         acc[roleItem.role] = roleItem.color;
         return acc;
@@ -71,7 +65,6 @@ class UsersAdminController {
         return acc;
       }, {});
 
-      // Formatear la respuesta con los datos de usuario y sus permisos
       const data = users.map((user) => ({
         id: user.id,
         username: user.username,
@@ -114,13 +107,11 @@ class UsersAdminController {
 
   getAdminUserById = async (req, res) => {
     try {
-      //validacion inicial
       const userId = Number(req.params.id);
       if (!userId) {
         return res.status(400).json({ message: 'ID de usuario inválido' });
       }
 
-      //buscar el usuario por ID
       const user = await models.Users.findByPk(userId, {
         attributes: ['id', 'username', 'email', 'role', 'account', 'uuid', 'mojang', 'createdAt', 'updatedAt']
       });
@@ -128,7 +119,6 @@ class UsersAdminController {
         return res.status(404).json({ message: 'Usuario no encontrado' });
       }
 
-      //registrar la accion de revision de usuario
       req.logAction({
         accion: 'Revision de usuario por ID',
         apartado: 'Usuarios',
@@ -138,14 +128,12 @@ class UsersAdminController {
         type: 'info'
       });
 
-      //obtener una lista de todos los permisos activos para mostrar en el admin
       const allPermissions = await models.Permissions.findAll({
         where: { active: true },
         attributes: ['id', 'key', 'name', 'description'],
         order: [['name', 'ASC']]
       });
 
-      //obtener los permisos asignados al usuario
       const assignedPermissionRows = await db.query(
         `
           SELECT s.key
@@ -160,7 +148,6 @@ class UsersAdminController {
         }
       );
 
-      //obtener el historial de cambios de estado del usuario
       const statusHistory = await db.query(
         `
           SELECT
@@ -182,7 +169,31 @@ class UsersAdminController {
         }
       );
 
-      // Usar 'this' para llamar a los métodos de la clase
+      const devices = await db.query(
+        `
+          SELECT
+            ud.id AS deviceId,
+            ud.device_hash AS deviceHash,
+            ud.authorized,
+            ud.user_agent AS userAgent,
+            ud.ip_address AS ipAddress,
+            ud.first_login AS firstLogin,
+            ud.last_login AS lastLogin,
+            (
+              SELECT COUNT(DISTINCT ud2.user)
+              FROM user_devices ud2
+              WHERE ud2.device_hash = ud.device_hash
+            ) AS sharedWithUsers
+          FROM user_devices ud
+          WHERE ud.user = :userId
+          ORDER BY ud.first_login DESC
+        `,
+        {
+          replacements: { userId },
+          type: QueryTypes.SELECT
+        }
+      );
+
       const [roleRecord, statusRecord, assignableRoles, assignableStatuses] = await Promise.all([
         models.Roles.findOne({ attributes: ['color'], where: { role: user.role, active: 'YES' } }),
         models.UserStatuses.findOne({ attributes: ['color'], where: { status: user.account, active: 'YES' } }),
@@ -190,7 +201,6 @@ class UsersAdminController {
         this.getAssignableStatuses()
       ]);
 
-      //formatear la respuesta con todos los datos obtenidos anteriormente
       return res.status(200).json({
         user: {
           id: user.id,
@@ -204,6 +214,7 @@ class UsersAdminController {
           mojang: user.mojang,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
+          devices,
           statusHistory,
           permissions: assignedPermissionRows.map((permission) => permission.key)
         },
@@ -235,26 +246,22 @@ class UsersAdminController {
   };
 
   updateAdminUserRole = async (req, res) => {
-    //iniciamos transacción para hacer rollback en caso de error y evitar cambios parciales en la base de datos
     const transaction = await db.transaction();
     try {
       const userId = Number(req.params.id);
       const { role } = req.body || {};
-      
-      //primero se valida el usuario y el role enviado antes de hacer cualquier cambio
+
       if (!userId) {
         await transaction.rollback();
         return res.status(400).json({ message: 'ID de usuario inválido' });
       }
 
-      //buscar el usuario por ID para validar que exista antes de intentar actualizarlo
       const user = await models.Users.findByPk(userId, { transaction });
       if (!user) {
         await transaction.rollback();
         return res.status(404).json({ message: 'Usuario no encontrado' });
       }
-      
-      // Si se envía un role diferente al actual, validar que sea un role permitido
+
       if (user.role !== role) {
         const assignableRoles = await this.getAssignableRoles(transaction);
         const assignableRoleSet = new Set(assignableRoles.map((item) => item.role));
@@ -265,21 +272,17 @@ class UsersAdminController {
         }
       }
 
-      //si el role es valido y el usuario existe, se actualiza el role del usuario
       user.role = role;
       await user.save({ transaction });
 
-      //se aplican permisos preset asociados al nuevo role
       const appliedPermissions = await applyRolePresetPermissions({
         userId,
         role,
         transaction
       });
 
-      //se realiza la transaccion a la bd
       await transaction.commit();
 
-      //registramos log
       await req.logAction({
         accion: 'Role de usuario actualizado con preset de permisos',
         apartado: 'AdminUsers',
@@ -289,7 +292,6 @@ class UsersAdminController {
         type: 'info'
       });
 
-      //responder
       return res.status(200).json({
         message: 'Role actualizado correctamente',
         role,
@@ -313,7 +315,6 @@ class UsersAdminController {
   };
 
   updateAdminUserDetails = async (req, res) => {
-    //iniciamos transacción para hacer rollback en caso de error y evitar cambios parciales en la base de datos
     const transaction = await db.transaction();
 
     try {
@@ -337,8 +338,7 @@ class UsersAdminController {
         await transaction.rollback();
         return res.status(404).json({ message: 'Usuario no encontrado' });
       }
-      
-      // Si se envía un role diferente al actual, validar que sea un role permitido
+
       const actualRole = user.role;
       if (actualRole !== role) {
         const assignableRoles = await this.getAssignableRoles(transaction);
@@ -535,6 +535,5 @@ class UsersAdminController {
   };
 }
 
-
-const ctrlUsers = new UsersAdminController();
-export default ctrlUsers;
+const ctrlUsers = new UsersController();
+export { ctrlUsers };
