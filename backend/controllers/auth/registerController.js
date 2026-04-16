@@ -7,6 +7,8 @@ import { applyRolePresetPermissions } from '../../helpers/applyRolePresetPermiss
 import bcrypt from 'bcrypt';
 
 class RegisterController {
+    buildUserFolio = (userId) => `TDT-${String(userId).padStart(8, '0')}`;
+
   register = async (req, res) => {
     const { email, password, username } = req.body;
 
@@ -38,6 +40,9 @@ class RegisterController {
             password: hashedPassword,
             role: "USER"
         }, { transaction });
+
+        const folio = this.buildUserFolio(newUser.id);
+        await newUser.update({ folio }, { transaction });
 
         await applyRolePresetPermissions({
             userId: newUser.id,

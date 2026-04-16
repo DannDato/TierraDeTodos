@@ -36,6 +36,10 @@ export default (sequelize, DataTypes) => {
         defaultValue: 'INACTIVE',
         allowNull: false
     },
+    folio: {
+      type: DataTypes.STRING(32),
+      allowNull: true
+    },
   },{
     tableName: 'Users',
     timestamps: true,
@@ -49,6 +53,11 @@ export default (sequelize, DataTypes) => {
         name: 'users_email_unique',
         unique: true,
         fields: ['email']
+      },
+      {
+        name: 'users_folio_unique',
+        unique: true,
+        fields: ['folio']
       }
     ]
   });
@@ -69,9 +78,6 @@ export default (sequelize, DataTypes) => {
   };
 
   Users.seed = async () => {
-    const validate = await Users.findAll();
-    if (validate.length > 0) return;
-
     const seedUsers = [
       // 1. Tu usuario Admin original
       {
@@ -82,7 +88,8 @@ export default (sequelize, DataTypes) => {
         displayName: 'DannDato',
         uuid: '123e4567-e89b-12d3-a456-426614174000',
         mojang: 'PREMIUM',
-        account: 'ACTIVE'
+        account: 'ACTIVE',
+        folio: 'TDT-00000001'
       },
       // 2. Un usuario VIP, activo y Premium
       {
@@ -93,7 +100,8 @@ export default (sequelize, DataTypes) => {
         displayName: 'SteveTDT',
         uuid: '550e8400-e29b-41d4-a716-446655440001',
         mojang: 'PREMIUM',
-        account: 'ACTIVE'
+        account: 'ACTIVE',
+        folio: 'TDT-00000002'
       },
       // 3. Un Moderador para probar permisos intermedios
       {
@@ -104,7 +112,8 @@ export default (sequelize, DataTypes) => {
         displayName: 'AlexGuard',
         uuid: '550e8400-e29b-41d4-a716-446655440002',
         mojang: 'PREMIUM',
-        account: 'ACTIVE'
+        account: 'ACTIVE',
+        folio: 'TDT-00000003'
       },
       // 4. Un usuario baneado (ideal para ver cómo reacciona el dashboard)
       {
@@ -115,7 +124,8 @@ export default (sequelize, DataTypes) => {
         displayName: 'HackerPro99',
         uuid: '550e8400-e29b-41d4-a716-446655440003',
         mojang: 'NO-PREMIUM',
-        account: 'BANNED'
+        account: 'BANNED',
+        folio: 'TDT-00000004'
       },
       // 5. Un usuario normal, pero inactivo (quizás no ha verificado su correo)
       {
@@ -126,7 +136,8 @@ export default (sequelize, DataTypes) => {
         displayName: 'LazyMiner',
         uuid: '550e8400-e29b-41d4-a716-446655440004',
         mojang: 'NO-PREMIUM',
-        account: 'INACTIVE'
+        account: 'INACTIVE',
+        folio: 'TDT-00000005'
       },
       // 6. Un usuario normal completamente estándar
       {
@@ -137,12 +148,30 @@ export default (sequelize, DataTypes) => {
         displayName: 'IronGolem',
         uuid: '550e8400-e29b-41d4-a716-446655440005',
         mojang: 'PREMIUM',
-        account: 'ACTIVE'
+        account: 'ACTIVE',
+        folio: 'TDT-00000006'
       }
     ];
 
-    await Users.bulkCreate(seedUsers);
-    console.log('🌱 Admin y 5 usuarios de prueba sembrados con éxito.');
+    for (const seedUser of seedUsers) {
+      const existingUser = await Users.findOne({ where: { username: seedUser.username } });
+      if (!existingUser) {
+        await Users.create(seedUser);
+      }
+    }
+
+    const danndato = await Users.findOne({ where: { username: 'danndato' } });
+    if (danndato) {
+      const updates = {};
+      if (danndato.role !== 'ADMIN') updates.role = 'ADMIN';
+      if (danndato.account !== 'ACTIVE') updates.account = 'ACTIVE';
+
+      if (Object.keys(updates).length > 0) {
+        await danndato.update(updates);
+      }
+    }
+
+    console.log('🌱 Seeds de usuarios aplicadas correctamente.');
   };
 
   return Users;

@@ -15,6 +15,7 @@ class ProfileController {
         const userData = await db.query(`
             SELECT
                 u.username,
+                u.folio,
                 u.role,
                 (SELECT r.color FROM Roles r WHERE r.role = u.role AND r.active = 'YES' LIMIT 1) AS roleColor,
                 u.email,

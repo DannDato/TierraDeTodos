@@ -91,7 +91,20 @@ export default (sequelize, DataTypes) => {
     const danndato = users.find((user) => user.username === 'danndato');
     if (!danndato) return;
 
-    const adminRoutePermissions = ['gest.roles', 'gest.permissions', 'gest.statuses', 'menu.users', 'menu.userscontrol', 'user.view', 'user.edit'];
+    const adminRoutePermissions = [
+      'menu.start',
+      'menu.userscontrol',
+      'menu.users',
+      'menu.profile',
+      'menu.configuration',
+      'menu.aboutapp',
+      'menu.gestion',
+      'gest.roles',
+      'gest.permissions',
+      'gest.statuses',
+      'user.view',
+      'user.edit'
+    ];
     const activePermissionKeys = new Set(permissions.map((permission) => permission.key));
 
     const missingDanndatoPermissions = adminRoutePermissions

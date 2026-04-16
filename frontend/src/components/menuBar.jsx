@@ -20,7 +20,7 @@ function MenuBar() {
   useEffect(() => {
     const loadMenu = async () => {
       try {
-        const { data } = await api.get("/user/menu");
+        const { data } = await api.get("/system/menu");
         if (Array.isArray(data?.menuItems) && data.menuItems.length > 0) {
           setMenuItems(data.menuItems);
         } else {
