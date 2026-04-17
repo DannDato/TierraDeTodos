@@ -17,29 +17,40 @@ class sessionsController {
             s.ip,
             s.createdAt,
             s.expiresAt,
-            s.revoked
+            s.revoked,
+            (
+              SELECT ud.folio
+              FROM user_devices ud
+              WHERE ud.user = s.userId
+              AND ud.user_agent = s.device
+              ORDER BY ud.last_login DESC, ud.id DESC
+              LIMIT 1
+            ) AS deviceFolio
           FROM Sessions s
           INNER JOIN Users u ON u.id = s.userId
+          WHERE s.revoked = 0
+          AND s.expiresAt > :now
           ORDER BY s.createdAt DESC
         `,
-        { type: QueryTypes.SELECT }
+        {
+          replacements: { now },
+          type: QueryTypes.SELECT
+        }
       );
 
       const data = sessions.map((session) => {
-        const expiresAt = session.expiresAt ? new Date(session.expiresAt) : null;
-        const isActive = Boolean(!session.revoked && (!expiresAt || expiresAt > now));
-
         return {
           id: session.id,
           userId: session.userId,
           username: session.username,
           device: session.device || 'unknown-device',
+          deviceFolio: session.deviceFolio || null,
           ip: session.ip || null,
           startedAt: session.createdAt,
           expiresAt: session.expiresAt,
           revoked: Boolean(session.revoked),
-          status: isActive ? 'ACTIVE' : 'INACTIVE',
-          isActive
+          status: 'ACTIVE',
+          isActive: true
         };
       });
 

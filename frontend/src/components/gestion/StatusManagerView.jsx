@@ -196,14 +196,17 @@ function StatusManagerView() {
         onConfirm={handleAlertConfirm}
       />
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
         <div>
           <h2 className="text-2xl font-extrabold text-[var(--ins-text-white)]">
             Catálogo de Estatus
           </h2>
+          <p className="text-sm text-[var(--ins-text-gray)] mt-1">
+            Define estados de cuenta, visibilidad operativa y reglas de asignación para usuarios.
+          </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <div className="relative">
             <Input
               placeholder="Buscar..."
@@ -224,11 +227,11 @@ function StatusManagerView() {
       </div>
 
       {filteredStatuses.length === 0 ? (
-        <div className="rounded-2xl bg-[var(--black-color)]/20 py-12 text-center text-[var(--ins-text-gray)]">
+        <div className="rounded-3xl border border-[var(--white-color)]/5 bg-[var(--black-color)]/20 py-12 text-center text-[var(--ins-text-gray)]">
           No hay estatus para mostrar.
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
           {filteredStatuses.map((statusItem) => (
             <StatusCard
               key={statusItem.id}
@@ -270,30 +273,37 @@ function StatusCard({ statusItem, onOpenDetails, onDeleteStatus }) {
   return (
     <div
       ref={cardRef}
-      className="relative bg-[var(--ins-background)] rounded-2xl p-6 flex flex-col justify-between hover:bg-[var(--black-color)]/20 transition-colors"
+      className="relative min-h-[220px] rounded-3xl border border-[var(--white-color)]/5 bg-[var(--black-color)]/20 p-6 flex flex-col justify-between shadow-sm hover:bg-[var(--black-color)]/25 hover:border-[var(--white-color)]/10 transition-all duration-200"
       onDoubleClick={() => onOpenDetails(statusItem)}
     >
       <div className="flex justify-between items-start mb-4 relative">
-        <span
-          className="px-3 py-1 rounded-full text-xs font-bold border"
-          style={{
-            color: statusItem.color,
-            borderColor: `${statusItem.color}40`,
-            backgroundColor: `${statusItem.color}10`,
-          }}
-        >
-          {statusItem.status}
-        </span>
+        <div className="flex items-center gap-2 flex-wrap pr-3">
+          <span
+            className="px-3 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wider"
+            style={{
+              color: statusItem.color,
+              borderColor: `${statusItem.color}40`,
+              backgroundColor: `${statusItem.color}10`,
+            }}
+          >
+            {statusItem.status}
+          </span>
+          {statusItem.immutable && (
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-500/25 bg-amber-500/10 text-amber-200">
+              Protegido
+            </span>
+          )}
+        </div>
 
         <button
           onClick={() => setOptionsOpen(!optionsOpen)}
-          className="text-[var(--ins-text-dark)] hover:text-[var(--ins-text-white)] transition-colors p-1"
+          className="rounded-lg p-2 text-[var(--ins-text-dark)] hover:text-[var(--ins-text-white)] hover:bg-white/5 transition-colors"
         >
           <MoreVertical size={20} />
         </button>
 
         {optionsOpen && (
-          <div className="absolute right-0 top-8 w-32 bg-[var(--gray-dark-color)] rounded-xl shadow-xl z-10 overflow-hidden text-sm">
+          <div className="absolute right-0 top-10 w-32 bg-[var(--ins-contextual-menu)] border border-[var(--white-color)]/10 rounded-xl shadow-xl z-10 overflow-hidden text-sm">
             <button
               onClick={() => {
                 onOpenDetails(statusItem);
@@ -303,30 +313,32 @@ function StatusCard({ statusItem, onOpenDetails, onDeleteStatus }) {
             >
               Editar
             </button>
-            <button
-              onClick={() => {
-                onDeleteStatus(statusItem);
-                setOptionsOpen(false);
-              }}
-              className="w-full text-left px-4 py-2 text-[var(--cancel-color)] hover:bg-[var(--cancel-color)]/10 transition-colors"
-            >
-              Borrar
-            </button>
+            {!statusItem.immutable && (
+              <button
+                onClick={() => {
+                  onDeleteStatus(statusItem);
+                  setOptionsOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 text-[var(--cancel-color)] hover:bg-[var(--cancel-color)]/10 transition-colors"
+              >
+                Borrar
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      <p className="text-sm text-[var(--ins-text-gray)] mb-6 line-clamp-2 min-h-[40px]">
+      <p className="text-sm text-[var(--ins-text-gray)] mb-6 line-clamp-3 min-h-[62px] leading-relaxed">
         {statusItem.detail}
       </p>
 
-      <div className="flex gap-6 pt-4 mt-auto">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold tracking-wider text-[var(--ins-text-dark)] mb-1">USUARIOS</span>
+      <div className="grid grid-cols-2 gap-3 pt-4 mt-auto border-t border-[var(--white-color)]/5">
+        <div className="rounded-2xl bg-black/20 px-4 py-3">
+          <span className="text-[10px] font-bold tracking-[0.18em] text-[var(--ins-text-dark)] mb-1 block">USUARIOS</span>
           <span className="text-[var(--ins-text-white)] font-bold text-lg">{statusItem.users}</span>
         </div>
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold tracking-wider text-[var(--ins-text-dark)] mb-1">ASIGNABLE</span>
+        <div className="rounded-2xl bg-black/20 px-4 py-3">
+          <span className="text-[10px] font-bold tracking-[0.18em] text-[var(--ins-text-dark)] mb-1 block">ASIGNABLE</span>
           <span className="text-[var(--ins-text-white)] font-bold text-lg">{statusItem.asignable}</span>
         </div>
       </div>
@@ -380,7 +392,7 @@ function StatusDetailModal({ statusData, onClose, onSave, onDelete, isSaving }) 
           <CloseButton onClick={onClose} />
         </div>
 
-        <div className="p-8 overflow-y-auto custom-scrollbar flex flex-col gap-10">
+        <div className="p-8 overflow-y-auto tdt-scrollbar flex flex-col gap-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
               label="Nombre del Estatus"

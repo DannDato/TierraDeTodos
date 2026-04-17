@@ -241,14 +241,17 @@ function PermissionsManagerView() {
         onConfirm={handleAlertConfirm}
       />
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
         <div>
           <h2 className="text-2xl font-extrabold text-[var(--ins-text-white)]">
             Gestión de Permisos
           </h2>
+          <p className="text-sm text-[var(--ins-text-gray)] mt-1">
+            Controla las capacidades disponibles y su estado operativo dentro del sistema.
+          </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <div className="relative">
             <Input
               placeholder="Buscar..."
@@ -270,11 +273,11 @@ function PermissionsManagerView() {
 
       {/* Grid de Permisos */}
       {filteredPermissions.length === 0 ? (
-        <div className="rounded-2xl bg-[var(--black-color)]/20 py-12 text-center text-[var(--ins-text-gray)]">
+        <div className="rounded-3xl border border-[var(--white-color)]/5 bg-[var(--black-color)]/20 py-12 text-center text-[var(--ins-text-gray)]">
           No hay permisos para mostrar.
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
           {filteredPermissions.map((permission) => {
             return (
               <PermissionCard
@@ -306,44 +309,57 @@ function PermissionCard({ permission, onOpenDetails, onTogglePermission }) {
   return (
     <div
       key={permission.key}
-      className={`group flex items-center justify-between p-4 rounded-2xl border transition-all duration-200 z-0
+      className={`group min-h-[180px] flex flex-col justify-between p-5 rounded-3xl border transition-all duration-200 z-0 shadow-sm
         ${
           permission.active
-            ? "bg-[var(--secondary-color)]/5 border-[var(--secondary-color)]/30"
+            ? "bg-[var(--secondary-color)]/5 border-[var(--secondary-color)]/25 hover:border-[var(--secondary-color)]/35"
             : "bg-[var(--white-color)]/5 border-[var(--white-color)]/5 hover:border-[var(--white-color)]/10 hover:bg-[var(--white-color)]/10"
         }`
       }
       onDoubleClick={() => onOpenDetails(permission)}
     >
-      <div className="pr-4">
-        <h4 className={`text-sm font-bold transition-colors ${permission.active ? "text-[var(--ins-text-white)]" : "text-[var(--ins-text-gray)] group-hover:text-[var(--ins-text-white)]"}`}>
-          {permission.name}
-        </h4>
-        <p className="text-[10px] font-mono mt-1 px-1.5 py-0.5 rounded bg-[var(--black-color)]/30 inline-block text-[var(--ins-text-gray)]">
-          {permission.key}
-        </p>
-        {permission.description && (
-          <p className="text-xs text-[var(--ins-text-gray)] mt-2 leading-relaxed">
-            {permission.description}
+      <div className="flex items-start justify-between gap-4">
+        <div className="pr-4 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h4 className={`text-sm font-bold transition-colors ${permission.active ? "text-[var(--ins-text-white)]" : "text-[var(--ins-text-gray)] group-hover:text-[var(--ins-text-white)]"}`}>
+              {permission.name}
+            </h4>
+            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${permission.active ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-200" : "border-[var(--white-color)]/10 bg-white/5 text-[var(--ins-text-gray)]"}`}>
+              {permission.active ? "Activo" : "Inactivo"}
+            </span>
+          </div>
+          <p className="text-[10px] font-mono mt-2 px-1.5 py-0.5 rounded bg-[var(--black-color)]/30 inline-block text-[var(--ins-text-gray)] break-all">
+            {permission.key}
           </p>
-        )}
-      </div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onTogglePermission(permission);
-        }}
-        className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors duration-300 z-10 ${
-          permission.active ? "bg-[var(--secondary-color)] shadow-[0_0_10px_var(--secondary-color)]" : "bg-[var(--black-color)]/50 "
-        }`}
-        type="button"
-      >
-        <span
-          className={`inline-block h-5 w-5 transform rounded-full bg-[var(--white-color)] transition-transform duration-300 shadow-sm ${
-            permission.active ? "translate-x-6" : "translate-x-1 opacity-70"
+          {permission.description && (
+            <p className="text-xs text-[var(--ins-text-gray)] mt-3 leading-relaxed line-clamp-3 min-h-[54px]">
+              {permission.description}
+            </p>
+          )}
+        </div>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onTogglePermission(permission);
+          }}
+          className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors duration-300 z-10 mt-1 ${
+            permission.active ? "bg-[var(--secondary-color)] shadow-[0_0_10px_var(--secondary-color)]" : "bg-[var(--black-color)]/50 "
           }`}
-        />
-      </button>
+          type="button"
+        >
+          <span
+            className={`inline-block h-5 w-5 transform rounded-full bg-[var(--white-color)] transition-transform duration-300 shadow-sm ${
+              permission.active ? "translate-x-6" : "translate-x-1 opacity-70"
+            }`}
+          />
+        </button>
+      </div>
+
+      <div className="pt-4 mt-4 border-t border-[var(--white-color)]/5 flex items-center justify-between">
+        <span className="text-[10px] font-bold tracking-[0.18em] text-[var(--ins-text-dark)]">DOBLE CLICK PARA EDITAR</span>
+        <span className="text-xs font-mono text-[var(--ins-text-gray)]">{permission.id}</span>
+      </div>
     </div>
   );
 }

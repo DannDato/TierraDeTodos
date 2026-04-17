@@ -88,7 +88,7 @@ export default function News() {
         <div className="relative w-full mt-10 mb-12">
           <div
             ref={carouselRef}
-            className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-8 pt-4 custom-scrollbar"
+            className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-8 pt-4 scrollbar-hidden"
           >
             {newsData.map((news) => (
               <div

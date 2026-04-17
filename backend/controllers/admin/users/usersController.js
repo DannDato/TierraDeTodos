@@ -113,7 +113,7 @@ class UsersController {
       }
 
       const user = await models.Users.findByPk(userId, {
-        attributes: ['id', 'username', 'email', 'role', 'account', 'uuid', 'mojang', 'createdAt', 'updatedAt']
+        attributes: ['id', 'username', 'email', 'role', 'account', 'uuid', 'mojang', 'folio', 'createdAt', 'updatedAt']
       });
       if (!user) {
         return res.status(404).json({ message: 'Usuario no encontrado' });
@@ -173,6 +173,7 @@ class UsersController {
         `
           SELECT
             ud.id AS deviceId,
+            ud.folio AS folio,
             ud.device_hash AS deviceHash,
             ud.authorized,
             ud.user_agent AS userAgent,
@@ -194,6 +195,24 @@ class UsersController {
         }
       );
 
+      const latestAvatar = await db.query(
+        `
+          SELECT
+            upi.img AS avatarUrl,
+            upi.pos_x AS avatarPosX,
+            upi.pos_y AS avatarPosY,
+            upi.zoom AS avatarZoom
+          FROM user_profile_images upi
+          WHERE upi.userId = :userId
+          ORDER BY upi.id DESC
+          LIMIT 1
+        `,
+        {
+          replacements: { userId },
+          type: QueryTypes.SELECT
+        }
+      );
+
       const [roleRecord, statusRecord, assignableRoles, assignableStatuses] = await Promise.all([
         models.Roles.findOne({ attributes: ['color'], where: { role: user.role, active: 'YES' } }),
         models.user_statuses.findOne({ attributes: ['color'], where: { status: user.account, active: 'YES' } }),
@@ -206,14 +225,20 @@ class UsersController {
           id: user.id,
           username: user.username,
           email: user.email,
+          folio: user.folio,
           role: user.role,
           roleColor: roleRecord?.color || null,
           status: user.account,
           statusColor: statusRecord?.color || null,
           uuid: user.uuid,
           mojang: user.mojang,
+          country: 'MX',
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
+          avatarUrl: latestAvatar[0]?.avatarUrl || null,
+          avatarPosX: latestAvatar[0]?.avatarPosX ?? 50,
+          avatarPosY: latestAvatar[0]?.avatarPosY ?? 50,
+          avatarZoom: latestAvatar[0]?.avatarZoom ?? 1,
           devices,
           statusHistory,
           permissions: assignedPermissionRows.map((permission) => permission.key)

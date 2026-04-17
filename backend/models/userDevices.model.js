@@ -23,6 +23,11 @@ export default (sequelize, DataTypes) => {
       allowNull: false
     },
 
+    folio: {
+      type: DataTypes.STRING(24),
+      allowNull: true
+    },
+
     authorized: {
       type: DataTypes.ENUM('PENDING','AUTHORIZED','DENIED'),
       allowNull: false,
@@ -58,9 +63,32 @@ export default (sequelize, DataTypes) => {
       {
         name: 'user_devices_user_index',
         fields: ['user']
+      },
+      {
+        name: 'user_devices_folio_unique',
+        unique: true,
+        fields: ['folio']
       }
     ]
   });
+
+  UserDevices.addHook('afterCreate', async (device, options) => {
+    if (device.folio) return;
+    const folio = `DEV-${String(device.id).padStart(8, '0')}`;
+    await device.update({ folio }, { transaction: options?.transaction, hooks: false });
+  });
+
+  UserDevices.seed = async () => {
+    const rowsWithoutFolio = await UserDevices.findAll({
+      attributes: ['id', 'folio'],
+      where: { folio: null }
+    });
+
+    for (const row of rowsWithoutFolio) {
+      const folio = `DEV-${String(row.id).padStart(8, '0')}`;
+      await row.update({ folio }, { hooks: false });
+    }
+  };
 
   return UserDevices;
 };

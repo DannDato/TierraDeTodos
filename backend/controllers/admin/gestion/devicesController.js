@@ -11,6 +11,7 @@ class devicesController {
         `
           SELECT
             ud.id,
+            ud.folio,
             ud.user,
             u.username,
             ud.device_hash,
@@ -43,78 +44,26 @@ class devicesController {
         activeSessions.map((session) => `${session.userId}|${session.device || ''}`)
       );
 
-      const devicesMap = new Map();
-
-      for (const row of deviceRows) {
-        const key = row.device_hash;
-
-        if (!devicesMap.has(key)) {
-          devicesMap.set(key, {
-            deviceId: row.id,
-            deviceHash: key,
-            titularUserId: row.user,
-            titularUsername: row.username,
-            isActive: false,
-            status: 'INACTIVE',
-            registeredAt: row.first_login,
-            registeredIp: row.ip_address,
-            device: row.user_agent || 'unknown-device',
-            ownersCount: 1,
-            authorizations: [row.authorized],
-            rows: [row],
-            ownerSet: new Set([row.user])
-          });
-          continue;
-        }
-
-        const current = devicesMap.get(key);
-        current.rows.push(row);
-        current.authorizations.push(row.authorized);
-        if (Number(row.id) < Number(current.deviceId)) {
-          current.deviceId = row.id;
-        }
-
-        if (!current.ownerSet.has(row.user)) {
-          current.ownerSet.add(row.user);
-          current.ownersCount += 1;
-        }
-
-        const currentDate = new Date(current.registeredAt);
-        const rowDate = new Date(row.first_login);
-        if (rowDate < currentDate) {
-          current.titularUserId = row.user;
-          current.titularUsername = row.username;
-          current.registeredAt = row.first_login;
-          current.registeredIp = row.ip_address;
-          current.device = row.user_agent || current.device;
-        }
-      }
-
-      const data = Array.from(devicesMap.values())
-        .map((deviceItem) => {
-          const hasActiveSession = deviceItem.rows.some((row) => {
-            return activeSessionLookup.has(`${row.user}|${row.user_agent || ''}`);
-          });
-
-          const allDenied = deviceItem.authorizations.every((value) => value === 'DENIED');
-          const hasAuthorized = deviceItem.authorizations.some((value) => value === 'AUTHORIZED');
-          const authorizationState = hasAuthorized ? 'AUTHORIZED' : allDenied ? 'DENIED' : 'PENDING';
+      const data = deviceRows
+        .map((row) => {
+          const hasActiveSession = activeSessionLookup.has(`${row.user}|${row.user_agent || ''}`);
 
           return {
-            deviceId: deviceItem.deviceId,
-            deviceHash: deviceItem.deviceHash,
-            titularUserId: deviceItem.titularUserId,
-            titularUsername: deviceItem.titularUsername,
+            deviceId: row.id,
+            folio: row.folio || null,
+            deviceHash: row.device_hash,
+            userId: row.user,
+            username: row.username,
+            userAgent: row.user_agent || 'unknown-device',
+            ipAddress: row.ip_address || null,
+            authorized: row.authorized,
+            firstLogin: row.first_login,
+            lastLogin: row.last_login,
             isActive: hasActiveSession,
-            status: hasActiveSession ? 'ACTIVE' : 'INACTIVE',
-            registeredAt: deviceItem.registeredAt,
-            registeredIp: deviceItem.registeredIp,
-            device: deviceItem.device,
-            ownersCount: deviceItem.ownersCount,
-            authorizationState
+            sessionStatus: hasActiveSession ? 'ACTIVE' : 'INACTIVE'
           };
         })
-        .sort((a, b) => new Date(b.registeredAt) - new Date(a.registeredAt));
+        .sort((a, b) => new Date(b.firstLogin) - new Date(a.firstLogin));
 
       return res.status(200).json({ devices: data });
     } catch (error) {
@@ -134,6 +83,7 @@ class devicesController {
         `
           SELECT
             ud.id,
+            ud.folio,
             ud.user,
             u.username,
             ud.authorized,
@@ -233,16 +183,26 @@ class devicesController {
 
       return res.status(200).json({
         deviceId: owners[0].id,
+        folio: owners[0].folio || null,
         deviceHash,
         titular: {
           deviceId: owners[0].id,
+          folio: owners[0].folio || null,
           userId: owners[0].user,
           username: owners[0].username,
           registeredAt: owners[0].first_login,
           registeredIp: owners[0].ip_address,
           device: owners[0].user_agent || 'unknown-device'
         },
-        usageByUsers
+        usageByUsers,
+        loginAttempts: loginHistory.map((attempt) => ({
+          id: attempt.id,
+          userId: attempt.user,
+          username: attempt.username || 'unknown-user',
+          ip: attempt.ip_address,
+          userAgent: attempt.user_agent,
+          at: attempt.createdAt
+        }))
       });
     } catch (error) {
       return handleError(res, req, error, 'Error al obtener historial de uso de dispositivo');

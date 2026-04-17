@@ -6,19 +6,20 @@ function Credencial({
   currentStatus,
   isInactiveStatus,
   isCancelledStatus,
-  isFlipped,
-  onToggleFlip,
+  isFlipped = false,
+  onToggleFlip = () => {},
   avatarInputRef,
-  onAvatarInputChange,
-  onAvatarClick,
-  isUploadingAvatar,
-  isSavingAvatarPosition,
+  onAvatarInputChange = () => {},
+  onAvatarClick = () => {},
+  isUploadingAvatar = false,
+  isSavingAvatarPosition = false,
   avatarPreview,
-  avatarImageStyle,
-  isAvatarMenuOpen,
-  onOpenAvatarEditor,
-  onTriggerAvatarPicker,
-  onRequestDeleteAvatar,
+  avatarImageStyle = {},
+  isAvatarMenuOpen = false,
+  onOpenAvatarEditor = () => {},
+  onTriggerAvatarPicker = () => {},
+  onRequestDeleteAvatar = () => {},
+  readOnly = false,
 }) {
   const UserFallbackIcon = User;
 
@@ -115,16 +116,18 @@ function Credencial({
         </div>
       ) : (
         <div
-          className={`credential-container relative cursor-pointer select-none ${isFlipped ? "flipped" : ""}`}
-          onDoubleClick={onToggleFlip}
+          className={`credential-container relative ${readOnly ? "" : "cursor-pointer"} select-none ${isFlipped ? "flipped" : ""}`}
+          onDoubleClick={readOnly ? undefined : onToggleFlip}
         >
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/*"
-            onChange={onAvatarInputChange}
-            className="hidden"
-          />
+          {!readOnly && (
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onAvatarInputChange}
+              className="hidden"
+            />
+          )}
 
           <div className="credential-flipper">
             <div className="credential-front">
@@ -149,7 +152,7 @@ function Credencial({
                       onClick={onAvatarClick}
                       className="minecraft-mugshot w-28 h-36 rounded flex-shrink-0 flex items-center justify-center p-1.5 overflow-hidden relative"
                       title="Subir imagen de perfil"
-                      disabled={isUploadingAvatar || isSavingAvatarPosition}
+                      disabled={readOnly || isUploadingAvatar || isSavingAvatarPosition}
                     >
                       {avatarPreview ? (
                         <img
@@ -162,7 +165,7 @@ function Credencial({
                         <UserFallbackIcon size={60} className="text-[var(--gray-color)]" />
                       )}
 
-                      {!avatarPreview && (
+                      {!readOnly && !avatarPreview && (
                         <span className="absolute inset-x-0 bottom-0 bg-black/45 text-white text-[9px] py-0.5 flex items-center justify-center gap-1">
                           <Upload size={10} />
                           {isUploadingAvatar ? "Subiendo..." : "Subir"}
@@ -170,7 +173,7 @@ function Credencial({
                       )}
                     </button>
 
-                    {avatarPreview && isAvatarMenuOpen && (
+                    {!readOnly && avatarPreview && isAvatarMenuOpen && (
                       <div className="absolute z-20 top-[calc(100%+6px)] left-0 rounded-lg border border-black/30 bg-[var(--ins-background)] shadow-lg overflow-hidden text-xs min-w-[120px]">
                         <button
                           type="button"

@@ -358,7 +358,7 @@ function Profile() {
                 Seguridad
               </h2>
 
-              <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-2 tdt-scrollbar">
                 {user.devices?.map((device) => (
                   <div
                     key={device.id}

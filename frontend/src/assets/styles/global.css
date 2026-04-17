@@ -54,13 +54,60 @@ section[id] {
   scroll-margin-top: 100px;
 }
 
-/* Ocultar barra de scroll para el carrusel pero mantener funcionalidad */
-.custom-scrollbar::-webkit-scrollbar {
+/* Scrollbar global del proyecto */
+.tdt-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(231, 223, 200, 0.45) transparent;
+}
+
+.tdt-scrollbar::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.tdt-scrollbar::-webkit-scrollbar-button {
+  width: 0;
+  height: 0;
   display: none;
 }
-.custom-scrollbar {
-  -ms-overflow-style: none;  /* IE y Edge */
-  scrollbar-width: none;  /* Firefox */
+
+.tdt-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tdt-scrollbar::-webkit-scrollbar-track-piece:start {
+  margin-top: 15px;
+}
+
+.tdt-scrollbar::-webkit-scrollbar-track-piece:end {
+  margin-bottom: 15px;
+}
+
+.tdt-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.tdt-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(231, 223, 200, 0.48), rgba(188, 183, 167, 0.48));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-right-width: 5px;
+}
+
+.tdt-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(231, 223, 200, 0.72), rgba(188, 183, 167, 0.72));
+  background-clip: content-box;
+}
+
+/* Ocultar barra para carruseles u overflow decorativo */
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Clase principal para el fondo */

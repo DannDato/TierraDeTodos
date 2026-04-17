@@ -372,7 +372,7 @@ function Users() {
   }, [statusOptions, availableStatuses, selectedUser]);
 
   const getRoleBadge = (role, roleColor) => {
-    const baseClass = "inline-flex justify-center items-center text-xs font-bold px-3 py-1 rounded-full shadow-sm w-28";
+    const baseClass = "inline-flex justify-center items-center text-xs font-bold px-3 py-1 rounded-full shadow-sm min-w-[112px]";
     const safeRole = role || "N/A";
     const color = roleColor || roleColorMap[role] || "#29d096";
 
@@ -391,7 +391,7 @@ function Users() {
   };
 
   const getStatusBadge = (status, statusColor) => {
-    const baseClass = "inline-flex justify-center items-center text-xs font-bold px-3 py-1 rounded-full shadow-sm w-28";
+    const baseClass = "inline-flex justify-center items-center text-xs font-bold px-3 py-1 rounded-full shadow-sm min-w-[112px]";
     const safeStatus = status || "N/A";
     const color = statusColor || statusColorMap[status] || "#8a8a8a";
     return (
@@ -486,8 +486,8 @@ function Users() {
           </div> */}
         </div>
 
-        <div className="bg-black/20 rounded-3xl overflow-hidden shadow-md p-6">
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="bg-black/20 rounded-[2rem] border border-[var(--white-color)]/5 overflow-hidden shadow-md p-6">
+          <div className="flex flex-col md:flex-row md:items-end gap-4 mb-6">
             <div className="flex-1 relative">
               <Input
                 placeholder="Buscar jugador por nombre o email..."
@@ -498,14 +498,14 @@ function Users() {
               <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--white-color)] pointer-events-none" size={20} />
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Select value={roleFilter} onChange={setRoleFilter} options={roleOptions} />
               <Select value={statusFilter} onChange={setStatusFilter} options={statusOptions} />
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto tdt-scrollbar">
+            <table className="w-full min-w-[980px] text-left">
               <thead>
                 <tr className="bg-black/10 text-sm text-[var(--ins-text-gray)]">
                   <th className="py-4 px-4 font-bold uppercase tracking-wider">Jugador</th>
@@ -544,7 +544,7 @@ function Users() {
                     >
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-[var(--ins-text-dark)] rounded-full flex items-center justify-center shadow-sm overflow-hidden shrink-0">
+                          <div className="w-11 h-11 bg-[var(--black-color)]/30 border border-[var(--white-color)]/10 rounded-2xl flex items-center justify-center shadow-sm overflow-hidden shrink-0">
                             <button
                               onClick={() => openUserDetails(u.id)}
                             >
@@ -552,7 +552,10 @@ function Users() {
                               <User size={20} className="text-[var(--ins-text-gray)]" />
                             </button>
                           </div>
-                          <span className="font-bold text-[var(--ins-text-white)]">{u.username}</span>
+                          <div>
+                            <span className="font-bold text-[var(--ins-text-white)] block">{u.username}</span>
+                            <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-[var(--ins-text-dark)]">ID {u.id}</span>
+                          </div>
                         </div>
                       </td>
 
@@ -568,22 +571,22 @@ function Users() {
                         <div>
                           {u.lastConnection ? new Date(u.lastConnection).toLocaleString() : "N/A"}
                         </div>
-                        <div className="font-mono text-[10px] mt-1 opacity-70">Permisos: {(u.permissions || []).length}</div>
+                        <div className="font-mono text-[10px] mt-1 opacity-70 uppercase tracking-[0.14em]">Permisos: {(u.permissions || []).length}</div>
                       </td>
 
                       <td className="py-4 px-4 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
-                            className="p-2 hover:bg-white rounded-full text-gray-500 hover:text-blue-400 transition-colors"
+                            className="p-2 rounded-xl bg-[var(--black-color)]/20 border border-transparent text-gray-500 hover:text-blue-400 hover:border-blue-400/20 transition-colors"
                             title="Ver detalle"
                             onClick={() => openUserDetails(u.id)}
                           >
                             <Eye size={18} />
                           </button>
-                          <button className="p-2 hover:bg-white rounded-full text-gray-500 hover:text-red-500 transition-colors" title="Banear/Suspender">
+                          <button className="p-2 rounded-xl bg-[var(--black-color)]/20 border border-transparent text-gray-500 hover:text-red-500 hover:border-red-500/20 transition-colors" title="Banear/Suspender">
                             <Ban size={18} onClick={()=> banUserbyId(u.id,u.role)}/>
                           </button>
-                          <button className="p-2 hover:bg-white rounded-full text-gray-500 hover:text-blue-500 transition-colors" title="Enviar Mensaje">
+                          <button className="p-2 rounded-xl bg-[var(--black-color)]/20 border border-transparent text-gray-500 hover:text-blue-500 hover:border-blue-500/20 transition-colors" title="Enviar Mensaje">
                             <Mail size={18} />
                           </button>
                         </div>
@@ -601,7 +604,7 @@ function Users() {
             </table>
           </div>
 
-          <div className="mt-6 flex items-center justify-between text-sm font-medium text-[var(--gray-color)] px-4">
+          <div className="mt-6 flex items-center justify-between text-sm font-medium text-[var(--gray-color)] px-1">
             <span>Mostrando {filteredUsers.length} de {users.length} jugadores</span>
           </div>
         </div>

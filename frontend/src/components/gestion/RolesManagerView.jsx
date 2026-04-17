@@ -278,14 +278,17 @@ function RolesManagerView() {
         onConfirm={handleAlertConfirm}
       />
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
         <div>
           <h2 className="text-2xl font-extrabold text-[var(--ins-text-white)]">
             Gestión de Roles
           </h2>
+          <p className="text-sm text-[var(--ins-text-gray)] mt-1">
+            Organiza jerarquías, alcance operativo y permisos preset para cada tipo de cuenta.
+          </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <div className="relative">
             <Input
               placeholder="Buscar..."
@@ -307,11 +310,11 @@ function RolesManagerView() {
 
       {/* Grid de Roles */}
       {filteredRoles.length === 0 ? (
-        <div className="rounded-2xl bg-[var(--black-color)]/20 py-12 text-center text-[var(--ins-text-gray)]">
+        <div className="rounded-3xl border border-[var(--white-color)]/5 bg-[var(--black-color)]/20 py-12 text-center text-[var(--ins-text-gray)]">
           No hay roles para mostrar.
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
           {filteredRoles.map((role) => {
             return (
               <RoleCard
@@ -363,12 +366,12 @@ function RoleCard({ role, onOpenDetails, onDeleteRole }) {
   return (
     <div
       ref={cardRef}
-      className="relative bg-[var(--ins-background)] rounded-2xl p-6 flex flex-col justify-between hover:bg-[var(--black-color)]/20 transition-colors "
+      className="relative min-h-[220px] rounded-3xl border border-[var(--white-color)]/5 bg-[var(--black-color)]/20 p-6 flex flex-col justify-between shadow-sm hover:bg-[var(--black-color)]/25 hover:border-[var(--white-color)]/10 transition-all duration-200"
       onDoubleClick={() => onOpenDetails(role)}
     >
       <div className="flex justify-between items-start mb-4 relative">
         <span
-          className="px-3 py-1 rounded-full text-xs font-bold border"
+          className="px-3 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wider"
           style={{
             color: color,
             borderColor: `${color}40`,
@@ -380,14 +383,14 @@ function RoleCard({ role, onOpenDetails, onDeleteRole }) {
 
         <button
           onClick={() => setOptionsOpen(!optionsOpen)}
-          className="text-[var(--ins-text-dark)] hover:text-[var(--ins-text-white)] transition-colors p-1"
+          className="rounded-lg p-2 text-[var(--ins-text-dark)] hover:text-[var(--ins-text-white)] hover:bg-white/5 transition-colors"
         >
           <MoreVertical size={20} />
         </button>
 
         {/* Menú contextual posicionado absolutamente respecto a este header */}
         {optionsOpen && (
-          <div className="absolute right-0 top-8 w-32 bg-[var(--gray-dark-color)]  rounded-xl shadow-xl z-10 overflow-hidden text-sm">
+          <div className="absolute right-0 top-10 w-32 bg-[var(--ins-contextual-menu)] border border-[var(--white-color)]/10 rounded-xl shadow-xl z-10 overflow-hidden text-sm">
             <button
               onClick={() => {
                 onOpenDetails(role); // Pasamos todo el objeto role
@@ -410,17 +413,17 @@ function RoleCard({ role, onOpenDetails, onDeleteRole }) {
         )}
       </div>
 
-      <p className="text-sm text-[var(--ins-text-gray)] mb-6 line-clamp-2 min-h-[40px]">
+      <p className="text-sm text-[var(--ins-text-gray)] mb-6 line-clamp-3 min-h-[62px] leading-relaxed">
         {detail}
       </p>
 
-      <div className="flex gap-6 pt-4 mt-auto">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold tracking-wider text-[var(--ins-text-dark)] mb-1">USUARIOS</span>
+      <div className="grid grid-cols-2 gap-3 pt-4 mt-auto border-t border-[var(--white-color)]/5">
+        <div className="rounded-2xl bg-black/20 px-4 py-3">
+          <span className="text-[10px] font-bold tracking-[0.18em] text-[var(--ins-text-dark)] mb-1 block">USUARIOS</span>
           <span className="text-[var(--ins-text-white)] font-bold text-lg">{users}</span>
         </div>
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold tracking-wider text-[var(--ins-text-dark)] mb-1">PERMISOS</span>
+        <div className="rounded-2xl bg-black/20 px-4 py-3">
+          <span className="text-[10px] font-bold tracking-[0.18em] text-[var(--ins-text-dark)] mb-1 block">PERMISOS</span>
           <span className="text-[var(--ins-text-white)] font-bold text-lg">{permissions}</span>
         </div>
       </div>
@@ -532,7 +535,7 @@ function RoleDetailModal({
         )}
 
         {/* Cuerpo del formulario */}
-        <div className="p-8 overflow-y-auto custom-scrollbar flex flex-col gap-10">
+        <div className="p-8 overflow-y-auto tdt-scrollbar flex flex-col gap-10">
 
           {(isNewRole || activeTab === "data") && (
             <>
