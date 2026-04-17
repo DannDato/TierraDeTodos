@@ -75,6 +75,18 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'userId',
       as: 'profileImages'
     });
+
+    Users.hasMany(models.UserEdition, {
+      foreignKey: 'userID',
+      as: 'editions'
+    });
+
+    Users.belongsToMany(models.Edition, {
+      through: models.UserEdition,
+      foreignKey: 'userID',
+      otherKey: 'editionId',
+      as: 'editionsList'
+    });
   };
 
   Users.seed = async () => {
@@ -106,7 +118,7 @@ export default (sequelize, DataTypes) => {
       // 3. Un Moderador para probar permisos intermedios
       {
         username: 'alex_mod',
-        role: 'MODERATOR',
+        role: 'MOD',
         email: 'alex@tierradetodos.com',
         password: '$2b$10$rQgptFOsAm1mZtZbRMEnreQBuWqs6VOdweNey4jwHqXkMmeeIrqrO',
         displayName: 'AlexGuard',
@@ -163,7 +175,7 @@ export default (sequelize, DataTypes) => {
     const danndato = await Users.findOne({ where: { username: 'danndato' } });
     if (danndato) {
       const updates = {};
-      if (danndato.role !== 'ADMIN') updates.role = 'ADMIN';
+      if (danndato.role !== 'SUPER-ADMIN') updates.role = 'SUPER-ADMIN';
       if (danndato.account !== 'ACTIVE') updates.account = 'ACTIVE';
 
       if (Object.keys(updates).length > 0) {

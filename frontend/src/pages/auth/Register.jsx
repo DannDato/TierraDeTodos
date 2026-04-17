@@ -2,7 +2,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import api from "../../api/axios"
 import { useState } from "react"
 
-import Input from "../../elements/Input" 
+import Input from "../../elements/Input"
 import Button from "../../elements/Button"
 import Banner from "../../elements/Banner"
 import Footer from "../../components/Footer"
@@ -32,7 +32,7 @@ function Register() {
 
   const validate = (event) => {
     event.preventDefault();
-    
+
     // Reset de errores
     setUsernameError(username ? false : "El nombre de usuario es obligatorio");
     setEmailError(email ? false : "El correo electrónico es obligatorio");
@@ -58,7 +58,7 @@ function Register() {
           email,
           password
         },
-      );  
+      );
 
       // nvo dispositivo
       if (data.type === "new_device") {
@@ -98,7 +98,7 @@ function Register() {
           {/* LADO IZQUIERDO: BIENVENIDA (Invertido respecto al login para balance visual) */}
           <div className="col bg-[var(--black-color)] flex-col items-center justify-center p-10 text-[var(--white-color)]  hidden md:flex" data-aos="fade-left">
             <a href="/" className="hover:scale-105 transition-transform duration-300">
-              <img src="/img/tdt3.webp" alt="Tierra de Todos Logo" className="mb-6 w-48" />
+              <img src="/img/tdtLine.png" alt="Tierra de Todos Logo" className="mb-6 w-48" />
             </a>
             <p className="text-sm font-light mb-10 text-center leading-relaxed opacity-90">
               Si ya tienes una cuenta, puedes iniciar sesión fácilmente. Únete a nuestra comunidad y continúa tu aventura hoy mismo.

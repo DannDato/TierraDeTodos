@@ -36,14 +36,14 @@ function Home() {
   }, [location.pathname, location.state, navigate]);
 
   return (
-    <>  
+    <>
       <Navbar></Navbar>
       <Banner>
         <center className="h-full flex items-center justify-center ">
           <div className="max-w-[800px] text-[var(--white-color)] flex flex-col items-center z-20 " >
-            <img 
-              src="img/tdt3.webp" 
-              alt="Tierra de Todos Logo" 
+            <img
+              src="img/tdtLine.png"
+              alt="Tierra de Todos Logo"
               className="w-full max-w-[550px] mb-5 -my-30"
               data-aos="fade-down"
               data-aos-duration="2000"

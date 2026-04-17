@@ -4,6 +4,7 @@ import { Op } from 'sequelize';
 import generateDeviceHash from '../../utils/generateDeviceHash.js';
 import { createAccessCode } from '../../helpers/createCodes.js';
 import { applyRolePresetPermissions } from '../../helpers/applyRolePresetPermissions.js';
+import { getActualEdition } from '../../utils/getEdition.js';
 import bcrypt from 'bcrypt';
 
 class RegisterController {
@@ -15,6 +16,8 @@ class RegisterController {
     const transaction = await db.transaction();
 
     try {
+        const actualEdition = await getActualEdition();
+        if (!actualEdition) { return res.status(409).json({ message: 'No hay inscripciones activas en este momento' }); }
 
         if (!email || !password || !username) {
             return res.status(400).json({ message: 'Datos incompletos' });
@@ -62,6 +65,12 @@ class RegisterController {
 
         const SendAccess = await createAccessCode(newUser, deviceHash, req, res);
         if (!SendAccess) {throw new Error("No se pudo crear el código de acceso");}
+
+        await models.UserEdition.create({
+            editionId: actualEdition.id,
+            userID: newUser.id,
+            date: new Date()
+        }, { transaction });
 
         await transaction.commit();
 

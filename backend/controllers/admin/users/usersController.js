@@ -214,7 +214,7 @@ class UsersController {
       );
 
       const [roleRecord, statusRecord, assignableRoles, assignableStatuses] = await Promise.all([
-        models.Roles.findOne({ attributes: ['color'], where: { role: user.role, active: 'YES' } }),
+        models.Roles.findOne({ attributes: ['color', 'complementary', 'enfasis', 'extra'], where: { role: user.role, active: 'YES' } }),
         models.user_statuses.findOne({ attributes: ['color'], where: { status: user.account, active: 'YES' } }),
         this.getAssignableRoles(),
         this.getAssignableStatuses()
@@ -228,6 +228,9 @@ class UsersController {
           folio: user.folio,
           role: user.role,
           roleColor: roleRecord?.color || null,
+          roleComplementary: roleRecord?.complementary || null,
+          roleEnfasis: roleRecord?.enfasis || null,
+          roleExtra: roleRecord?.extra || null,
           status: user.account,
           statusColor: statusRecord?.color || null,
           uuid: user.uuid,

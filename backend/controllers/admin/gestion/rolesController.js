@@ -6,7 +6,7 @@ class RolesController {
   getRoles = async (req, res) => {
     try {
       const [roles] = await db.query(`
-        SELECT id, role, detail, color, asignable, active,
+        SELECT id, role, detail, color, complementary, enfasis, extra, asignable, active,
         (SELECT COUNT(id) FROM users WHERE role=Roles.role) AS users,
         (SELECT COUNT(permissionKey) FROM preset_permissions WHERE role=Roles.role) AS permissions
         FROM Roles
@@ -21,7 +21,16 @@ class RolesController {
     const transaction = await db.transaction();
 
     try {
-      const { role, detail, color, asignable = 'YES', active = 'YES' } = req.body || {};
+      const {
+        role,
+        detail,
+        color,
+        complementary,
+        enfasis,
+        extra,
+        asignable = 'YES',
+        active = 'YES'
+      } = req.body || {};
       const normalizedRole = String(role || '').trim().toUpperCase();
 
       if (!normalizedRole || !detail || !String(detail).trim()) {
@@ -50,6 +59,9 @@ class RolesController {
           role: normalizedRole,
           detail: String(detail).trim(),
           color: color || '#29d096',
+          complementary: complementary || '#6b7280',
+          enfasis: enfasis || '#111827',
+          extra: extra || '#f5f5f5',
           asignable,
           active
         },
@@ -72,6 +84,9 @@ class RolesController {
         role: newRole.role,
         detail: newRole.detail,
         color: newRole.color,
+        complementary: newRole.complementary,
+        enfasis: newRole.enfasis,
+        extra: newRole.extra,
         asignable: newRole.asignable,
         active: newRole.active,
         users: 0,
@@ -87,7 +102,7 @@ class RolesController {
 
     try {
       const roleId = Number(req.params.id);
-      const { role, detail, color, asignable, active } = req.body || {};
+      const { role, detail, color, complementary, enfasis, extra, asignable, active } = req.body || {};
 
       if (!roleId) {
         await transaction.rollback();
@@ -130,6 +145,9 @@ class RolesController {
       roleRecord.role = nextRole;
       roleRecord.detail = String(detail ?? roleRecord.detail).trim();
       roleRecord.color = color || roleRecord.color;
+      roleRecord.complementary = complementary || roleRecord.complementary;
+      roleRecord.enfasis = enfasis || roleRecord.enfasis;
+      roleRecord.extra = extra || roleRecord.extra;
       roleRecord.asignable = asignable || roleRecord.asignable;
       roleRecord.active = active || roleRecord.active;
       await roleRecord.save({ transaction });
@@ -157,6 +175,9 @@ class RolesController {
         role: roleRecord.role,
         detail: roleRecord.detail,
         color: roleRecord.color,
+        complementary: roleRecord.complementary,
+        enfasis: roleRecord.enfasis,
+        extra: roleRecord.extra,
         asignable: roleRecord.asignable,
         active: roleRecord.active
       });
@@ -218,7 +239,7 @@ class RolesController {
       }
 
       const roleRecord = await models.Roles.findByPk(roleId, {
-        attributes: ['id', 'role', 'detail', 'color', 'asignable', 'active']
+        attributes: ['id', 'role', 'detail', 'color', 'complementary', 'enfasis', 'extra', 'asignable', 'active']
       });
 
       if (!roleRecord) {

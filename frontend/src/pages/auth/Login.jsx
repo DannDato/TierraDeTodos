@@ -127,7 +127,7 @@ function Login() {
           {/* LADO DERECHO: BIENVENIDA */}
           <div className="col bg-[var(--black-color)] flex-col items-center justify-center p-10 text-[var(--white-color)]  hidden md:flex" data-aos="fade-right">
             <a href="/" className="hover:scale-105 transition-transform duration-300">
-              <img src="/img/tdt3.webp" alt="Tierra de Todos Logo" className="mb-6 w-48" />
+              <img src="/img/tdtLine.png" alt="Tierra de Todos Logo" className="mb-6 w-48" />
             </a>
 
             <p className="text-sm font-light mb-10 text-center leading-relaxed opacity-90">

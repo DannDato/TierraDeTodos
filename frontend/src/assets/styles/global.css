@@ -23,16 +23,16 @@
   --police-color: #0073ff;
   --admin-color: #ffffff;
 
-  
+
   --hover-primary: #4a6b9e;
   --hover-secondary: #1e6b4d;
   --hover-tertiary: #e6a000;
   --hover-cancel: #b24343;
   --hover-gray: #666666;
-  
+
   --discord-color: #5865f2;
   --discord-hover: #555eca;
-  
+
   --ins-background: #333130;
   --ins-contextual-menu: #272625;
   --ins-text-white: #e7dfc8;
@@ -132,7 +132,7 @@ section[id] {
     opacity: 1;
   }
   15% {
-    opacity: 1; 
+    opacity: 1;
   }
   85% {
     opacity: 1;

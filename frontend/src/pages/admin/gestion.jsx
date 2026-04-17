@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   ShieldCheck,
   Key,
@@ -6,6 +6,8 @@ import {
   Settings,
   Database,
   Smartphone,
+  Menu,
+  X,
 } from "lucide-react";
 import RolesManagerView from "../../components/gestion/RolesManagerView";
 import PermissionsManagerView from "../../components/gestion/PermissionsManagerView";
@@ -17,8 +19,31 @@ import DevicesManagerView from "../../components/gestion/DevicesManagerView";
 function Gestion() {
   const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
   const [activeSection, setActiveSection] = useState("roles");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
+        setSidebarOpen(false);
+      }
+    };
+    if (sidebarOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [sidebarOpen]);
+
+  const handleSelectSection = (id) => {
+    setActiveSection(id);
+    setSidebarOpen(false);
+  };
 
   const menuCategories = [
+    {
+      title: "Base",
+      items: [
+        { id: "editions", label: "Control de ediciones", icon: <ShieldCheck size={18} /> },
+      ]
+    },
     {
       title: "Seguridad y Accesos",
       items: [
@@ -56,43 +81,84 @@ function Gestion() {
             Gestión del Sistema
           </h1>
 
-          <p className="text-sm text-[var(--ins-text-gray)] mt-2 max-w-lg">
-            Administra y modera la configuracion completa del comportamiento del sistema, incluyendo roles, permisos, estatus de usuarios, sesiones activas y dispositivos autorizados. Control total para una gestión eficiente y segura.
-          </p>
+          <div className="flex items-start justify-between gap-4 mt-2">
+            <p className="text-sm text-[var(--ins-text-gray)] max-w-lg">
+              Administra y modera la configuracion completa del comportamiento del sistema, incluyendo roles, permisos, estatus de usuarios, sesiones activas y dispositivos autorizados. Control total para una gestión eficiente y segura.
+            </p>
+            {/* BOTÓN HAMBURGUESA — solo visible en < lg */}
+            <div className="lg:hidden flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--black-color)]/30 text-[var(--ins-text-white)] text-sm font-bold hover:bg-[var(--black-color)]/50 transition-colors"
+              >
+                <Menu size={18} />
+                <span>Menú</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-1 gap-8 min-h-0 overflow-hidden mt-10">
 
-            {/* SIDEBAR INTERNO */}
-            <div className="w-64 flex-shrink-0 flex flex-col gap-8 pb-8 sticky top-0 self-start">
-            {menuCategories.map((category, idx) => (
+            {/* OVERLAY — solo en < lg */}
+            {sidebarOpen && (
+              <div className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+            )}
+
+            {/* SIDEBAR */}
+            <div
+              ref={sidebarRef}
+              className={`
+                fixed lg:static z-50 lg:z-auto top-0 left-0 h-full lg:h-auto
+                w-72 lg:w-64
+                flex flex-col gap-8 pb-8
+                bg-[var(--ins-background)] lg:bg-transparent
+                px-6 pt-8 lg:px-0 lg:pt-0
+                flex-shrink-0 self-start
+                transition-transform duration-300
+                ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+              `}
+            >
+              {/* Botón cerrar — solo en < lg */}
+              <div className="lg:hidden flex justify-end mb-2">
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-1.5 rounded-lg text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-white/10"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {menuCategories.map((category, idx) => (
                 <div key={idx}>
-                <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--ins-text-dark)] mb-3">
+                  <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--ins-text-dark)] mb-3">
                     {category.title}
-                </h3>
-                <div className="flex flex-col gap-1">
+                  </h3>
+                  <div className="flex flex-col gap-1">
                     {category.items.map((item) => {
-                    const isActive = activeSection === item.id;
-                    return (
+                      const isActive = activeSection === item.id;
+                      return (
                         <button
-                        key={item.id}
-                        onClick={() => setActiveSection(item.id)}
-                        className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-colors duration-200 ${
+                          key={item.id}
+                          onClick={() => handleSelectSection(item.id)}
+                          className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-colors duration-200 ${
                             isActive
-                            ? "bg-[var(--black-color)]/20 text-[var(--ins-text-white)]"
-                            : "text-[var(--ins-text-gray)] hover:bg-[var(--black-color)]/10 hover:text-[var(--ins-text-white)]"
-                        }`}
+                              ? "bg-[var(--black-color)]/20 text-[var(--ins-text-white)]"
+                              : "text-[var(--ins-text-gray)] hover:bg-[var(--black-color)]/10 hover:text-[var(--ins-text-white)]"
+                          }`}
                         >
-                        <span className={isActive ? "text-[var(--secondary-color)]" : "text-[var(--ins-text-dark)]"}>
+                          <span className={isActive ? "text-[var(--secondary-color)]" : "text-[var(--ins-text-dark)]"}>
                             {item.icon}
-                        </span>
-                        {item.label}
+                          </span>
+                          {item.label}
                         </button>
-                    );
+                      );
                     })}
+                  </div>
                 </div>
-                </div>
-            ))}
+              ))}
             </div>
 
             {/* ÁREA DE CONTENIDO DINÁMICO */}

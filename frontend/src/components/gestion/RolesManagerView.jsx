@@ -84,6 +84,9 @@ function RolesManagerView() {
       role: "",
       detail: "",
       color: "#29d096",
+      complementary: "#6b7280",
+      enfasis: "#111827",
+      extra: "#f5f5f5",
       asignable: "YES",
       active: "YES",
       users: 0,
@@ -215,6 +218,9 @@ function RolesManagerView() {
       role: normalizedRole,
       detail: normalizedDetail,
       color: formData?.color || "#29d096",
+      complementary: formData?.complementary || "#6b7280",
+      enfasis: formData?.enfasis || "#111827",
+      extra: formData?.extra || "#f5f5f5",
       asignable: formData?.asignable || "YES",
       active: formData?.active || "YES",
     };
@@ -452,6 +458,9 @@ function RoleDetailModal({
     role: roleData?.role || "",
     detail: roleData?.detail || "",
     color: roleData?.color || "#ffffff",
+    complementary: roleData?.complementary || "#6b7280",
+    enfasis: roleData?.enfasis || "#111827",
+    extra: roleData?.extra || "#f5f5f5",
     asignable: roleData?.asignable || "YES",
     active: roleData?.active || "YES",
   });
@@ -463,6 +472,9 @@ function RoleDetailModal({
       role: roleData?.role || "",
       detail: roleData?.detail || "",
       color: roleData?.color || "#29d096",
+      complementary: roleData?.complementary || "#6b7280",
+      enfasis: roleData?.enfasis || "#111827",
+      extra: roleData?.extra || "#f5f5f5",
       asignable: roleData?.asignable || "YES",
       active: roleData?.active || "YES",
     });
@@ -551,7 +563,7 @@ function RoleDetailModal({
                 <div className="flex gap-4">
                   <div className="flex-1">
                     <Input
-                      label="Color Hexadecimal"
+                      label="Color Fondo"
                       value={formData.color}
                       onChange={(e) => handleChange("color", e.target.value)}
                       placeholder="#FFFFFF"
@@ -581,6 +593,83 @@ function RoleDetailModal({
                 placeholder="Describe qué hace este rol..."
                 context="dark"
               />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Input
+                      label="Color Complementary"
+                      value={formData.complementary}
+                      onChange={(e) => handleChange("complementary", e.target.value)}
+                      placeholder="#6B7280"
+                    />
+                  </div>
+                  <div className="w-12 mt-7 flex-shrink-0 flex items-center justify-center">
+                    <label
+                      className="relative w-10 h-10 rounded-xl border-2 border-[var(--black-color)]/40 cursor-pointer block overflow-hidden transition-transform hover:scale-105"
+                      style={{ backgroundColor: formData.complementary }}
+                      title="Elegir color complementary"
+                    >
+                      <input
+                        type="color"
+                        value={formData.complementary}
+                        onChange={(e) => handleChange("complementary", e.target.value)}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Input
+                      label="Color Enfasis"
+                      value={formData.enfasis}
+                      onChange={(e) => handleChange("enfasis", e.target.value)}
+                      placeholder="#111827"
+                    />
+                  </div>
+                  <div className="w-12 mt-7 flex-shrink-0 flex items-center justify-center">
+                    <label
+                      className="relative w-10 h-10 rounded-xl border-2 border-[var(--black-color)]/40 cursor-pointer block overflow-hidden transition-transform hover:scale-105"
+                      style={{ backgroundColor: formData.enfasis }}
+                      title="Elegir color enfasis"
+                    >
+                      <input
+                        type="color"
+                        value={formData.enfasis}
+                        onChange={(e) => handleChange("enfasis", e.target.value)}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Input
+                      label="Color Extra"
+                      value={formData.extra}
+                      onChange={(e) => handleChange("extra", e.target.value)}
+                      placeholder="#F5F5F5"
+                    />
+                  </div>
+                  <div className="w-12 mt-7 flex-shrink-0 flex items-center justify-center">
+                    <label
+                      className="relative w-10 h-10 rounded-xl border-2 border-[var(--black-color)]/40 cursor-pointer block overflow-hidden transition-transform hover:scale-105"
+                      style={{ backgroundColor: formData.extra }}
+                      title="Elegir color extra"
+                    >
+                      <input
+                        type="color"
+                        value={formData.extra}
+                        onChange={(e) => handleChange("extra", e.target.value)}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-2">

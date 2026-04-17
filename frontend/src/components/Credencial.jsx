@@ -53,6 +53,33 @@ function Credencial({
     );
   };
 
+  const getCredentialPaperStyle = (roleColor, roleExtra) => {
+    const color = roleColor || user?.roleColor;
+    const extra = roleExtra || user?.roleExtra || color;
+    if (!color) {
+      return {
+        backgroundColor: "#f0e8d8",
+        borderColor: "rgba(139,110,58,0.3)",
+        boxShadow:
+          "0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(139, 110, 58, 1) inset",
+      };
+    }
+
+    return {
+      backgroundColor: color,
+      borderColor: extra || color,
+      boxShadow: `0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 1px 1px ${extra || color} inset`,
+    };
+  };
+
+  const credentialPaperStyle = getCredentialPaperStyle(user?.roleColor, user?.roleExtra);
+
+  const credentialThemeStyle = {
+    "--credential-label-color": user?.roleComplementary || "var(--gray-color)",
+    "--credential-data-color": user?.roleEnfasis || "#111827",
+    "--credential-id-color": user?.roleExtra || "var(--gray-color)",
+  };
+
   return (
     <div className="w-full max-w-[340px] lg:max-w-[360px] mx-auto lg:mx-0 lg:shrink-0">
       <style>{`
@@ -80,14 +107,25 @@ function Credencial({
           transform: rotateY(180deg);
         }
 
+        .credential-themed .credential-label {
+          color: var(--credential-label-color) !important;
+        }
+
+        .credential-themed .credential-data {
+          color: var(--credential-data-color) !important;
+        }
+
+        .credential-themed .credential-id {
+          color: var(--credential-id-color) !important;
+        }
+
         .paper-texture {
           background-color: #f0e8d8;
           background-image:
-            repeating-linear-gradient(45deg, rgba(139, 110, 58, 0.01) 0px, rgba(139, 110, 58, 0.01) 2px, transparent 2px, transparent 4px),
-            linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(255,255,255,0) 20%, rgba(0,0,0,0.03) 90%, rgba(0,0,0,0.05));
+            repeating-linear-gradient(45deg, rgba(139, 110, 58, 0.01) 0px, rgba(139, 110, 58, 0.01) 2px, transparent 2px, transparent 4px);
           box-shadow:
             0 10px 25px -5px rgba(0, 0, 0, 0.6),
-            0 0 1px 1px rgba(139, 110, 58, 0.25) inset;
+            0 0 1px 1px rgba(139, 110, 58, 1) inset;
         }
 
         .font-mono-dossier {
@@ -116,7 +154,8 @@ function Credencial({
         </div>
       ) : (
         <div
-          className={`credential-container relative ${readOnly ? "" : "cursor-pointer"} select-none ${isFlipped ? "flipped" : ""}`}
+          className={`credential-container credential-themed relative ${readOnly ? "" : "cursor-pointer"} select-none ${isFlipped ? "flipped" : ""}`}
+          style={credentialThemeStyle}
           onDoubleClick={readOnly ? undefined : onToggleFlip}
         >
           {!readOnly && (
@@ -131,21 +170,37 @@ function Credencial({
 
           <div className="credential-flipper">
             <div className="credential-front">
-              <div className="h-full rounded-2xl paper-texture flex flex-col pt-5 pb-3 px-6 text-gray-900 border border-[rgba(139,110,58,0.3)]">
+              <div
+                className="h-full rounded-2xl paper-texture flex flex-col pt-5 pb-3 px-6 text-gray-900 border border-[rgba(139,110,58,0.3)]"
+                style={credentialPaperStyle}
+              >
                 <div className="flex items-center gap-3 pb-3 border-b border-[rgba(139,110,58,0.5)] mb-3">
                   <img src="/img/tierradetodos.png" alt="TDT Logo" className="w-20" />
                   <div className="flex-1 text-right">
-                    <p className="font-extrabold text-[14px] text-gray-950 uppercase tracking-tight leading-none text-right">Identidad Ciudadana</p>
-                    <p className="text-[12px] text-[var(--gray-color)] font-medium mt-1 text-right font-mono-dossier">Ministerio de Tierra de Todos</p>
+                    <p className="credential-data font-extrabold text-[17px] text-gray-950 uppercase tracking-tight leading-none text-right">Identidad Ciudadana</p>
+                    <p className="text-[12px] credential-label font-medium mt-1 text-right font-mono-dossier">Ministerio de Tierra de Todos</p>
                   </div>
                 </div>
 
-                <div className="border-b-2 border-dashed border-[rgba(139,110,58,0.4)] pb-1">
-                  <span className="block text-[9px] font-bold uppercase text-[var(--gray-color)] tracking-wider">Nombre Completo:</span>
-                  <h3 className="font-bold text-xl text-gray-950 leading-tight tracking-tight font-mono-dossier">{user.username}</h3>
+                <div className="border-b-2 border-dashed border-[rgba(139,110,58,0.4)] pb-2 mb-3">
+                  <div className="flex items-end justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="credential-label block text-[9px] font-bold uppercase tracking-wider">Nombre de usuario:</span>
+                      <h3 className="credential-data font-bold text-xl leading-tight tracking-tight font-mono-dossier truncate">{user.username}</h3>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0 pb-0.5">
+                      <span className="credential-label font-bold uppercase text-[9px] tracking-wider">Estatus:</span>
+                      <span
+                        className="font-bold px-2 py-0.5 rounded text-[9px] uppercase shadow-sm"
+                        style={{ color: "#fff", backgroundColor: currentStatus.color }}
+                      >
+                        {currentStatus.label}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-5 my-4">
+                <div className="flex items-start gap-5 my-3">
                   <div className="relative">
                     <button
                       type="button"
@@ -162,7 +217,7 @@ function Credencial({
                           style={{ imageRendering: "pixelated", ...avatarImageStyle }}
                         />
                       ) : (
-                        <UserFallbackIcon size={60} className="text-[var(--gray-color)]" />
+                        <UserFallbackIcon size={60} className="credential-label" />
                       )}
 
                       {!readOnly && !avatarPreview && (
@@ -200,70 +255,58 @@ function Credencial({
                     )}
                   </div>
 
-                  <div className="flex-1 space-y-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="block text-[14px] font-bold uppercase text-[var(--gray-color)] tracking-wider font-mono-dossier">Rango:</span>
-                      {getRoleBadge(user.role, user.roleColor)}
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-x-4 gap-y-3 font-mono-dossier text-sm text-gray-800 flex-1">
+                  <div className="flex-1 h-36 flex flex-col justify-between">
+                    <div className="grid grid-cols-3 gap-x-3 gap-y-2 font-mono-dossier text-sm flex-1 mt-2">
                       <div className="col-span-1 space-y-0.5 border-b border-[rgba(139,110,58,0.25)] pb-1">
-                        <span className="block font-bold uppercase text-[12px] text-[var(--gray-color)] tracking-wider">Pais</span>
-                        <span className="block text-[12px] font-bold text-gray-950">{user.country || "MX"}</span>
+                        <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Pais</span>
+                        <span className="credential-data block text-[12px] font-bold">{user.country || "MX"}</span>
                       </div>
                       <div className="col-span-2 space-y-0.5 border-b border-[rgba(139,110,58,0.25)] pb-1">
-                        <span className="block font-bold uppercase text-[12px] text-[var(--gray-color)] tracking-wider">ID Ciudadano</span>
-                        <span className="block text-[12px] font-bold text-gray-950">{user.folio || `TDT-${user.id?.toString().padStart(8, "0") || "XXXXXXXX"}`}</span>
+                        <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">ID Ciudadano</span>
+                        <span className="credential-id block text-[12px] font-bold">{user.folio || `TDT-${user.id?.toString().padStart(8, "0") || "XXXXXXXX"}`}</span>
                       </div>
 
                       <div className="col-span-3 space-y-0.5 border-b border-[rgba(139,110,58,0.25)] pb-1">
-                        <span className="block font-bold uppercase text-[12px] text-[var(--gray-color)] tracking-wider">Comunidad</span>
-                        <span className="block text-[12px] font-bold text-gray-950 break-all">TierraDeTodos</span>
+                        <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Comunidad</span>
+                        <span className="credential-data block text-[12px] font-bold break-all">TierraDeTodos</span>
+                      </div>
+
+                      <div className="col-span-3 border-b border-[rgba(139,110,58,0.25)] pb-1 space-y-0.5">
+                        <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Fecha de registro</span>
+                        <span className="credential-data block text-[12px] font-bold font-mono-dossier">
+                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" }) : "N/A"}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex-1 space-y-2.5">
-                  <div className="col-span-2 space-y-0.5 border-b border-[rgba(139,110,58,0.25)] pb-1">
-                    <span className="block font-bold uppercase text-[12px] text-[var(--gray-color)] tracking-wider">Fecha de registro</span>
-                    <span className="block text-[12px] font-bold text-gray-950 font-mono-dossier">
-                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" }) : "N/A"}
-                    </span>
-                  </div>
-                  <div className="col-span-1 space-y-0.5 border-b border-[rgba(139,110,58,0.25)] pb-1">
-                    <span className="block font-bold uppercase text-[12px] text-[var(--gray-color)] tracking-wider">Emision</span>
-                    <span className="block text-[12px] font-bold text-gray-950 font-mono-dossier">
-                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" }) : "N/A"}
-                    </span>
-                  </div>
+                <div className="border-b border-[rgba(139,110,58,0.25)] pb-2 mb-2">
+                  <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Insignias</span>
+                  <div className="mt-1 h-12 rounded border border-dashed border-[rgba(139,110,58,0.35)] bg-black/5" />
+                </div>
 
-                  <div className="col-span-3 flex items-center justify-between gap-1 pt-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold uppercase text-[12px] text-[var(--gray-color)] tracking-wider">Estatus:</span>
-                      <span
-                        className="font-bold px-2 py-0.5 rounded text-[12px] uppercase shadow-sm"
-                        style={{ color: "#fff", backgroundColor: currentStatus.color }}
-                      >
-                        {currentStatus.label}
-                      </span>
-                    </div>
-                    <div className="text-right border-b border-gray-900 pb-0.5 pr-1">
-                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block leading-none">Firma Titular</span>
-                      <span className="font-serif italic text-base text-gray-950">{user.username}</span>
+                <div>
+                  <div className="flex items-center justify-end gap-1 pt-0.5">
+                    <div className="text-right border-b border-gray-900 pb-0.5 pr-1 min-w-[120px]">
+                      <span className="credential-label text-[9px] font-bold uppercase tracking-widest block leading-none">Firma Titular</span>
+                      <span className="credential-data font-serif italic text-base">{user.username}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-center pt-2 border-t border-[rgba(139,110,58,0.4)] text-[8px] text-[var(--gray-color)] mt-auto">
-                  <p className="font-medium tracking-tight">AUTENTICACION BIOMETRICA VERIFICADA | © TierraDeTodos</p>
-                  <p className="mt-0.5 italic">Haz doble clic para ver el reverso</p>
+                <div className="text-center pt-2 border-t border-[rgba(139,110,58,0.4)] text-[8px] mt-auto">
+                  <p className="credential-label font-medium tracking-tight">Identidad única verificada | © TierraDeTodos</p>
+                  <p className="credential-label mt-0.5 italic">Haz doble clic para ver el reverso</p>
                 </div>
               </div>
             </div>
 
             <div className="credential-back">
-              <div className="h-full rounded-2xl paper-texture flex items-center justify-center p-4 border border-[rgba(139,110,58,0.3)]">
+              <div
+                className="h-full rounded-2xl paper-texture flex items-center justify-center p-4 border border-[rgba(139,110,58,0.3)]"
+                style={credentialPaperStyle}
+              >
                 <div className="w-full h-full rounded-lg bg-black/10 flex items-center justify-center p-3 shadow-inner overflow-hidden border border-[rgba(139,110,58,0.15)]">
                   <img
                     src="/img/tierradetodos.png"
