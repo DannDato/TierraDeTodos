@@ -30,7 +30,7 @@ const Select = ({
 
   return (
 
-    <div className="relative w-60 " ref={selectRef}>
+    <div className={`relative w-60 ${className}`} ref={selectRef}>
       <div
         onClick={() => setIsOpen(!isOpen)}
         className=" px-4 py-3 mt-1 border-b-1 border-[var(--ins-text-gray)] text-sm font-medium text-[var(--ins-text-white)] cursor-pointer flex justify-between items-center"

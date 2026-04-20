@@ -50,6 +50,7 @@ export default (sequelize, DataTypes) => {
       { role: 'ADMIN', permissionKey: 'gest.roles', active: true },
       { role: 'ADMIN', permissionKey: 'gest.permissions', active: true },
       { role: 'ADMIN', permissionKey: 'gest.statuses', active: true },
+      { role: 'ADMIN', permissionKey: 'gest.editions', active: true },
       { role: 'ADMIN', permissionKey: 'user.view', active: true },
       { role: 'ADMIN', permissionKey: 'user.edit', active: true },
 

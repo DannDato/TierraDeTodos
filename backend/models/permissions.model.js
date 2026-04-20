@@ -62,6 +62,7 @@ export default (sequelize, DataTypes) => {
       { key: 'gest.roles', name: 'Gestionar roles', description: 'Permite crear, editar y eliminar roles', active: true },
       { key: 'gest.permissions', name: 'Gestionar permisos', description: 'Permite crear, editar y eliminar permisos', active: true },
       { key: 'gest.statuses', name: 'Gestionar estatus', description: 'Permite crear, editar y eliminar estatus', active: true },
+      { key: 'gest.editions', name: 'Gestionar ediciones', description: 'Permite crear, aperturar, cerrar y eliminar ediciones', active: true },
       { key: 'user.view', name: 'Ver usuarios', description: 'Permite ver la lista de usuarios y sus detalles', active: true },
       { key: 'user.edit', name: 'Editar usuarios', description: 'Permite modificar los datos de los usuarios, incluyendo roles y permisos', active: true }
     ];

@@ -10,10 +10,27 @@ import bcrypt from 'bcrypt';
 class RegisterController {
     buildUserFolio = (userId) => `TDT-${String(userId).padStart(8, '0')}`;
 
+    ensureUserInActiveEdition = async ({ userId, source = 'REGISTER', transaction, editionId }) => {
+        const effectiveEditionId = editionId || (await getActualEdition())?.id;
+        if (!effectiveEditionId) return null;
+
+        await models.UserEdition.findOrCreate({
+            where: {
+                editionId: effectiveEditionId,
+                userID: userId
+            },
+            defaults: {
+                source
+            },
+            transaction
+        });
+
+        return effectiveEditionId;
+    };
+
   register = async (req, res) => {
     const { email, password, username } = req.body;
-
-    const transaction = await db.transaction();
+    let transaction = null;
 
     try {
         const actualEdition = await getActualEdition();
@@ -22,6 +39,8 @@ class RegisterController {
         if (!email || !password || !username) {
             return res.status(400).json({ message: 'Datos incompletos' });
         }
+
+        transaction = await db.transaction();
 
         const existingUser = await models.Users.findOne({
             where: {
@@ -66,13 +85,15 @@ class RegisterController {
         const SendAccess = await createAccessCode(newUser, deviceHash, req, res);
         if (!SendAccess) {throw new Error("No se pudo crear el código de acceso");}
 
-        await models.UserEdition.create({
+        await this.ensureUserInActiveEdition({
+            userId: newUser.id,
+            source: 'REGISTER',
             editionId: actualEdition.id,
-            userID: newUser.id,
-            date: new Date()
-        }, { transaction });
+            transaction
+        });
 
         await transaction.commit();
+        transaction = null;
 
         return res.status(201).json({
             type: "new_device",
@@ -81,7 +102,9 @@ class RegisterController {
 
     } catch (error) {
 
-        await transaction.rollback();
+        if (transaction) {
+            await transaction.rollback();
+        }
 
         console.error("REGISTER ERROR:", error);
 

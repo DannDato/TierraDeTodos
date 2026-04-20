@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { RefreshCcw, LogOut } from "lucide-react";
+import { RefreshCcw, LogOut, Search } from "lucide-react";
 
 import Button from "../../elements/Button";
+import Input from "../../elements/Input";
 import AlertModal from "../../elements/AlertModal";
 import LoadingOverlay from "../LoadingOverlay";
 import api from "../../api/axios";
 
 function SessionsManagerView() {
   const [sessions, setSessions] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
@@ -94,6 +96,17 @@ function SessionsManagerView() {
     return `DV-${digits.slice(-5).padStart(5, "0")}`;
   };
 
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const filteredSessions = sessions.filter((session) => {
+    if (!normalizedSearchTerm) return true;
+
+    const haystack = Object.values(session || {})
+      .map((value) => String(value ?? "").toLowerCase())
+      .join(" ");
+
+    return haystack.includes(normalizedSearchTerm);
+  });
+
   return (
     <div className="flex flex-col h-full animate-[fadeIn_0.2s_ease-out]">
       <LoadingOverlay isVisible={loading || isSaving} />
@@ -106,15 +119,26 @@ function SessionsManagerView() {
         onConfirm={handleAlertConfirm}
       />
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
         <div>
           <h2 className="text-2xl font-extrabold text-[var(--ins-text-white)]">Sesiones Globales</h2>
           <p className="text-sm text-[var(--ins-text-gray)] mt-1">Listado de sesiones activas actualmente.</p>
         </div>
 
-        <Button variant="primary" size="md" className="flex items-center gap-2" onClick={loadSessions}>
-          <RefreshCcw size={16} /> Actualizar
-        </Button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="relative">
+            <Input
+              placeholder="Buscar en cualquier campo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--ins-text-white)]/50 pointer-events-none" size={20} />
+          </div>
+
+          <Button variant="primary" size="md" className="flex items-center gap-2" onClick={loadSessions}>
+            <RefreshCcw size={16} /> Actualizar
+          </Button>
+        </div>
       </div>
 
       <div className="bg-black/20 rounded-3xl overflow-hidden shadow-md p-6">
@@ -131,12 +155,14 @@ function SessionsManagerView() {
               </tr>
             </thead>
             <tbody>
-              {sessions.length === 0 ? (
+              {filteredSessions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-[var(--ins-text-gray)]">No hay sesiones activas.</td>
+                  <td colSpan={6} className="py-10 text-center text-[var(--ins-text-gray)]">
+                    {sessions.length === 0 ? "No hay sesiones activas." : "No hay resultados para la búsqueda."}
+                  </td>
                 </tr>
               ) : (
-                sessions.map((session) => (
+                filteredSessions.map((session) => (
                   <tr key={session.id} className="border-b border-black/10 hover:bg-black/5 transition-colors">
                     <td className="py-4 px-4">
                       <span className="inline-flex items-center gap-2 text-emerald-300 text-xs font-semibold">

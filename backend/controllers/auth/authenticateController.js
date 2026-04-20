@@ -4,9 +4,27 @@ import { Op } from 'sequelize';
 import generateDeviceHash from '../../utils/generateDeviceHash.js';
 import { createAccessCode } from '../../helpers/createCodes.js';
 import { CreateSession } from '../../helpers/CreateSession.js';
+import { getActualEdition } from '../../utils/getEdition.js';
 import bcrypt from 'bcrypt';
 
 class AuthenticateController {
+    ensureUserInActiveEdition = async ({ userId }) => {
+        const actualEdition = await getActualEdition();
+        if (!actualEdition) return null;
+
+        await models.UserEdition.findOrCreate({
+            where: {
+                editionId: actualEdition.id,
+                userID: userId
+            },
+            defaults: {
+                source: 'LOGIN'
+            }
+        });
+
+        return actualEdition;
+    };
+
   authenticate = async (req, res) => {
     const { usuario, password } = req.body;
     
@@ -151,6 +169,8 @@ class AuthenticateController {
             ip_address: req.ip,
             user_agent: req.headers['user-agent']
         });
+
+        await this.ensureUserInActiveEdition({ userId: user.id });
 
         // Registrar dispositivo
         const deviceHash = generateDeviceHash(req);

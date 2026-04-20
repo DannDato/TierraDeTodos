@@ -1,69 +1,26 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import api from "../api/axios";
 
 export default function Reglas() {
-  
-  // temporal (luego esto se toma del backend)
-  const reglasData = [
-    {
-      id: 1,
-      titulo: "Reglas principales",
-      color: "text-red-400",
-      borderColor: "border-red-500/30",
-      descripcion:
-        "A quien no cumpla con estas reglas se le asignará tiempo de cárcel irrevocable dentro del servidor sin excepción.",
-      icon: "❌",
-      items: [
-        "Prohibido entrar a casas sin permiso.",
-        "Prohibido abrir cofres ajenos.",
-        "Prohibido robar objetos.",
-        "Prohibido matar mascotas.",
-        "Prohibidas construcciones flotantes.",
-        "Prohibido usar TNT o explosivos.",
-        "Prohibido acceder al Nether o End.",
-        "Prohibido usar hacks o glitches."
-      ]
-    },
-    {
-      id: 2,
-      titulo: "Obligaciones",
-      color: "text-green-400",
-      borderColor: "border-green-500/30",
-      icon: "✅",
-      items: [
-        "Plantar un árbol por cada árbol talado.",
-        "Respetar construcciones ajenas.",
-        "Mantener convivencia respetuosa.",
-        "Reparar daños accidentales.",
-        "Respetar decisiones del staff."
-      ]
-    },
-    {
-      id: 3,
-      titulo: "Reglas técnicas",
-      color: "text-yellow-400",
-      borderColor: "border-yellow-500/30",
-      icon: "⚖️",
-      items: [
-        "Prohibido uso de X-Ray.",
-        "Prohibido mods que den ventaja.",
-        "Prohibido macros o automatizaciones.",
-        "Prohibido cualquier modificación no vanilla."
-      ]
-    },
-    {
-      id: 4,
-      titulo: "Indicaciones del staff",
-      color: "text-[var(--tertiary-color)]",
-      borderColor: "border-[var(--tertiary-color)]",
-      icon: "🎙️",
-      items: [
-        "No ignorar indicaciones del streamer.",
-        "Respetar la jerarquía del servidor.",
-        "Comunicar conflictos al streamer correspondiente.",
-        "No saltar la cadena de comunicación."
-      ]
-    }
-  ];
+  const [reglasData, setReglasData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadRules = async () => {
+      try {
+        setLoading(true);
+        const { data } = await api.get("/home/rules");
+        setReglasData(data?.rules || []);
+      } catch (error) {
+        console.error("Error cargando reglas:", error);
+        setReglasData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRules();
+  }, []);
 
   return (
     <section id="reglas" className="scroll-smooth py-20 px-6 md:px-12 lg:px-20 rounded-[30px] mx-2 md:mx-10 text-[var(--white-color)] min-h-screen relative z-20">
@@ -78,42 +35,48 @@ export default function Reglas() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8" data-aos="fade-up" data-aos-duration="1000">
-          {reglasData.map((section) => (
-            <div 
-              key={section.id} 
-              className={`bg-black/50 rounded-2xl p-6 md:p-8 hover:bg-black/80 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 flex flex-col h-full ${section.borderColor ? `hover:border-b-4 ${section.borderColor}` : ''}`}
-            >
-              
-              <div className="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
-                <span className="text-3xl bg-black/30 p-3 rounded-xl shadow-inner" data-aos="fade" data-aos-duration="3000" data-aos-delay="500">
-                  {section.icon}
-                </span>
-                <h3 className={`text-2xl font-bold tracking-wide ${section.color}`} data-aos="fade" data-aos-duration="1000">
-                  {section.titulo}
-                </h3>
-              </div>
+        {loading ? (
+          <div className="text-center text-gray-400 text-lg" data-aos="fade-up" data-aos-duration="1000">
+            Cargando reglas...
+          </div>
+        ) : reglasData.length === 0 ? (
+          <div className="text-center text-gray-400 text-lg" data-aos="fade-up" data-aos-duration="1000">
+            aun no tenemos las reglas definidas
+          </div>
+        ) : (
+        <div className="max-w-4xl mx-auto bg-black/45 rounded-[28px] border border-white/8 shadow-2xl backdrop-blur-sm overflow-hidden" data-aos="fade-up" data-aos-duration="1000">
+          <div className="px-6 md:px-8 py-5 border-b border-white/8 bg-black/20">
+            <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+              Cada punto marca una regla obligatoria dentro de la edición actual. Léelas completas antes de entrar al servidor.
+            </p>
+          </div>
 
-              {section.descripcion && (
-                <div className="bg-red-900/20 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg">
-                  <p className="text-sm md:text-base font-medium text-red-300 leading-relaxed">
-                    {section.descripcion}
-                  </p>
+          <ul className="divide-y divide-white/6">
+            {reglasData.map((rule, index) => (
+              <li
+                key={rule.id || `${rule.category}-${index}`}
+                className="flex items-start gap-4 px-6 md:px-8 py-5 hover:bg-white/[0.03] transition-colors duration-300"
+                data-aos="fade-up"
+                data-aos-duration={500 + index * 70}
+              >
+                <div className="flex items-center gap-3 pt-0.5 shrink-0 min-w-[48px]">
+                  <span
+                    className="w-3 h-3 rounded-full shadow-[0_0_14px_currentColor]"
+                    style={{ color: rule.color || "#ffffff", backgroundColor: rule.color || "#ffffff" }}
+                  />
+                  <span className="text-lg leading-none" style={{ color: rule.color || "#ffffff" }}>
+                    {rule.icon || "•"}
+                  </span>
                 </div>
-              )}
 
-              <ul className="space-y-3 flex-grow">
-                {section.items.map((item, index) => (
-                  <li key={index} className="flex items-start gap-3 text-gray-300">
-                    <span className={`mt-1 text-sm ${section.color}`}>✦</span>
-                    <span className="leading-relaxed" data-aos="fade-up" data-aos-duration={500 + index * 200}>{item}</span>
-                  </li>
-                ))}
-              </ul>
-
-            </div>
-          ))}
+                <p className="leading-relaxed text-gray-200 md:text-[1.02rem]">
+                  {rule.item}
+                </p>
+              </li>
+            ))}
+          </ul>
         </div>
+        )}
 
       </div>
     </section>

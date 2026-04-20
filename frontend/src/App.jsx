@@ -17,6 +17,8 @@ import Configuration from "./pages/user/configuration";
 import Start from "./pages/user/start";
 import Reports from "./pages/user/Reports";
 import Download from "./pages/user/download";
+import Players from "./pages/user/players";
+import News from "./pages/user/news";
 // Páginas de admin
 import Users from "./pages/admin/users";
 import Gestion from "./pages/admin/gestion";
@@ -47,8 +49,10 @@ const App = function App() {
       <Route path="/aboutapp" element={<DashboardLayout><AboutApp /></DashboardLayout>}/>
       <Route path="/configuration" element={<DashboardLayout><Configuration /></DashboardLayout>}/>
       <Route path="/start" element={<DashboardLayout><Start /></DashboardLayout>}/>
-      <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>}/>
+      <Route path="/tickets" element={<DashboardLayout><Reports /></DashboardLayout>}/>
       <Route path="/download" element={<DashboardLayout><Download /></DashboardLayout>}/>
+      <Route path="/players" element={<DashboardLayout><Players /></DashboardLayout>}/>
+      <Route path="/news" element={<DashboardLayout><News /></DashboardLayout>}/>
       <Route path="/gestion" element={<DashboardLayout><Gestion /></DashboardLayout>}/>
       
       <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>}/>

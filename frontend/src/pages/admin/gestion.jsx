@@ -14,11 +14,12 @@ import PermissionsManagerView from "../../components/gestion/PermissionsManagerV
 import StatusManagerView from "../../components/gestion/StatusManagerView";
 import SessionsManagerView from "../../components/gestion/SessionsManagerView";
 import DevicesManagerView from "../../components/gestion/DevicesManagerView";
+import EditionsManagerView from "../../components/gestion/EditionsManagerView";
 
 
 function Gestion() {
   const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
-  const [activeSection, setActiveSection] = useState("roles");
+  const [activeSection, setActiveSection] = useState("editions");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
 
@@ -164,6 +165,7 @@ function Gestion() {
             {/* ÁREA DE CONTENIDO DINÁMICO */}
             <div className="flex-1 min-h-0 bg-[var(--black-color)]/20 rounded-[2rem] overflow-hidden flex flex-col relative">
             <div className="flex-1 overflow-y-auto p-8 tdt-scrollbar">
+              {activeSection === "editions" && <EditionsManagerView />}
                 {activeSection === "roles" && <RolesManagerView />}
                 {activeSection === "status" && <StatusManagerView />}
                 {activeSection === "permissions" && <PermissionsManagerView />}

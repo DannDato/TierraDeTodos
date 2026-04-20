@@ -20,6 +20,7 @@ function Credencial({
   onTriggerAvatarPicker = () => {},
   onRequestDeleteAvatar = () => {},
   readOnly = false,
+  lazyImages = false,
 }) {
   const UserFallbackIcon = User;
 
@@ -79,6 +80,17 @@ function Credencial({
     "--credential-data-color": user?.roleEnfasis || "#111827",
     "--credential-id-color": user?.roleExtra || "var(--gray-color)",
   };
+
+  const resolvedAvatarPreview = avatarPreview || user?.avatarUrl || user?.mc_skin_head || null;
+  const resolvedAvatarPosX = Number.isFinite(Number(user?.avatarPosX)) ? Number(user?.avatarPosX) : 50;
+  const resolvedAvatarPosY = Number.isFinite(Number(user?.avatarPosY)) ? Number(user?.avatarPosY) : 50;
+  const resolvedAvatarZoom = Number.isFinite(Number(user?.avatarZoom)) ? Number(user?.avatarZoom) : 1;
+  const resolvedAvatarImageStyle = avatarPreview
+    ? avatarImageStyle
+    : {
+        objectPosition: `${resolvedAvatarPosX}% ${resolvedAvatarPosY}%`,
+        transform: `scale(${resolvedAvatarZoom})`,
+      };
 
   return (
     <div className="w-full max-w-[340px] lg:max-w-[360px] mx-auto lg:mx-0 lg:shrink-0">
@@ -209,18 +221,20 @@ function Credencial({
                       title="Subir imagen de perfil"
                       disabled={readOnly || isUploadingAvatar || isSavingAvatarPosition}
                     >
-                      {avatarPreview ? (
+                      {resolvedAvatarPreview ? (
                         <img
-                          src={avatarPreview}
+                          src={resolvedAvatarPreview}
                           alt="Skin Head"
                           className="w-full h-full object-cover"
-                          style={{ imageRendering: "pixelated", ...avatarImageStyle }}
+                          loading={lazyImages ? "lazy" : "eager"}
+                          decoding="async"
+                          style={{ imageRendering: "pixelated", ...resolvedAvatarImageStyle }}
                         />
                       ) : (
                         <UserFallbackIcon size={60} className="credential-label" />
                       )}
 
-                      {!readOnly && !avatarPreview && (
+                      {!readOnly && !resolvedAvatarPreview && (
                         <span className="absolute inset-x-0 bottom-0 bg-black/45 text-white text-[9px] py-0.5 flex items-center justify-center gap-1">
                           <Upload size={10} />
                           {isUploadingAvatar ? "Subiendo..." : "Subir"}
@@ -228,7 +242,7 @@ function Credencial({
                       )}
                     </button>
 
-                    {!readOnly && avatarPreview && isAvatarMenuOpen && (
+                    {!readOnly && resolvedAvatarPreview && isAvatarMenuOpen && (
                       <div className="absolute z-20 top-[calc(100%+6px)] left-0 rounded-lg border border-black/30 bg-[var(--ins-background)] shadow-lg overflow-hidden text-xs min-w-[120px]">
                         <button
                           type="button"
@@ -312,6 +326,8 @@ function Credencial({
                     src="/img/tierradetodos.png"
                     alt="TierraDeTodos Logo Grande"
                     className="object-contain"
+                    loading={lazyImages ? "lazy" : "eager"}
+                    decoding="async"
                     style={{
                       width: "80%",
                       height: "80%",
@@ -331,6 +347,8 @@ function Credencial({
                 src={cancelledStamp}
                 alt="Credencial cancelada"
                 className="w-[88%] max-w-[320px] opacity-80"
+                loading={lazyImages ? "lazy" : "eager"}
+                decoding="async"
                 style={{ transform: "rotate(-12deg)" }}
               />
             </div>

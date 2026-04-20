@@ -27,7 +27,7 @@ const getActualEditionByUser = async (userId) => {
         const [result] = await db.query(`
             SELECT e.id, e.name, e.number, e.date_start, e.date_end, e.description, e.status
             FROM edition e
-            INNER JOIN user_edition ue ON ue.editionId = e.id
+            INNER JOIN user_editions ue ON ue.editionId = e.id
             WHERE ue.userID = ? AND e.status = 'ACTIVE'
             ORDER BY e.date_start DESC
             LIMIT 1
