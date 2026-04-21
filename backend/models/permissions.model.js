@@ -62,6 +62,7 @@ export default (sequelize, DataTypes) => {
       { key: 'menu.news', name: 'Noticias', description: 'Permite ver la sección de noticias', active: true },
       { key: 'news.create', name: 'Crear noticias', description: 'Permite publicar nuevas noticias', active: true },
       { key: 'news.edit', name: 'Editar noticias', description: 'Permite editar noticias creadas por el usuario', active: true },
+      { key: 'news.delete', name: 'Eliminar noticias', description: 'Permite eliminar noticias del sistema', active: true },
       { key: 'menu.download', name: 'Descargas', description: 'Permite ver la sección de descargas', active: true },
       { key: 'menu.aboutapp', name: 'Acerca de', description: 'Permite ver about app', active: true },
       { key: 'menu.gestion', name: 'Gestión', description: 'Permite ver gestión de sistema', active: true },

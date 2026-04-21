@@ -146,10 +146,7 @@ function Credencial({
         }
 
         .minecraft-mugshot {
-          background-image: url('https://www.transparenttextures.com/patterns/dark-dotted.png'),
-                            linear-gradient(to bottom, #5a5a5a, #4a4a4a);
-          border: 4px solid #3a3a3a;
-          box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 2px 2px 0 rgba(0,0,0,0.3);
+          border: 1px solid #3a3a3a42;
           image-rendering: pixelated;
         }
       `}</style>

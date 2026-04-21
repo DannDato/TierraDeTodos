@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronRight, Plus, UserRound, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
 import Button from "../../elements/Button";
@@ -18,6 +18,7 @@ const createInitialNewsForm = () => ({
 });
 
 function News() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const currentUser = {
     role: localStorage.getItem("role") || "USER",
     username: localStorage.getItem("username") || "Sistema",
@@ -99,6 +100,7 @@ function News() {
 
   const hasCreatePermission = permissions.includes("news.create");
   const hasEditPermission = permissions.includes("news.edit");
+  const hasDeletePermission = permissions.includes("news.delete");
 
   const normalizedNews = useMemo(() => {
     return (news || []).map((item, index) => {
@@ -173,7 +175,7 @@ function News() {
     return "#f59e0b";
   };
 
-  const openNewsModal = (article) => {
+  const openNewsModal = useCallback((article) => {
     setSelectedNews(article);
     setIsEditingSelected(false);
     setEditFormData({
@@ -186,7 +188,7 @@ function News() {
     setEditImageFile(null);
     setEditImagePreview("");
     setCommentText("");
-  };
+  }, []);
 
   const closeNewsModal = () => {
     setSelectedNews(null);
@@ -216,6 +218,24 @@ function News() {
 
     loadComments();
   }, [selectedNews?.id]);
+
+  useEffect(() => {
+    const openId = String(searchParams.get("open") || "").trim();
+    if (!openId || normalizedNews.length === 0 || selectedNews) {
+      return;
+    }
+
+    const target = normalizedNews.find((item) => String(item.id) === openId);
+    if (!target) {
+      return;
+    }
+
+    openNewsModal(target);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("open");
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams, normalizedNews, selectedNews, openNewsModal]);
 
   const openCreateModal = () => {
     setFormData({
@@ -416,6 +436,24 @@ function News() {
     }
   };
 
+  const handleDeleteSelected = async () => {
+    if (!selectedNews?.id || !hasDeletePermission) return;
+
+    const ok = window.confirm("Esta accion eliminara la noticia de forma permanente. Deseas continuar?");
+    if (!ok) return;
+
+    try {
+      setSubmitting(true);
+      await api.delete(`/user/news/${selectedNews.id}`);
+      setNews((prev) => (Array.isArray(prev) ? prev.filter((item) => item.id !== selectedNews.id) : []));
+      closeNewsModal();
+    } catch (error) {
+      window.alert(error.response?.data?.message || "No se pudo eliminar la noticia.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
       <LoadingOverlay isVisible={loading || submitting} message={submitting ? "Publicando noticia..." : "Cargando noticias"} />
@@ -429,8 +467,11 @@ function News() {
               <span className="text-[var(--secondary-color)]">Noticias</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--ins-text-white)] tracking-tight">
-              Noticias del Sistema
+              Noticias!
             </h1>
+            <p className="text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
+              Mantente al tanto de las últimas novedades, eventos y anuncios relacionados con Tierra de Todos. Aquí encontrarás toda la información oficial sobre el servidor, actualizaciones, actividades especiales y mucho más. ¡No te pierdas nada!
+            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
@@ -579,13 +620,37 @@ function News() {
                   </div>
 
                   {!isEditingSelected && canEditSelected && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="primary"
+                        className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+                        onClick={startEditSelected}
+                      >
+                        Editar noticia
+                      </Button>
+
+                      {hasDeletePermission && (
+                        <Button
+                          type="button"
+                          variant="cancel"
+                          className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white"
+                          onClick={handleDeleteSelected}
+                        >
+                          Eliminar
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {!isEditingSelected && !canEditSelected && hasDeletePermission && (
                     <Button
                       type="button"
-                      variant="primary"
-                      className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
-                      onClick={startEditSelected}
+                      variant="cancel"
+                      className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white"
+                      onClick={handleDeleteSelected}
                     >
-                      Editar noticia
+                      Eliminar
                     </Button>
                   )}
                 </div>
@@ -622,7 +687,8 @@ function News() {
                       rows={6}
                       value={editFormData.description}
                       onChange={(e) => setEditFormData((prev) => ({ ...prev, description: e.target.value }))}
-                      className="w-full bg-transparent border-b border-white/30 text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none"
+                      className="w-full bg-transparent border-b border-white/30 text-lg text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none"
+                      style={{ fontFamily: '"Times New Roman", Times, serif' }}
                     />
                   </div>
 
@@ -632,24 +698,37 @@ function News() {
                       rows={2}
                       value={editFormData.note}
                       onChange={(e) => setEditFormData((prev) => ({ ...prev, note: e.target.value }))}
-                      className="w-full bg-transparent border-b border-white/25 text-xs text-[var(--ins-text-gray)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none"
+                      className="w-full bg-transparent border-b border-white/25 text-base text-[var(--ins-text-gray)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none"
+                      style={{ fontFamily: '"Times New Roman", Times, serif' }}
                     />
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="flex flex-wrap gap-4 text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold">
-                    <span>Fecha: {selectedNews.dateLabel}</span>
-                    <span>Reportero: {selectedNews.Reporter}</span>
+                  <div
+                    className="-mx-6 -mt-6 px-6 py-6 bg-white"
+                    style={{
+                      backgroundImage:
+                        "radial-gradient(rgba(0,0,0,0.06) 0.45px, transparent 0.45px), linear-gradient(0deg, rgba(0,0,0,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px)",
+                      backgroundSize: "3px 3px, 14px 14px, 18px 18px",
+                      backgroundPosition: "0 0, 0 0, 0 0",
+                    }}
+                  >
+                    <div className="flex flex-wrap gap-4 text-xs text-black/65 uppercase tracking-wider font-semibold mb-4">
+                      <span>Fecha: {selectedNews.dateLabel}</span>
+                      <span>Reportero: {selectedNews.Reporter}</span>
+                    </div>
+
+                    <p className="text-2xl text-black text-justify whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                      {selectedNews.description}
+                    </p>
+
+                    {selectedNews.note ? (
+                      <p className="mt-4 text-base text-black/75 whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                        Nota: {selectedNews.note}
+                      </p>
+                    ) : null}
                   </div>
-
-                  <p className="text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap">
-                    {selectedNews.description}
-                  </p>
-
-                  {selectedNews.note ? (
-                    <p className="text-xs text-[var(--ins-text-gray)] whitespace-pre-wrap">Nota: {selectedNews.note}</p>
-                  ) : null}
                 </>
               )}
 
@@ -830,7 +909,8 @@ function News() {
                   value={formData.description}
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="Contenido principal de la noticia"
-                  className="w-full bg-transparent border-b border-white/30 text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/45"
+                  className="w-full bg-transparent border-b border-white/30 text-lg text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/45"
+                  style={{ fontFamily: '"Times New Roman", Times, serif' }}
                 />
               </div>
 
@@ -841,7 +921,8 @@ function News() {
                   value={formData.note}
                   onChange={(e) => setFormData((prev) => ({ ...prev, note: e.target.value }))}
                   placeholder="Dato extra opcional"
-                  className="w-full bg-transparent border-b border-white/25 text-xs text-[var(--ins-text-gray)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
+                  className="w-full bg-transparent border-b border-white/25 text-base text-[var(--ins-text-gray)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
+                  style={{ fontFamily: '"Times New Roman", Times, serif' }}
                 />
               </div>
             </div>

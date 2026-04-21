@@ -1,5 +1,6 @@
 import { db, models } from '../../models/index.js';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { Op } from 'sequelize';
 
 class NewsController {
   s3 = () => {
@@ -22,7 +23,15 @@ class NewsController {
 
   getNews = async (_req, res) => {
     try {
+      const minDate = new Date();
+      minDate.setMonth(minDate.getMonth() - 4);
+
       const rows = await models.news.findAll({
+        where: {
+          fecha: {
+            [Op.gte]: minDate.toISOString().slice(0, 10)
+          }
+        },
         order: [['fecha', 'DESC'], ['id', 'DESC']]
       });
 
@@ -198,6 +207,40 @@ class NewsController {
       return res.status(200).json({
         message: 'Imagen de noticia actualizada.',
         news: row,
+      });
+    } catch (_error) {
+      return res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  };
+
+  deleteNews = async (req, res) => {
+    try {
+      const newsId = Number(req.params.id);
+      if (!newsId) {
+        return res.status(400).json({ message: 'ID de noticia invalido.' });
+      }
+
+      const row = await models.news.findByPk(newsId);
+      if (!row) {
+        return res.status(404).json({ message: 'Noticia no encontrada.' });
+      }
+
+      const publicBase = this.getPublicBase();
+      const oldImage = String(row.image || '');
+      if (oldImage && oldImage.startsWith(`${publicBase}/`)) {
+        const oldKey = oldImage.slice(publicBase.length + 1);
+        if (oldKey) {
+          await this.s3().send(new DeleteObjectCommand({
+            Bucket: process.env.R2_BUCKET,
+            Key: oldKey,
+          }));
+        }
+      }
+
+      await row.destroy();
+
+      return res.status(200).json({
+        message: 'Noticia eliminada correctamente.'
       });
     } catch (_error) {
       return res.status(500).json({ message: 'Error interno del servidor' });

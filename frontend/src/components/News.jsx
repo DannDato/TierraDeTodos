@@ -1,48 +1,62 @@
-import { useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import NewsCard from "../components/NewsCard";
+import api from "../api/axios";
+import tdtNewsImage from "../img/tdtnews.png";
 
 export default function News() {
   const carouselRef = useRef(null);
+  const navigate = useNavigate();
+  const [newsData, setNewsData] = useState([]);
+  const isLoggedIn = Boolean(localStorage.getItem("token"));
 
-  // temporal (luego viene del backend)
-  const newsData = [
-    {
-      id: 1,
-      image: "/img/noticias/noticia1.jpg",
-      category: "Actualización",
-      date: "25/08/2026",
-      title: "TDT lanza su nueva edición mamalona",
-      description:
-        "La nueva edición de Tierra de Todos, correspondiente al número 3, trae emocionantes novedades y mejoras..."
-    },
-    {
-      id: 2,
-      image: "/img/noticias/noticia2.jpg",
-      category: "Desarrollo",
-      date: "12/09/2026",
-      title: "Más fácil que nunca",
-      description:
-        "Ahora instalar y jugar en TDT es más fácil que nunca. Con nuestra nueva plataforma..."
-    },
-    {
-      id: 3,
-      image: "/img/noticias/noticia3.jpg",
-      category: "Lanzamiento",
-      date: "Próximamente",
-      title: "Aún no hay fecha de lanzamiento",
-      description:
-        "Aunque la nueva edición está en desarrollo, aún no se ha anunciado fecha..."
-    },
-    {
-      id: 4,
-      image: "/img/noticias/noticia1.jpg",
-      category: "Comunidad",
-      date: "Próximamente",
-      title: "Torneo de apertura",
-      description:
-        "Prepárate para el gran torneo de apertura en la primera semana del servidor."
+  useEffect(() => {
+    const loadLatestNews = async () => {
+      try {
+        const { data } = await api.get("/home/news");
+        const payload = Array.isArray(data) ? data : data?.news;
+        setNewsData(Array.isArray(payload) ? payload : []);
+      } catch (_error) {
+        setNewsData([]);
+      }
+    };
+
+    loadLatestNews();
+  }, []);
+
+  const normalizedNews = useMemo(() => {
+    return newsData.map((item, index) => {
+      const rawDate = item?.fecha || item?.createdAt;
+      const safeDate = rawDate ? new Date(rawDate) : null;
+      const dateLabel = safeDate && !Number.isNaN(safeDate.getTime())
+        ? safeDate.toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "2-digit" })
+        : "Sin fecha";
+
+      return {
+        id: item?.id || `home-news-${index}`,
+        image: item?.image || tdtNewsImage,
+        category: String(item?.type || "NOTICIA").toUpperCase(),
+        date: dateLabel,
+        title: item?.title || "Sin titulo",
+        description: item?.description || "",
+      };
+    });
+  }, [newsData]);
+
+  const openNews = (newsId) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
     }
-  ];
+
+    if (!newsId) {
+      navigate("/news");
+      return;
+    }
+
+    navigate(`/news?open=${encodeURIComponent(String(newsId))}`);
+  };
 
   const scrollLeft = () => {carouselRef.current?.scrollBy({ left: -400, behavior: "smooth" });};
   const scrollRight = () => {carouselRef.current?.scrollBy({ left: 400, behavior: "smooth" });};
@@ -50,7 +64,7 @@ export default function News() {
   return (
     <section
       id="noticias"
-      className="scroll-mt-24 relative z-20 bg-[var(--white-color)] text-[var(--black-color)] 
+      className="scroll-mt-24 relative z-20 bg-[var(--white-color)] text-[var(--black-color)]
       md:px-24 pt-10 rounded-[30px] -mt-[100px] md:-mt-[250px] pb-10 overflow-hidden mx-2 md:mx-10"
       data-aos="fade-up"
       data-aos-duration="1000"
@@ -68,7 +82,11 @@ export default function News() {
           </h2>
 
           <a
-            href="/noticias"
+            href="#"
+            onClick={(event) => {
+              event.preventDefault();
+              openNews(normalizedNews[0]?.id || "");
+            }}
             data-aos="fade-left"
             data-aos-duration="1000"
             className="mt-4 sm:mt-0 text-[var(--secondary-color)] hover:text-[var(--black-color)] transition-colors font-medium"
@@ -90,7 +108,7 @@ export default function News() {
             ref={carouselRef}
             className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-8 pt-4 scrollbar-hidden"
           >
-            {newsData.map((news) => (
+            {normalizedNews.map((news) => (
               <div
                 key={news.id}
                 className="snap-start shrink-0 basis-[85%] md:basis-[55%] lg:basis-[40%]"
@@ -101,7 +119,9 @@ export default function News() {
                   date={news.date}
                   title={news.title}
                   description={news.description}
-                  onClick={() => console.log(`Ir a noticia ${news.id}`)}
+                  onClick={() => openNews(news.id)}
+                  ctaLabel={isLoggedIn ? "Leer más..." : "Inicia sesión para leer más..."}
+                  ctaOnClick={() => openNews(news.id)}
                 />
               </div>
             ))}
@@ -111,9 +131,9 @@ export default function News() {
           <div className="text-center mt-4 z-1 relative">
             <button
               onClick={scrollLeft}
-              className="mx-4 p-3 rounded-full border border-gray-300 
-              text-gray-600 hover:bg-[var(--secondary-color)] 
-              hover:text-white hover:border-[var(--secondary-color)] 
+              className="mx-4 p-3 rounded-full border border-gray-300
+              text-gray-600 hover:bg-[var(--secondary-color)]
+              hover:text-white hover:border-[var(--secondary-color)]
               transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"> <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /> </svg>
@@ -121,9 +141,9 @@ export default function News() {
 
             <button
               onClick={scrollRight}
-              className="mx-4 p-3 rounded-full border border-gray-300 
-              text-gray-600 hover:bg-[var(--secondary-color)] 
-              hover:text-white hover:border-[var(--secondary-color)] 
+              className="mx-4 p-3 rounded-full border border-gray-300
+              text-gray-600 hover:bg-[var(--secondary-color)]
+              hover:text-white hover:border-[var(--secondary-color)]
               transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"> <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /> </svg>
