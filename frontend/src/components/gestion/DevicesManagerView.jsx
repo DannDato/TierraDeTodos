@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { RefreshCcw, Eye, EyeOff } from "lucide-react";
+import { RefreshCcw, Eye, EyeOff, Search } from "lucide-react";
 
 import Button from "../../elements/Button";
+import Input from "../../elements/Input";
 import AlertModal from "../../elements/AlertModal";
 import LoadingOverlay from "../LoadingOverlay";
 import CloseButton from "../../elements/closeButton";
@@ -10,6 +11,7 @@ import api from "../../api/axios";
 
 function DevicesManagerView() {
   const [devices, setDevices] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [visibleIpRowIds, setVisibleIpRowIds] = useState(new Set());
@@ -145,6 +147,17 @@ function DevicesManagerView() {
     });
   };
 
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const filteredDevices = devices.filter((device) => {
+    if (!normalizedSearchTerm) return true;
+
+    const haystack = Object.values(device || {})
+      .map((value) => String(value ?? "").toLowerCase())
+      .join(" ");
+
+    return haystack.includes(normalizedSearchTerm);
+  });
+
   return (
     <div className="flex flex-col h-full animate-[fadeIn_0.2s_ease-out]">
       <LoadingOverlay isVisible={loading || isSaving} />
@@ -157,15 +170,26 @@ function DevicesManagerView() {
         onConfirm={handleAlertConfirm}
       />
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
         <div>
           <h2 className="text-2xl font-extrabold text-[var(--ins-text-white)]">Dispositivos Autorizados</h2>
           <p className="text-sm text-[var(--ins-text-gray)] mt-1">Doble clic en una fila para ver detalle e historial.</p>
         </div>
 
-        <Button variant="primary" size="md" className="flex items-center gap-2" onClick={loadDevices}>
-          <RefreshCcw size={16} /> Actualizar
-        </Button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="relative">
+            <Input
+              placeholder="Buscar en cualquier campo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--ins-text-white)]/50 pointer-events-none" size={20} />
+          </div>
+
+          <Button variant="primary" size="md" className="flex items-center gap-2" onClick={loadDevices}>
+            <RefreshCcw size={16} /> Actualizar
+          </Button>
+        </div>
       </div>
 
       <div className="bg-black/20 rounded-3xl overflow-hidden shadow-md p-6">
@@ -183,12 +207,14 @@ function DevicesManagerView() {
               </tr>
             </thead>
             <tbody>
-              {devices.length === 0 ? (
+              {filteredDevices.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-[var(--ins-text-gray)]">No hay dispositivos registrados.</td>
+                  <td colSpan={7} className="py-10 text-center text-[var(--ins-text-gray)]">
+                    {devices.length === 0 ? "No hay dispositivos registrados." : "No hay resultados para la búsqueda."}
+                  </td>
                 </tr>
               ) : (
-                devices.map((device) => {
+                filteredDevices.map((device) => {
                   const ipVisible = visibleIpRowIds.has(device.deviceId);
                   return (
                     <tr

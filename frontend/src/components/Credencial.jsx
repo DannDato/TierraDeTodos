@@ -20,6 +20,7 @@ function Credencial({
   onTriggerAvatarPicker = () => {},
   onRequestDeleteAvatar = () => {},
   readOnly = false,
+  lazyImages = false,
 }) {
   const UserFallbackIcon = User;
 
@@ -80,6 +81,17 @@ function Credencial({
     "--credential-id-color": user?.roleExtra || "var(--gray-color)",
   };
 
+  const resolvedAvatarPreview = avatarPreview || user?.avatarUrl || user?.mc_skin_head || null;
+  const resolvedAvatarPosX = Number.isFinite(Number(user?.avatarPosX)) ? Number(user?.avatarPosX) : 50;
+  const resolvedAvatarPosY = Number.isFinite(Number(user?.avatarPosY)) ? Number(user?.avatarPosY) : 50;
+  const resolvedAvatarZoom = Number.isFinite(Number(user?.avatarZoom)) ? Number(user?.avatarZoom) : 1;
+  const resolvedAvatarImageStyle = avatarPreview
+    ? avatarImageStyle
+    : {
+        objectPosition: `${resolvedAvatarPosX}% ${resolvedAvatarPosY}%`,
+        transform: `scale(${resolvedAvatarZoom})`,
+      };
+
   return (
     <div className="w-full max-w-[340px] lg:max-w-[360px] mx-auto lg:mx-0 lg:shrink-0">
       <style>{`
@@ -134,10 +146,7 @@ function Credencial({
         }
 
         .minecraft-mugshot {
-          background-image: url('https://www.transparenttextures.com/patterns/dark-dotted.png'),
-                            linear-gradient(to bottom, #5a5a5a, #4a4a4a);
-          border: 4px solid #3a3a3a;
-          box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 2px 2px 0 rgba(0,0,0,0.3);
+          border: 1px solid #3a3a3a42;
           image-rendering: pixelated;
         }
       `}</style>
@@ -209,18 +218,20 @@ function Credencial({
                       title="Subir imagen de perfil"
                       disabled={readOnly || isUploadingAvatar || isSavingAvatarPosition}
                     >
-                      {avatarPreview ? (
+                      {resolvedAvatarPreview ? (
                         <img
-                          src={avatarPreview}
+                          src={resolvedAvatarPreview}
                           alt="Skin Head"
                           className="w-full h-full object-cover"
-                          style={{ imageRendering: "pixelated", ...avatarImageStyle }}
+                          loading={lazyImages ? "lazy" : "eager"}
+                          decoding="async"
+                          style={{ imageRendering: "pixelated", ...resolvedAvatarImageStyle }}
                         />
                       ) : (
                         <UserFallbackIcon size={60} className="credential-label" />
                       )}
 
-                      {!readOnly && !avatarPreview && (
+                      {!readOnly && !resolvedAvatarPreview && (
                         <span className="absolute inset-x-0 bottom-0 bg-black/45 text-white text-[9px] py-0.5 flex items-center justify-center gap-1">
                           <Upload size={10} />
                           {isUploadingAvatar ? "Subiendo..." : "Subir"}
@@ -228,7 +239,7 @@ function Credencial({
                       )}
                     </button>
 
-                    {!readOnly && avatarPreview && isAvatarMenuOpen && (
+                    {!readOnly && resolvedAvatarPreview && isAvatarMenuOpen && (
                       <div className="absolute z-20 top-[calc(100%+6px)] left-0 rounded-lg border border-black/30 bg-[var(--ins-background)] shadow-lg overflow-hidden text-xs min-w-[120px]">
                         <button
                           type="button"
@@ -312,6 +323,8 @@ function Credencial({
                     src="/img/tierradetodos.png"
                     alt="TierraDeTodos Logo Grande"
                     className="object-contain"
+                    loading={lazyImages ? "lazy" : "eager"}
+                    decoding="async"
                     style={{
                       width: "80%",
                       height: "80%",
@@ -331,6 +344,8 @@ function Credencial({
                 src={cancelledStamp}
                 alt="Credencial cancelada"
                 className="w-[88%] max-w-[320px] opacity-80"
+                loading={lazyImages ? "lazy" : "eager"}
+                decoding="async"
                 style={{ transform: "rotate(-12deg)" }}
               />
             </div>

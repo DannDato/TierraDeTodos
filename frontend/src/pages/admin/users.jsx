@@ -14,7 +14,8 @@ import Select from "../../elements/Select";
 import api from "../../api/axios";
 
 import UserDetailsModal from "../../components/UserDetailsModal";
-import AlertModal from "../../elements/AlertModal";
+import LoadingOverlay from "../../components/LoadingOverlay";
+import AlertModal from "../../Elements/AlertModal";
 
 // const roleOptions = [
 //   { value: "TODOS", label: "Role: Todos" },
@@ -26,7 +27,7 @@ import AlertModal from "../../elements/AlertModal";
 
 function Users() {
   const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
-  
+
   const roleOptionsDefault = [{ value: "TODOS", label: "Role: Todos", color: null }];
   const statusOptionsDefault = [{ value: "TODOS", label: "Estatus: Todos", color: null }];
 
@@ -430,6 +431,11 @@ function Users() {
 
   return (
     <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
+      <LoadingOverlay
+        isVisible={isLoading || isSavingPermissions || isSavingRole}
+        message={isLoading ? "Cargando usuarios..." : "Guardando cambios..."}
+      />
+
       <AlertModal
         isOpen={alertConfig.isOpen}
         type={alertConfig.type}
@@ -474,7 +480,7 @@ function Users() {
               Jugadores
             </h1>
 
-            <p className="text-sm text-[var(--ins-text-gray)] mt-2 max-w-lg">
+            <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-lg">
               Administra y modera a la comunidad de TDT. Doble click o botón de ojo para abrir detalle y permisos.
             </p>
           </div>

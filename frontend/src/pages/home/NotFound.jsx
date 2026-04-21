@@ -24,24 +24,24 @@ function Login() {
             </Button>
           </div>
         </div> */}
-        <div className="w-full max-w-7xl px-4 md:mx-10 mx-0 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 px-2">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-            <span>Tierra de Todos</span>
-            <span>/</span>
-            <span className="text-[var(--secondary-color)]">Error</span>
+        <div className="w-full max-w-7xl px-4 md:px-8 mx-auto mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+              <span>Tierra de Todos</span>
+              <span>/</span>
+              <span className="text-[var(--secondary-color)]">Error</span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--white-color)] tracking-tight">
+              Algo salio mal...
+            </h1>
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--white-color)] tracking-tight">
-            Algo salió mal...
-          </h1>
         </div>
-      </div>
 
-      <div className="flex-grow flex items-center justify-center pt-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 max-w-7xl mx-auto shadow-md overflow-hidden rounded-3xl bg-[var(--white-color)]"
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
-        >
-          <div className="p-10 bg-[var(--white-color)] flex flex-col items-start gap-6 relative overflow-hidden">
+        <div className="flex-grow flex items-center justify-center px-4 md:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 max-w-7xl mx-auto shadow-md overflow-hidden rounded-3xl bg-[var(--white-color)]"
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
+          >
+            <div className="p-10 bg-[var(--white-color)] flex flex-col items-start gap-6 relative overflow-hidden">
             
             <div className="w-full flex flex-col items-center gap-2">
               <h2 className="text-3xl font-extrabold text-[var(--black-color)] text-center leading-tight">
@@ -67,21 +67,22 @@ function Login() {
 
           </div>
 
-          <div className="p-10 bg-black flex flex-col items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/5" />
-            <div className="relative w-full h-full flex items-center justify-center">
+            <div className="p-10 bg-black flex flex-col items-center justify-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-black/5" />
+              <div className="relative w-full h-full flex items-center justify-center">
               
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[120px] font-black text-[var(--white-color)]/20 z-10 flex gap-2">
-                <span>4</span>
-                <span>0</span>
-                <span>4</span>
-              </div>              
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[120px] font-black text-[var(--white-color)]/20 z-10 flex gap-2">
+                  <span>4</span>
+                  <span>0</span>
+                  <span>4</span>
+                </div>              
 
+              </div>
             </div>
-          </div>
 
+          </div>
         </div>
-      </div>
+      
       </Banner>
       <Footer />
     </>

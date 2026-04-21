@@ -21,7 +21,9 @@ const streamers = [
   { user: "alorrandom", plataforma: "twitch.tv" }
 ];
 
-export default function Streamers() {
+export default function Streamers({ socialLinks }) {
+  const featuredTwitchUrl = String(socialLinks?.twitch || "https://twitch.tv/danndato").trim() || "https://twitch.tv/danndato";
+
   return (
     <section id="streamers" className="py-20 bg-[var(--white-color)] text-[var(--black-color)] relative overflow-hidden mx-2 md:mx-10 rounded-[30px] z-20" data-aos="fade-up" data-aos-duration="1000">
       
@@ -36,7 +38,7 @@ export default function Streamers() {
 
         <div className="flex justify-center mb-20" data-aos="zoom-in" data-aos-duration="900">
           <a
-            href="https://twitch.tv/danndato"
+            href={featuredTwitchUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="group relative bg-[var(--black-color)] rounded-3xl p-8 md:p-10 w-full max-w-md flex flex-col items-center text-center shadow-2xl border-2 border-[var(--secondary-color)] transition-all duration-300 hover:shadow-[0_0_30px_var(--secondary-color)] hover:-translate-y-2"

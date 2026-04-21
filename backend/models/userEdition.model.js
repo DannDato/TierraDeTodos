@@ -14,24 +14,34 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
+    source: {
+      type: DataTypes.ENUM('REGISTER', 'LOGIN'),
+      allowNull: false,
+      defaultValue: 'REGISTER'
+    }
   },{
-    tableName: 'user_edition',
+    tableName: 'user_editions',
     timestamps: true,
     indexes: [
         {
-        name: 'user_edition_id_unique',
+        name: 'user_editions_id_unique',
             unique: true,
             fields: ['id'],
         },
         {
-        name: 'user_edition_editionId_unique',
+        name: 'user_editions_editionId_index',
             unique: false,
             fields: ['editionId'],
         },
         {
-        name: 'user_edition_userID_unique',
+        name: 'user_editions_userID_index',
             unique: false,
             fields: ['userID'],
+        },
+        {
+        name: 'user_editions_edition_user_unique',
+            unique: true,
+            fields: ['editionId', 'userID'],
         }
     ]
   });

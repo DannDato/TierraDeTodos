@@ -40,6 +40,7 @@ try {
     }
     dbConnection = true;
     dbMessage = 'Base de datos conectada correctamente';
+
 } catch (error) {
     dbConnection = false;
     dbMessage = `Error al conectar a la base de datos: ${error.message}`;

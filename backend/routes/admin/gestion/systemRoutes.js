@@ -1,0 +1,14 @@
+import express from 'express';
+
+import { ctrlSystemAdmin } from '../../../controllers/admin/gestion/systemController.js';
+import { verifyToken } from '../../../middlewares/verifyToken.js';
+import { checkPermissions } from '../../../middlewares/checkPermissions.js';
+
+const router = express.Router();
+
+router.get('/system-settings', verifyToken, checkPermissions(['gest.system']), ctrlSystemAdmin.getSettings);
+router.get('/system-settings/links', verifyToken, checkPermissions(['gest.system']), ctrlSystemAdmin.getLinks);
+router.put('/system-settings/links', verifyToken, checkPermissions(['gest.system']), ctrlSystemAdmin.updateLinks);
+router.put('/system-settings/:key', verifyToken, checkPermissions(['gest.system']), ctrlSystemAdmin.upsertSetting);
+
+export default router;

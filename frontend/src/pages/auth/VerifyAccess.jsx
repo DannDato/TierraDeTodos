@@ -57,7 +57,7 @@ function VerifyAccess() {
         <div className="grid grid-cols-2 max-w-xl mx-auto"
           style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
         >
-          <div className="col p-8 bg-[var(--white-color)] rounded-3xl shadow-xl border border-black/5" data-aos="fade-left">
+          <div className="col p-8 bg-[var(--white-color)] rounded-3xl shadow-xl" data-aos="fade-left">
             {/* Encabezado */}
             <div className="mb-6">
               <h1 className="text-3xl font-bold mb-2 text-[var(--black-color)]">Código de verificación</h1>
@@ -72,7 +72,7 @@ function VerifyAccess() {
                 </p>
                 <form className="flex flex-col gap-4 mt-10" onSubmit={(e) => e.preventDefault()}>
                   {/* Contenedor del Input con énfasis */}
-                  <div className="bg-black/5 p-6 rounded-2xl  focus-within:border-[var(--secondary-color)] transition-all">
+                  <div className="bg-black/5 p-6 rounded-2xl transition-all">
                     <Input
                       label="Ingresa el código de 6 dígitos"
                       context="light"
@@ -99,7 +99,7 @@ function VerifyAccess() {
                       ¿No recibiste el código? Reenviar correo
                     </button>
                     
-                    <div className="flex justify-between items-center border-t border-black/10 pt-4 mt-2">
+                    <div className="flex justify-between items-center pt-4 mt-2">
                       <a href="/login" className="text-xs text-[var(--ins-text-dark)] hover:text-black flex items-center gap-1 transition-colors">
                         <ArrowLeft size={14} /> Volver al inicio de sesión
                       </a>

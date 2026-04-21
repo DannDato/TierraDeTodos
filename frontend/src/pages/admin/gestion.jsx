@@ -14,13 +14,24 @@ import PermissionsManagerView from "../../components/gestion/PermissionsManagerV
 import StatusManagerView from "../../components/gestion/StatusManagerView";
 import SessionsManagerView from "../../components/gestion/SessionsManagerView";
 import DevicesManagerView from "../../components/gestion/DevicesManagerView";
+import EditionsManagerView from "../../components/gestion/EditionsManagerView";
+import TicketCatalogManagerView from "../../components/gestion/TicketCatalogManagerView";
+import NewsTypesManagerView from "../../components/gestion/NewsTypesManagerView";
+import SystemPreferencesView from "../../components/gestion/SystemPreferencesView";
+import LoadingOverlay from "../../components/LoadingOverlay";
 
 
 function Gestion() {
   const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
-  const [activeSection, setActiveSection] = useState("roles");
+  const [activeSection, setActiveSection] = useState("editions");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sectionLoading, setSectionLoading] = useState(true);
   const sidebarRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSectionLoading(false), 220);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -33,6 +44,10 @@ function Gestion() {
   }, [sidebarOpen]);
 
   const handleSelectSection = (id) => {
+    if (id !== activeSection) {
+      setSectionLoading(true);
+      setTimeout(() => setSectionLoading(false), 180);
+    }
     setActiveSection(id);
     setSidebarOpen(false);
   };
@@ -42,6 +57,8 @@ function Gestion() {
       title: "Base",
       items: [
         { id: "editions", label: "Control de ediciones", icon: <ShieldCheck size={18} /> },
+        { id: "ticketCatalogs", label: "Catálogos de Tickets", icon: <Database size={18} /> },
+        { id: "newsTypes", label: "Tipos de Noticias",   icon: <Activity size={18} /> },
       ]
     },
     {
@@ -69,6 +86,8 @@ function Gestion() {
 
   return (
     <section className="h-screen py-6 flex items-start justify-center bg-[var(--ins-background)] overflow-hidden pb-24">
+      <LoadingOverlay isVisible={sectionLoading} message="Cargando gestión..." />
+
       <div className="flex flex-col h-full animate-[fadeIn_0.3s_ease-out] p-8 max-w-[1400px] mx-auto w-full bg-[var(--ins-background)]">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
@@ -164,16 +183,15 @@ function Gestion() {
             {/* ÁREA DE CONTENIDO DINÁMICO */}
             <div className="flex-1 min-h-0 bg-[var(--black-color)]/20 rounded-[2rem] overflow-hidden flex flex-col relative">
             <div className="flex-1 overflow-y-auto p-8 tdt-scrollbar">
+              {activeSection === "editions" && <EditionsManagerView />}
+                {activeSection === "ticketCatalogs" && <TicketCatalogManagerView />}
+                {activeSection === "newsTypes" && <NewsTypesManagerView />}
                 {activeSection === "roles" && <RolesManagerView />}
                 {activeSection === "status" && <StatusManagerView />}
                 {activeSection === "permissions" && <PermissionsManagerView />}
                 {activeSection === "sessions" && <SessionsManagerView />}
                 {activeSection === "devices" && <DevicesManagerView />}
-                {activeSection === "system" && (
-                  <div className="rounded-2xl bg-[var(--black-color)]/20 py-14 text-center text-[var(--ins-text-gray)]">
-                    Preferencias del sistema en construcción.
-                  </div>
-                )}
+                {activeSection === "system" && <SystemPreferencesView />}
             </div>
             </div>
         </div>

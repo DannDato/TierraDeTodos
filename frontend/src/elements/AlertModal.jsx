@@ -13,6 +13,7 @@ function AlertModal({
   message = "Algo salió mal.",
   onClose,
   onConfirm,
+  cancelText = "Cancelar",
   confirmText = "Aceptar",
 }) {
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -123,7 +124,7 @@ function AlertModal({
             type="button"
             className="min-w-28 rounded-2xl border border-transparent px-4 py-2 text-sm font-semibold tracking-wide text-[var(--ins-text-white)]/75 transition-all duration-200 hover:border-white/20 hover:text-[var(--ins-text-white)] focus:outline-none focus:ring-2 focus:ring-white/25"
           >
-            Cancelar
+            {cancelText}
           </button>
           <button
             onClick={handleConfirm}

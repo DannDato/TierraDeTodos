@@ -4,177 +4,90 @@ import { db, models } from '../../models/index.js';
 import handleError from '../../handlers/handleError.js';
 
 class SystemController {
-  parseSettingValue = (row, rawValue) => {
-    const type = row.type;
+	getPublicSettings = async (req, res) => {
+		try {
+			const queryKeys = String(req.query?.keys || '')
+				.split(',')
+				.map((key) => key.trim().toLowerCase())
+				.filter(Boolean);
 
-    if (type === 'boolean') {
-      if (typeof rawValue === 'boolean') return rawValue;
-      return String(rawValue).toLowerCase() === 'true';
-    }
+			const where = {
+				active: true,
+				visibility: 'public'
+			};
 
-    if (type === 'number') {
-      return Number(rawValue);
-    }
+			if (queryKeys.length > 0) {
+				where.key = { [Op.in]: queryKeys };
+			}
 
-    return rawValue;
-  };
+			const settings = await models.system.findAll({
+				where,
+				attributes: ['key', 'name', 'category', 'valueType', 'value'],
+				order: [['category', 'ASC'], ['key', 'ASC']]
+			});
 
-  toPersistedValue = (row, inputValue) => {
-    if (row.type === 'boolean') {
-      if (typeof inputValue === 'boolean') return String(inputValue);
-      const normalized = String(inputValue).trim().toLowerCase();
-      if (['true', '1', 'yes', 'si'].includes(normalized)) return 'true';
-      if (['false', '0', 'no'].includes(normalized)) return 'false';
-      throw new Error(`Valor invalido para ${row.key}`);
-    }
+			const config = settings.reduce((acc, item) => {
+				acc[item.key] = item.value;
+				return acc;
+			}, {});
 
-    if (row.type === 'number') {
-      const numeric = Number(inputValue);
-      if (!Number.isFinite(numeric)) {
-        throw new Error(`Valor numerico invalido para ${row.key}`);
-      }
-      return String(numeric);
-    }
+			return res.status(200).json({ settings, config });
+		} catch (_error) {
+			return res.status(500).json({ message: 'Error interno del servidor' });
+		}
+	};
 
-    if (row.type === 'enum') {
-      const candidate = String(inputValue);
-      const options = Array.isArray(row.options) ? row.options : [];
-      if (!options.includes(candidate)) {
-        throw new Error(`Valor invalido para ${row.key}. Opciones: ${options.join(', ')}`);
-      }
-      return candidate;
-    }
+	getSettings = async (_req, res) => {
+		try {
+			const settings = await models.system.findAll({
+				order: [['category', 'ASC'], ['key', 'ASC']]
+			});
 
-    return String(inputValue ?? '');
-  };
+			return res.status(200).json({ settings });
+		} catch (error) {
+			handleError(res, _req, error, 'Error al cargar configuraciones del sistema');
+		}
+	};
 
-  serializeSetting = (row) => ({
-    key: row.key,
-    groupKey: row.groupKey,
-    label: row.label,
-    description: row.description,
-    type: row.type,
-    value: this.parseSettingValue(row, row.value),
-    defaultValue: this.parseSettingValue(row, row.defaultValue),
-    options: Array.isArray(row.options) ? row.options : [],
-    updatedBy: row.updatedBy,
-    updatedAt: row.updatedAt,
-  });
+	updateSettings = async (req, res) => {
+		try {
+			const updates = Array.isArray(req.body?.settings) ? req.body.settings : [];
+			if (updates.length === 0) {
+				return res.status(400).json({ message: 'No se recibieron configuraciones para actualizar.' });
+			}
 
-  getSettings = async (req, res) => {
-    try {
-      const rows = await models.SystemSettings.findAll({
-        order: [['groupKey', 'ASC'], ['id', 'ASC']],
-      });
+			for (const setting of updates) {
+				const key = String(setting?.key || '').trim().toLowerCase();
+				if (!key) continue;
 
-      const settings = rows.map((row) => this.serializeSetting(row));
+				const row = await models.system.findOne({ where: { key } });
+				if (!row || !row.editable) continue;
 
-      return res.status(200).json({ settings });
-    } catch (error) {
-      return handleError(res, req, error, 'Error al obtener configuraciones del sistema');
-    }
-  };
+				if ('value' in setting) row.value = setting.value;
+				if ('active' in setting) row.active = Boolean(setting.active);
+				await row.save();
+			}
 
-  updateSettings = async (req, res) => {
-    const transaction = await db.transaction();
+			return res.status(200).json({ message: 'Configuraciones actualizadas correctamente.' });
+		} catch (error) {
+			handleError(res, req, error, 'Error al actualizar configuraciones del sistema');
+		}
+	};
 
-    try {
-      const payload = req.body?.updates;
-      const updates = payload && typeof payload === 'object' ? payload : null;
+	getHealth = async (_req, res) => {
+		try {
+			return res.status(200).json({
+				status: 'ok',
+				service: 'system',
+				timestamp: new Date().toISOString(),
+				host: os.hostname(),
+				uptime: process.uptime()
+			});
+		} catch (error) {
+			handleError(res, _req, error, 'Error al obtener health del sistema');
+		}
+	};
 
-      if (!updates || Object.keys(updates).length === 0) {
-        await transaction.rollback();
-        return res.status(400).json({ message: 'No hay cambios para guardar' });
-      }
-
-      const keys = Object.keys(updates);
-      const rows = await models.SystemSettings.findAll({
-        where: { key: keys },
-        transaction,
-      });
-
-      if (rows.length !== keys.length) {
-        await transaction.rollback();
-        const found = new Set(rows.map((row) => row.key));
-        const missing = keys.filter((key) => !found.has(key));
-        return res.status(404).json({ message: `Configuraciones no encontradas: ${missing.join(', ')}` });
-      }
-
-      for (const row of rows) {
-        const nextValue = this.toPersistedValue(row, updates[row.key]);
-        row.value = nextValue;
-        row.updatedBy = req.user?.id || null;
-        await row.save({ transaction });
-      }
-
-      await transaction.commit();
-
-      await req.logAction({
-        accion: 'Configuraciones del sistema actualizadas',
-        apartado: 'Gestion',
-        userId: req.user?.id,
-        username: req.user?.username,
-        valor: `keys=${keys.join(',')}`,
-        type: 'info',
-      });
-
-      const updatedRows = await models.SystemSettings.findAll({
-        where: { key: keys },
-        order: [['groupKey', 'ASC'], ['id', 'ASC']],
-      });
-
-      return res.status(200).json({
-        message: 'Configuraciones guardadas correctamente',
-        updated: updatedRows.map((row) => this.serializeSetting(row)),
-      });
-    } catch (error) {
-      return handleError(res, req, error, 'Error al actualizar configuraciones del sistema', transaction);
-    }
-  };
-
-  getHealth = async (req, res) => {
-    try {
-      const now = new Date();
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-
-      const [usersCount, activeSessionsCount, pendingDevicesCount, deniedDevicesCount, failedAttemptsLast5m] = await Promise.all([
-        models.Users.count(),
-        models.Sessions.count({
-          where: {
-            revoked: false,
-            expiresAt: { [Op.gt]: now },
-          },
-        }),
-        models.UserDevices.count({ where: { authorized: 'PENDING' } }),
-        models.UserDevices.count({ where: { authorized: 'DENIED' } }),
-        models.Attempts.count({
-          where: {
-            status: 'FAILED',
-            createdAt: { [Op.gte]: fiveMinutesAgo },
-          },
-        }),
-      ]);
-
-      return res.status(200).json({
-        health: {
-          db: 'up',
-          usersCount,
-          activeSessionsCount,
-          pendingDevicesCount,
-          deniedDevicesCount,
-          failedAttemptsLast5m,
-          serverUptimeSeconds: Math.floor(process.uptime()),
-          memoryUsage: process.memoryUsage(),
-          loadAverage: os.loadavg(),
-          platform: os.platform(),
-          nodeVersion: process.version,
-          timestamp: new Date(),
-        },
-      });
-    } catch (error) {
-      return handleError(res, req, error, 'Error al obtener salud del sistema');
-    }
-  };
 }
 
 const ctrlSystem = new SystemController();

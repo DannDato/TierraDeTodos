@@ -7,25 +7,25 @@ function Download() {
   };
 
   return (
-    <section className="min-h-screen py-10 flex items-center justify-center bg-[var(--white-color)]">
-      <div className="w-full max-w-7xl px-4 md:mx-20 mx-0">
+    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
+      <div className="w-full max-w-7xl px-4 md:px-8 text-[var(--ins-text-white)]">
 
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
 
           {/* Lado Izquierdo */}
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-widest mb-2">
               <span>{user.role}</span>
               <span>/</span>
-              <span className="text-emerald-600">Descargas</span>
+              <span className="text-[var(--secondary-color)]">Descargas</span>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
               Launcher TDT
             </h1>
 
-            <p className="text-sm text-gray-500 mt-2 max-w-lg">
+            <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-lg">
               Descarga el launcher oficial y comienza tu aventura en Tierra de Todos.
             </p>
           </div>
@@ -42,7 +42,7 @@ function Download() {
         </div>
 
         {/* BANNER */}
-        <div className="relative w-full overflow-hidden flex flex-col items-center justify-center min-h-[450px] md:min-h-[500px] rounded-2xl">
+        <div className="relative w-full overflow-hidden flex flex-col items-center justify-center min-h-[450px] md:min-h-[500px] rounded-3xl bg-black/15 shadow-md">
 
           <img
             src="/img/banner.webp"
@@ -50,7 +50,7 @@ function Download() {
             className="absolute inset-0 h-full w-full object-cover blur-[5px] scale-110 z-0"
           />
 
-          <div className="absolute inset-0 bg-black/40 z-0" />
+          <div className="absolute inset-0 bg-black/55 z-0" />
 
           <div className="relative z-10 flex flex-col items-center justify-center text-center w-full h-full p-8 md:p-16">
 

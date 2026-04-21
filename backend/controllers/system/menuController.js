@@ -40,7 +40,7 @@ class MenuController {
     const menuRows = await models.Menu.findAll({
       where: { active: true },
       order: [['orderIndex', 'ASC'], ['id', 'ASC']],
-      attributes: ['id', 'name', 'icon', 'path', 'target', 'shortAccess', 'required_permissions']
+      attributes: ['id', 'name', 'icon', 'path', 'target', 'shortAccess', 'required_permissions', 'menuGroup']
     });
 
     const menuItems = menuRows
@@ -62,6 +62,7 @@ class MenuController {
               path: item.path,
               target: item.target,
               shortAccess: item.shortAccess,
+              menuGroup: item.menuGroup,
               required_permissions: requiredPermissions
             }
           : null;

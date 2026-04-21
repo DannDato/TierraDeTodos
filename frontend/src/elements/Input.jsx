@@ -8,6 +8,7 @@ export default function Input({
   value,
   onChange,
   error = false,
+  ...props
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const inputType = type === "password" && showPassword ? "text" : type;
@@ -42,6 +43,7 @@ export default function Input({
             }
             focus:border-b-[var(--secondary-color)]
           `}
+          {...props}
         />
 
         {type === "password" && (

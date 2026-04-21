@@ -2,20 +2,23 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../api/axios";
 import * as Icons from "lucide-react";
-import AlertModal from "../elements/AlertModal"; 
+import AlertModal from "../elements/AlertModal";
 
 
 const fallbackMenuItems = [
-  { id: 0, name: "Inicio", icon: "Home", path: "/start", target: "_self", shortAccess: true },
-  { id: 3, name: "Cuenta", icon: "User", path: "/profile", target: "_self", shortAccess: true },
+  { id: 0, name: "Inicio", icon: "Home", path: "/start", target: "_self", shortAccess: true, menuGroup: "user" },
+  { id: 3, name: "Cuenta", icon: "User", path: "/profile", target: "_self", shortAccess: true, menuGroup: "user" },
 ];
 
 function MenuBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [showAlert, setShowAlert] = useState(false); 
+  const [showAlert, setShowAlert] = useState(false);
   const [menuItems, setMenuItems] = useState(fallbackMenuItems);
+
+  const userMenuItems = menuItems.filter((item) => String(item.menuGroup || "user") === "user");
+  const adminMenuItems = menuItems.filter((item) => String(item.menuGroup || "user") === "admin");
 
   useEffect(() => {
     const loadMenu = async () => {
@@ -39,6 +42,11 @@ function MenuBar() {
     if (target === "_blank") {
       window.open(path, "_blank", "noopener,noreferrer");
     } else {
+      if (location.pathname === path) {
+        navigate(0);
+        setIsOpen(false);
+        return;
+      }
       navigate(path);
     }
     setIsOpen(false);
@@ -124,33 +132,61 @@ function MenuBar() {
           </h2>
 
           <div className="flex flex-col gap-5">
-            {menuItems.map((item) => {
-              const Icon = Icons[item.icon] || Icons.Menu;
-              const isActive = location.pathname === item.path;
+            <div className="space-y-4">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-black/45">Mis opciones</p>
+              {userMenuItems.map((item) => {
+                const Icon = Icons[item.icon] || Icons.Menu;
+                const isActive = location.pathname === item.path;
 
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigate(item.path, item.target)}
-                  className={`flex items-center gap-3 text-left transition-all duration-200
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavigate(item.path, item.target)}
+                    className={`flex items-center gap-3 text-left transition-all duration-200
                     ${isActive
                       ? "text-[var(--secondary-color)] font-medium"
                       : "text-black/70 hover:text-black"
                     }`}
-                >
-                  <Icon size={20} />
-                  <span>{item.name}</span>
-                </button>
-              );
-            })}
+                  >
+                    <Icon size={20} />
+                    <span>{item.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {adminMenuItems.length > 0 && (
+              <div className="space-y-4 pt-2 border-t border-black/10">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-black/45">Opciones de admin</p>
+                {adminMenuItems.map((item) => {
+                  const Icon = Icons[item.icon] || Icons.Menu;
+                  const isActive = location.pathname === item.path;
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleNavigate(item.path, item.target)}
+                      className={`flex items-center gap-3 text-left transition-all duration-200
+                    ${isActive
+                          ? "text-[var(--secondary-color)] font-medium"
+                          : "text-black/70 hover:text-black"
+                        }`}
+                    >
+                      <Icon size={20} />
+                      <span>{item.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
         <div className="p-6 ">
           <button
             onClick={() => {
-              setIsOpen(false); 
-              setShowAlert(true); 
+              setIsOpen(false);
+              setShowAlert(true);
             }}
             className="flex items-center gap-3 w-full py-3 px-4 rounded-xl text-[var(--cancel-color)] hover:bg-[var(--cancel-color)]/10 transition-all duration-200 font-semibold"
           >
