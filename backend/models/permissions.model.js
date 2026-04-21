@@ -73,6 +73,7 @@ export default (sequelize, DataTypes) => {
       { key: 'gest.editions', name: 'Gestionar ediciones', description: 'Permite crear, aperturar, cerrar y eliminar ediciones', active: true },
       { key: 'gest.tickets', name: 'Gestionar tickets', description: 'Permite gestionar tipos, prioridades y estatus de tickets', active: true },
       { key: 'gest.news', name: 'Gestionar noticias', description: 'Permite administrar los tipos de noticias en gestión', active: true },
+      { key: 'gest.system', name: 'Gestionar sistema', description: 'Permite administrar preferencias globales del sistema', active: true },
       { key: 'tickets.view', name: 'Ver tickets admin', description: 'Permite ver la bandeja de reports y los mensajes de tickets', active: true },
       { key: 'tickets.manage', name: 'Responder tickets admin', description: 'Permite responder tickets desde la pantalla de reports', active: true },
       { key: 'tickets.close', name: 'Cerrar tickets', description: 'Permite cerrar tickets desde la pantalla de reports', active: true },

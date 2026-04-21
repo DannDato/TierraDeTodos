@@ -1,6 +1,8 @@
 import Button from "../elements/Button";
 
-function Footer() {
+function Footer({ socialLinks }) {
+  const discordUrl = String(socialLinks?.discord || "https://discord.gg/tdt3").trim() || "https://discord.gg/tdt3";
+
   return (
     <footer className="bg-[var(--black-color)] text-[var(--white-color)] pt-16 pb-8 border-t border-white/5 relative z-20">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
@@ -28,7 +30,7 @@ function Footer() {
               className="shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all" 
               fullWidth={false} 
               target="_blank" 
-              href="https://discord.gg/tdt3"
+              href={discordUrl}
             >
               Únete a Discord
             </Button>

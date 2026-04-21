@@ -229,7 +229,7 @@ function Profile() {
   };
 
   return (
-    <section className="min-h-screen py-10 flex items-center justify-center bg-[var(--ins-background)]">
+    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
       <LoadingOverlay
         isVisible={!user || isUploadingAvatar || isSavingAvatarPosition}
         message={!user ? "Cargando cuenta..." : "Guardando cambios..."}
@@ -257,7 +257,7 @@ function Profile() {
       <div className="w-full max-w-7xl px-4 md:px-8 text-[var(--ins-text-white)]">
 
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
 
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
@@ -270,7 +270,7 @@ function Profile() {
               Tu Identificación
             </h1>
 
-            <p className="text-sm text-[var(--ins-text-gray)] mt-2 max-w-lg">
+            <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-lg">
               Tu credencial oficial en TierraDeTodos. Haz doble clic para ver ambos lados.
             </p>
           </div>
@@ -320,7 +320,7 @@ function Profile() {
           <div className="w-full lg:flex-1 min-w-0 space-y-6">
 
             {/* STATUS */}
-            <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm border border-white/5">
+            <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-full"
@@ -330,7 +330,7 @@ function Profile() {
               </h2>
 
               <div className="flex items-center gap-4 mb-4">
-                <div className="flex-1 bg-white/5 p-4 rounded-lg border border-white/10">
+                <div className="flex-1 bg-white/5 p-4 rounded-lg">
                   <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-wider block">
                     Estado
                   </span>
@@ -340,7 +340,7 @@ function Profile() {
                 </div>
               </div>
 
-              <div className="bg-white/5 p-4 rounded-lg border border-white/10 space-y-2 text-sm">
+              <div className="bg-white/5 p-4 rounded-lg space-y-2 text-sm">
                 <div>
                   <span className="text-[var(--ins-text-gray)] text-xs uppercase font-bold">Actualizado por:</span>
                   <p className="font-semibold">{user.status_changed_by || "Sistema"}</p>
@@ -355,7 +355,7 @@ function Profile() {
             </div>
 
             {/* SECURITY */}
-            <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm border border-white/5">
+            <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <ShieldAlert size={20} className="text-[var(--secondary-color)]" />
                 Seguridad
@@ -365,10 +365,10 @@ function Profile() {
                 {user.devices?.map((device) => (
                   <div
                     key={device.id}
-                    className={`p-4 rounded-lg border transition-all ${
+                    className={`p-4 rounded-lg transition-all ${
                       device.isCurrent
-                        ? "bg-[var(--secondary-color)]/10 border-[var(--secondary-color)]/30"
-                        : "bg-white/5 border-white/10"
+                        ? "bg-[var(--secondary-color)]/10"
+                        : "bg-white/5"
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -380,7 +380,7 @@ function Profile() {
                           <h3 className="font-bold text-sm flex items-center gap-2">
                             {device.device}
                             {device.isCurrent && (
-                              <span className="bg-emerald-500/20 text-emerald-400 text-[10px] uppercase px-2 py-0.5 rounded-full border border-emerald-500/30">
+                              <span className="bg-emerald-500/20 text-emerald-400 text-[10px] uppercase px-2 py-0.5 rounded-full">
                                 Actual
                               </span>
                             )}
@@ -395,7 +395,7 @@ function Profile() {
                 ))}
               </div>
 
-              <div className="mt-4 p-4 bg-[var(--danger-color)]/5 rounded-lg border border-[var(--danger-color)]/20 flex items-start gap-3">
+              <div className="mt-4 p-4 bg-[var(--danger-color)]/5 rounded-lg flex items-start gap-3">
                 <ShieldAlert
                   className="text-[var(--danger-color)] shrink-0 mt-0.5"
                   size={18}
@@ -428,7 +428,7 @@ function Profile() {
 
       {user && isAvatarEditorOpen && avatarPreview && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl bg-[#151515] border border-white/10 p-5 space-y-4">
+          <div className="w-full max-w-md rounded-2xl bg-[#151515] p-5 space-y-4">
             <h3 className="text-lg font-bold text-white">Ajustar avatar</h3>
 
             <div className="mx-auto w-40 h-48 minecraft-mugshot rounded overflow-hidden p-1.5">

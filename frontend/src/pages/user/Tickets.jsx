@@ -247,7 +247,7 @@ function Tickets() {
             <span className="text-[var(--secondary-color)]">Tickets</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Centro de Tickets</h1>
-          <p className="text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
+          <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
             Levanta tickets de soporte, reportes, robo o peticiones usando los catálogos definidos en Gestión.
           </p>
         </div>

@@ -15,7 +15,6 @@ import api from "../../api/axios";
 
 import UserDetailsModal from "../../components/UserDetailsModal";
 import LoadingOverlay from "../../components/LoadingOverlay";
-import AlertModal from "../../elements/AlertModal";
 
 // const roleOptions = [
 //   { value: "TODOS", label: "Role: Todos" },
@@ -480,7 +479,7 @@ function Users() {
               Jugadores
             </h1>
 
-            <p className="text-sm text-[var(--ins-text-gray)] mt-2 max-w-lg">
+            <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-lg">
               Administra y modera a la comunidad de TDT. Doble click o botón de ojo para abrir detalle y permisos.
             </p>
           </div>

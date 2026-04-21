@@ -106,7 +106,7 @@ function Login() {
               </div>
 
               <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-black/10"></span></div>
+                <div className="absolute inset-0 flex items-center"><span className="w-full h-px bg-black/10"></span></div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-[var(--white-color)] px-2 text-[var(--ins-text-dark)] font-bold">O continúa con</span>
                 </div>

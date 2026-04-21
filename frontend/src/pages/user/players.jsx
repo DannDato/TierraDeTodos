@@ -143,7 +143,7 @@ function Players() {
 						</div>
 
 						<h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Credenciales del Sistema</h1>
-						<p className="text-sm text-[var(--ins-text-gray)] mt-2 max-w-2xl">
+						<p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-2xl">
 							Visualiza todas las credenciales de jugadores registradas en TierraDeTodos.
 						</p>
 					</div>
@@ -154,14 +154,14 @@ function Players() {
 							value={search}
 							onChange={(event) => setSearch(event.target.value)}
 							placeholder="Buscar por usuario, folio, rol o estatus..."
-							className="w-full pl-11 pr-4 py-3 rounded-xl border border-white/10 bg-black/20 text-sm text-white placeholder:text-white/45 outline-none focus:border-[var(--secondary-color)] transition-colors"
+							className="w-full pl-11 pr-4 py-3 rounded-xl bg-black/20 text-sm text-white placeholder:text-white/45 outline-none focus:ring-2 focus:ring-[var(--secondary-color)]/45 transition-all"
 						/>
 						<Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50" size={18} />
 					</div>
 				</div>
 
 				{filteredPlayers.length === 0 ? (
-					<div className="rounded-3xl border border-white/10 bg-black/10 py-14 text-center text-[var(--ins-text-gray)]">
+					<div className="rounded-3xl bg-black/10 py-14 text-center text-[var(--ins-text-gray)]">
 						No se encontraron jugadores con ese filtro.
 					</div>
 				) : (

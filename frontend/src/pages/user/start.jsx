@@ -132,13 +132,13 @@ function Start() {
   const getAlertStyle = (level) => {
     switch (level) {
       case 'danger':
-        return { wrapper: 'bg-red-500/15 border-red-500/30 text-red-800', icon: <AlertTriangle size={20} className="text-red-600" /> };
+        return { wrapper: 'bg-red-500/15 text-red-800', icon: <AlertTriangle size={20} className="text-red-600" /> };
       case 'warning':
-        return { wrapper: 'bg-amber-500/15 border-amber-500/30 text-amber-800', icon: <AlertTriangle size={20} className="text-amber-600" /> };
+        return { wrapper: 'bg-amber-500/15 text-amber-800', icon: <AlertTriangle size={20} className="text-amber-600" /> };
       case 'success':
-        return { wrapper: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-800', icon: <CheckCircle2 size={20} className="text-emerald-600" /> };
+        return { wrapper: 'bg-emerald-500/15 text-emerald-800', icon: <CheckCircle2 size={20} className="text-emerald-600" /> };
       default:
-        return { wrapper: 'bg-blue-500/15 border-blue-500/30 text-blue-800', icon: <Info size={20} className="text-blue-600" /> };
+        return { wrapper: 'bg-blue-500/15 text-blue-800', icon: <Info size={20} className="text-blue-600" /> };
     }
   };
 
@@ -173,7 +173,7 @@ function Start() {
             {alerts.map((alert) => {
               const style = getAlertStyle(alert.level);
               return (
-                <div key={alert.id} className={`flex items-center gap-4 p-4 rounded-2xl border ${style.wrapper} transition-all`}>
+                <div key={alert.id} className={`flex items-center gap-4 p-4 rounded-2xl ${style.wrapper} transition-all`}>
                   <div className="flex-shrink-0">
                     {style.icon}
                   </div>
@@ -188,7 +188,7 @@ function Start() {
         {/* ========================================================= */}
         {/* ESTADISTICAS DEL JUGADOR */}
         {/* ========================================================= */}
-        <div className="bg-black/10 rounded-3xl p-6 shadow-md border border-black/5 flex flex-col relative overflow-hidden pb-8">
+        <div className="bg-black/10 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8">
 
           <div className="flex items-center justify-between mb-4 relative z-10">
             <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-widest">Tu Progreso</span>
@@ -198,7 +198,7 @@ function Start() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10">
-            <div className="bg-white/5 p-3 rounded-2xl border border-black/5 flex flex-col items-start gap-2">
+            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
                 <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Insignias</p>
               <div className="p-2 bg-purple-500/10 rounded-xl text-yellow-600">
                 <Trophy size={18} />
@@ -207,7 +207,7 @@ function Start() {
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-2xl border border-black/5 flex flex-col items-start gap-2">
+            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
               <div>
                 <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Tiempo Jugado</p>
               </div>
@@ -217,7 +217,7 @@ function Start() {
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-2xl border border-black/5 flex flex-col items-start gap-2">
+            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
               <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Monedas</p>
               <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-600 flex-row items-center gap-4 flex">
                 <Coins size={18} />
@@ -227,7 +227,7 @@ function Start() {
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-2xl border border-black/5 flex flex-col items-start gap-2">
+            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
               <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Kills / Muertes</p>
               <div className="p-2 bg-red-500/10 rounded-xl text-red-300 flex-row items-center gap-4 flex">
                 <Swords size={18} />
@@ -271,7 +271,7 @@ function Start() {
           </div>
 
           <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="bg-black/10 rounded-3xl p-6 shadow-md border h-80 border-black/5 flex flex-col items-center text-center relative overflow-hidden gap-5">
+            <div className="bg-black/10 rounded-3xl p-6 shadow-md h-80 flex flex-col items-center text-center relative overflow-hidden gap-5">
               <div className="absolute -top-24 -right-24 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
 
               <div className="w-full mb-3 relative z-10">
@@ -280,7 +280,7 @@ function Start() {
 
               <div className="w-full relative z-10">
                 {isDownloading ? (
-                  <div className="w-full bg-white p-4 rounded-3xl border border-black/10 shadow-sm">
+                  <div className="w-full bg-white p-4 rounded-3xl shadow-sm">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-xs font-bold text-[var(--secondary-color)] flex items-center gap-1">
                         <Download size={14} className="animate-bounce" /> Preparando descarga...

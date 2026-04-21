@@ -43,7 +43,7 @@ function AboutApp() {
               <Sparkles size={24} className="text-[var(--secondary-color)]" />
             </h1>
 
-            <p className="text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
+            <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
               Tierra de Todos 3 no es solo una app de soporte para el servidor: es el centro operativo que conecta jugadores,
               administración y seguridad en un solo lugar. Está diseñada para ser confiable, escalable y agradable de usar.
             </p>
@@ -51,7 +51,7 @@ function AboutApp() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-          <div className="lg:col-span-2 bg-white/5 rounded-3xl p-6 border border-black/10 shadow-md">
+          <div className="lg:col-span-2 bg-white/5 rounded-3xl p-6 shadow-md">
             <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
               <HeartHandshake size={20} className="text-[var(--secondary-color)]" />
               Nuestra misión
@@ -68,7 +68,7 @@ function AboutApp() {
             </p>
           </div>
 
-          <div className="bg-black/10 rounded-3xl p-6 border border-black/10 shadow-md">
+          <div className="bg-black/10 rounded-3xl p-6 shadow-md">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Globe2 size={20} className="text-[var(--secondary-color)]" />
               Estado actual
@@ -88,7 +88,7 @@ function AboutApp() {
             const Icon = pillar.icon;
 
             return (
-              <article key={pillar.title} className="bg-white/5 rounded-2xl p-5 border border-black/10 shadow-sm">
+              <article key={pillar.title} className="bg-white/5 rounded-2xl p-5 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-[var(--secondary-color)]/10 text-[var(--secondary-color)] flex items-center justify-center mb-3">
                   <Icon size={18} />
                 </div>
@@ -99,14 +99,14 @@ function AboutApp() {
           })}
         </div>
 
-        <div className="bg-white/5 rounded-3xl p-6 border border-black/10 shadow-md">
+        <div className="bg-white/5 rounded-3xl p-6 shadow-md">
           <h2 className="text-xl font-bold mb-4">Lo que hace especial a TDT3</h2>
 
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {highlights.map((item) => (
               <li
                 key={item}
-                className="text-sm text-[var(--ins-text-gray)] bg-black/10 border border-black/10 rounded-xl px-4 py-3"
+                className="text-sm text-[var(--ins-text-gray)] bg-black/10 rounded-xl px-4 py-3"
               >
                 {item}
               </li>
@@ -121,7 +121,7 @@ function AboutApp() {
 
 function StatusRow({ label, value }) {
   return (
-    <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-black/10">
+    <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
       <span className="text-[var(--ins-text-gray)]">{label}</span>
       <span className="font-bold text-[var(--secondary-color)]">{value}</span>
     </div>

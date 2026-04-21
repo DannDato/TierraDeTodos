@@ -16,8 +16,8 @@ import SessionsManagerView from "../../components/gestion/SessionsManagerView";
 import DevicesManagerView from "../../components/gestion/DevicesManagerView";
 import EditionsManagerView from "../../components/gestion/EditionsManagerView";
 import TicketCatalogManagerView from "../../components/gestion/TicketCatalogManagerView";
-import TicketStatusManagerView from "../../components/gestion/TicketStatusManagerView";
 import NewsTypesManagerView from "../../components/gestion/NewsTypesManagerView";
+import SystemPreferencesView from "../../components/gestion/SystemPreferencesView";
 import LoadingOverlay from "../../components/LoadingOverlay";
 
 
@@ -58,7 +58,6 @@ function Gestion() {
       items: [
         { id: "editions", label: "Control de ediciones", icon: <ShieldCheck size={18} /> },
         { id: "ticketCatalogs", label: "Catálogos de Tickets", icon: <Database size={18} /> },
-        { id: "ticketStatuses", label: "Estatus de Tickets",   icon: <Activity size={18} /> },
         { id: "newsTypes", label: "Tipos de Noticias",   icon: <Activity size={18} /> },
       ]
     },
@@ -186,18 +185,13 @@ function Gestion() {
             <div className="flex-1 overflow-y-auto p-8 tdt-scrollbar">
               {activeSection === "editions" && <EditionsManagerView />}
                 {activeSection === "ticketCatalogs" && <TicketCatalogManagerView />}
-                {activeSection === "ticketStatuses" && <TicketStatusManagerView />}
                 {activeSection === "newsTypes" && <NewsTypesManagerView />}
                 {activeSection === "roles" && <RolesManagerView />}
                 {activeSection === "status" && <StatusManagerView />}
                 {activeSection === "permissions" && <PermissionsManagerView />}
                 {activeSection === "sessions" && <SessionsManagerView />}
                 {activeSection === "devices" && <DevicesManagerView />}
-                {activeSection === "system" && (
-                  <div className="rounded-2xl bg-[var(--black-color)]/20 py-14 text-center text-[var(--ins-text-gray)]">
-                    Preferencias del sistema en construcción.
-                  </div>
-                )}
+                {activeSection === "system" && <SystemPreferencesView />}
             </div>
             </div>
         </div>

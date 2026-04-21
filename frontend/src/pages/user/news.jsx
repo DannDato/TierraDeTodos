@@ -469,8 +469,8 @@ function News() {
             <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--ins-text-white)] tracking-tight">
               Noticias!
             </h1>
-            <p className="text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
-              Mantente al tanto de las últimas novedades, eventos y anuncios relacionados con Tierra de Todos. Aquí encontrarás toda la información oficial sobre el servidor, actualizaciones, actividades especiales y mucho más. ¡No te pierdas nada!
+            <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
+              Mantente al tanto de las últimas novedades, eventos y anuncios relacionados con Tierra de Todos.
             </p>
           </div>
 

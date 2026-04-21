@@ -143,14 +143,14 @@ function Reports() {
       />
       <div className="w-full max-w-7xl px-4 md:px-8 text-[var(--ins-text-white)]">
 
-        <div className="mb-6">
+        <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-widest mb-2">
                 <span>ADMIN</span><span>/</span><span className="text-[var(--secondary-color)]">Reports</span>
               </div>
               <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Atención de Tickets</h1>
-              <p className="text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
+              <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
                 Bandeja operativa para atención de tickets. Se muestran primero por urgencia y dentro de cada nivel, del más viejo al más nuevo.
               </p>
             </div>
@@ -167,7 +167,7 @@ function Reports() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 justify-start md:justify-end mt-4">
+          <div className="flex flex-wrap items-center gap-4 justify-start md:justify-end mt-5">
             <Switch
               label="Ver cerrados"
               checked={showClosed}
