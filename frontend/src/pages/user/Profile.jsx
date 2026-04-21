@@ -4,6 +4,7 @@ import Button from "../../elements/Button";
 import AlertModal from "../../elements/AlertModal";
 import api from "../../api/axios";
 import Credencial from "../../components/Credencial";
+import LoadingOverlay from "../../components/LoadingOverlay";
 
 function Profile() {
   const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
@@ -210,10 +211,6 @@ function Profile() {
     BANNED: { label: "Suspendido" },
   };
 
-  if (!user) {
-    return <ProfileSkeleton />;
-  }
-
   const currentStatus = {
     label: (statusConfig[user?.status]?.label) || "Desconocido",
     color: user?.statusColor || "#8a8a8a",
@@ -233,6 +230,11 @@ function Profile() {
 
   return (
     <section className="min-h-screen py-10 flex items-center justify-center bg-[var(--ins-background)]">
+      <LoadingOverlay
+        isVisible={!user || isUploadingAvatar || isSavingAvatarPosition}
+        message={!user ? "Cargando cuenta..." : "Guardando cambios..."}
+      />
+
       <AlertModal
         isOpen={showAlert}
         type="warning"
@@ -251,6 +253,7 @@ function Profile() {
         onConfirm={handleDeleteAvatar}
       />
 
+      {user && (
       <div className="w-full max-w-7xl px-4 md:px-8 text-[var(--ins-text-white)]">
 
         {/* HEADER */}
@@ -421,8 +424,9 @@ function Profile() {
         </div>
 
       </div>
+      )}
 
-      {isAvatarEditorOpen && avatarPreview && (
+      {user && isAvatarEditorOpen && avatarPreview && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-2xl bg-[#151515] border border-white/10 p-5 space-y-4">
             <h3 className="text-lg font-bold text-white">Ajustar avatar</h3>
@@ -502,29 +506,6 @@ function Profile() {
           </div>
         </div>
       )}
-    </section>
-  );
-}
-
-/* SKELETON - SIN CAMBIOS */
-function ProfileSkeleton() {
-  return (
-    <section className="min-h-screen py-10 flex items-center justify-center bg-[var(--ins-background)]">
-      <div className="w-full max-w-7xl animate-pulse space-y-8 px-4">
-
-        <div className="h-20 bg-white/10 rounded w-1/3" />
-
-        <div className="flex gap-8">
-          <div className="lg:w-2/5">
-            <div className="h-[500px] bg-white/10 rounded-2xl" />
-          </div>
-          <div className="lg:w-3/5 space-y-6">
-            <div className="h-40 bg-white/10 rounded-2xl" />
-            <div className="h-64 bg-white/10 rounded-2xl" />
-          </div>
-        </div>
-
-      </div>
     </section>
   );
 }

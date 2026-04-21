@@ -73,10 +73,7 @@ export default (sequelize, DataTypes) => {
   });
 
   Menu.seed = async () => {
-    const validate = await Menu.findAll();
-    if (validate.length > 0) return;
-
-    await Menu.bulkCreate([
+    const seedMenu = [
       {
         key: 'menu.start',
         name: 'Inicio',
@@ -89,6 +86,17 @@ export default (sequelize, DataTypes) => {
         active: true
       },
       {
+        key: 'menu.tickets',
+        name: 'Tickets',
+        icon: 'ClipboardList',
+        path: '/tickets',
+        target: '_self',
+        shortAccess: true,
+        orderIndex: 2,
+        required_permissions: ['menu.tickets'],
+        active: true
+      },
+      {
         key: 'menu.users',
         name: 'Usuarios',
         icon: 'Users',
@@ -96,7 +104,18 @@ export default (sequelize, DataTypes) => {
         target: '_self',
         shortAccess: true,
         orderIndex: 3,
-        required_permissions: ['menu.users'],
+        required_permissions: ['menu.userscontrol'],
+        active: true
+      },
+      {
+        key: 'menu.reports',
+        name: 'Reports',
+        icon: 'Flag',
+        path: '/reports',
+        target: '_self',
+        shortAccess: true,
+        orderIndex: 4,
+        required_permissions: ['menu.reports'],
         active: true
       },
       {
@@ -106,7 +125,7 @@ export default (sequelize, DataTypes) => {
         path: '/profile',
         target: '_self',
         shortAccess: true,
-        orderIndex: 4,
+        orderIndex: 5,
         required_permissions: ['menu.profile'],
         active: true
       },
@@ -117,8 +136,41 @@ export default (sequelize, DataTypes) => {
         path: '/configuration',
         target: '_self',
         shortAccess: false,
-        orderIndex: 5,
+        orderIndex: 6,
         required_permissions: ['menu.configuration'],
+        active: true
+      },
+      {
+        key: 'menu.players',
+        name: 'Jugadores',
+        icon: 'Gamepad2',
+        path: '/players',
+        target: '_self',
+        shortAccess: false,
+        orderIndex: 7,
+        required_permissions: ['menu.players'],
+        active: true
+      },
+      {
+        key: 'menu.news',
+        name: 'Noticias',
+        icon: 'Newspaper',
+        path: '/news',
+        target: '_self',
+        shortAccess: false,
+        orderIndex: 8,
+        required_permissions: ['menu.news'],
+        active: true
+      },
+      {
+        key: 'menu.download',
+        name: 'Descargas',
+        icon: 'Download',
+        path: '/download',
+        target: '_self',
+        shortAccess: false,
+        orderIndex: 9,
+        required_permissions: ['menu.download'],
         active: true
       },
       {
@@ -128,7 +180,7 @@ export default (sequelize, DataTypes) => {
         path: '/aboutapp',
         target: '_self',
         shortAccess: false,
-        orderIndex: 6,
+        orderIndex: 10,
         required_permissions: ['menu.aboutapp'],
         active: true
       },
@@ -139,11 +191,20 @@ export default (sequelize, DataTypes) => {
         path: '/gestion',
         target: '_self',
         shortAccess: true,
-        orderIndex: 7,
+        orderIndex: 11,
         required_permissions: ['menu.gestion'],
         active: true
       }
-    ]);
+    ];
+
+    const existing = await Menu.findAll({ attributes: ['key'] });
+    const existingKeys = new Set(existing.map((item) => item.key));
+
+    const missing = seedMenu.filter((item) => !existingKeys.has(item.key));
+
+    if (missing.length > 0) {
+      await Menu.bulkCreate(missing);
+    }
   };
 
   return Menu;

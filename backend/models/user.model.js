@@ -87,6 +87,11 @@ export default (sequelize, DataTypes) => {
       otherKey: 'editionId',
       as: 'editionsList'
     });
+
+    Users.hasMany(models.news_comments, {
+      foreignKey: 'userId',
+      as: 'newsComments'
+    });
   };
 
   Users.seed = async () => {

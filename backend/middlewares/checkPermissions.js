@@ -43,13 +43,13 @@ export const checkPermissions = (requiredPermissions = []) => {
           type: 'error'
         });
 
-        return res.status(403).json({ message: 'No autorizado para administrar usuarios' });
+        return res.status(403).json({ message: 'No autorizado para este apartado' });
       }
-      
+
       const user = await db.models.Users.findByPk(req.user.id);
       req.permissionGranted = true;
       req.role = user?.role;
-      
+
       return next();
     } catch (error) {
       await req.logAction({

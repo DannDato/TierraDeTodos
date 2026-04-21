@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, Search } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
 import Credencial from "../../components/Credencial";
@@ -17,12 +18,17 @@ function Players() {
 	};
 
 	const [players, setPlayers] = useState([]);
-	const [search, setSearch] = useState("");
+	const [searchParams] = useSearchParams();
+	const [search, setSearch] = useState(() => String(searchParams.get("search") || ""));
 	const [loading, setLoading] = useState(true);
 	const [showScrollTop, setShowScrollTop] = useState(false);
 	const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
 	const hasLoadedOnce = useRef(false);
 	const sentinelRef = useRef(null);
+
+	useEffect(() => {
+		setSearch(String(searchParams.get("search") || ""));
+	}, [searchParams]);
 
 	useEffect(() => {
 		if (hasLoadedOnce.current) return;
