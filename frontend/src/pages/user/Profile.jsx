@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { LogOut, PencilIcon, Monitor, ShieldAlert } from "lucide-react";
 import Button from "../../elements/Button";
+import Input from "../../elements/Input";
+import FilePickerButton from "../../elements/FilePickerButton";
 import AlertModal from "../../elements/AlertModal";
 import api from "../../api/axios";
 import Credencial from "../../components/Credencial";
@@ -20,6 +22,15 @@ function Profile() {
   const [showAlert, setShowAlert] = useState(false);
   const [logoutMode, setLogoutMode] = useState("current");
   const [avatarDraft, setAvatarDraft] = useState({ posX: 50, posY: 50, zoom: 1 });
+  const [streamerForm, setStreamerForm] = useState({
+    link: "",
+    communityName: "",
+    image: "",
+  });
+  const [streamerImageFile, setStreamerImageFile] = useState(null);
+  const [isLoadingStreamer, setIsLoadingStreamer] = useState(false);
+  const [isSavingStreamer, setIsSavingStreamer] = useState(false);
+  const [streamerNotice, setStreamerNotice] = useState("");
   const avatarInputRef = useRef(null);
 
   useEffect(() => {
@@ -216,8 +227,15 @@ function Profile() {
     color: user?.statusColor || "#8a8a8a",
   };
   const normalizedStatus = String(user?.status || "").toUpperCase();
+  const normalizedRole = String(user?.role || currentUser.role || "").toUpperCase();
+  const isStreamerRole = normalizedRole === "STREAMER";
   const isInactiveStatus = normalizedStatus === "INACTIVE";
   const isCancelledStatus = normalizedStatus === "BANNED";
+  const statusReason = isCancelledStatus
+    ? (user?.status_reason || "No se registro un motivo de baneo.")
+    : (isInactiveStatus
+      ? "Su cuenta esta en revision esperando a ser autorizada por algun administrador."
+      : (user?.status_reason || "Sin observaciones"));
 
   const avatarPreview = user?.avatarUrl || user?.mc_skin_head || null;
   const avatarPosX = Number.isFinite(Number(user?.avatarPosX)) ? Number(user?.avatarPosX) : 50;
@@ -228,10 +246,112 @@ function Profile() {
     transform: `scale(${avatarZoom})`,
   };
 
+  useEffect(() => {
+    if (!user || !isStreamerRole) return;
+
+    const loadStreamerProfile = async () => {
+      try {
+        setIsLoadingStreamer(true);
+        const { data } = await api.get("/user/streamer");
+        const streamer = data?.streamer || null;
+
+        if (!streamer) {
+          setStreamerForm({ link: "", communityName: "", image: "" });
+          return;
+        }
+
+        setStreamerForm({
+          link: streamer.link || "",
+          communityName: streamer.communityName || "",
+          image: streamer.image || "",
+        });
+      } catch (_err) {
+        setStreamerNotice("No se pudo cargar tu perfil de streamer.");
+      } finally {
+        setIsLoadingStreamer(false);
+      }
+    };
+
+    loadStreamerProfile();
+  }, [user, isStreamerRole]);
+
+  const handleStreamerChange = (field, value) => {
+    setStreamerNotice("");
+    setStreamerForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleStreamerImageSelect = (file) => {
+    if (!file) {
+      setStreamerImageFile(null);
+      return;
+    }
+
+    if (!file.type?.startsWith("image/")) {
+      window.alert("Solo se permiten imágenes");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      window.alert("La imagen no debe superar 5MB");
+      return;
+    }
+
+    setStreamerImageFile(file);
+  };
+
+  const handleStreamerSubmit = async (event) => {
+    event.preventDefault();
+
+    const link = streamerForm.link.trim();
+    const communityName = streamerForm.communityName.trim();
+
+    if (!link || !communityName) {
+      setStreamerNotice("Link y nombre de comunidad son obligatorios.");
+      return;
+    }
+
+    try {
+      setIsSavingStreamer(true);
+      setStreamerNotice("");
+
+      const formData = new FormData();
+      formData.append("link", link);
+      formData.append("communityName", communityName);
+
+      if (streamerImageFile) {
+        formData.append("image", streamerImageFile);
+      } else if (streamerForm.image) {
+        formData.append("image", streamerForm.image);
+      }
+
+      const { data } = await api.put("/user/streamer", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const saved = data?.streamer;
+      if (saved) {
+        setStreamerForm({
+          link: saved.link || "",
+          communityName: saved.communityName || "",
+          image: saved.image || "",
+        });
+      }
+
+      setStreamerImageFile(null);
+      setStreamerNotice(data?.message || "Perfil de streamer guardado correctamente.");
+    } catch (err) {
+      setStreamerNotice(err.response?.data?.message || "No se pudo guardar el perfil de streamer.");
+    } finally {
+      setIsSavingStreamer(false);
+    }
+  };
+
   return (
     <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
       <LoadingOverlay
-        isVisible={!user || isUploadingAvatar || isSavingAvatarPosition}
+        isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer}
         message={!user ? "Cargando cuenta..." : "Guardando cambios..."}
       />
 
@@ -329,8 +449,8 @@ function Profile() {
                 Estatus Actual
               </h2>
 
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex-1 bg-white/5 p-4 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="bg-white/5 p-4 rounded-lg">
                   <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-wider block">
                     Estado
                   </span>
@@ -338,21 +458,90 @@ function Profile() {
                     {currentStatus.label}
                   </span>
                 </div>
-              </div>
 
-              <div className="bg-white/5 p-4 rounded-lg space-y-2 text-sm">
                 <div>
-                  <span className="text-[var(--ins-text-gray)] text-xs uppercase font-bold">Actualizado por:</span>
-                  <p className="font-semibold">{user.status_changed_by || "Sistema"}</p>
+                  <span className="text-[var(--ins-text-gray)] text-xs uppercase font-bold block mb-1">Motivo</span>
+                  <p className="font-semibold text-sm leading-relaxed break-words">{statusReason}</p>
                 </div>
+
                 <div>
-                  <span className="text-[var(--ins-text-gray)] text-xs uppercase font-bold">Fecha de Cambio:</span>
-                  <p className="font-semibold">
+                  <span className="text-[var(--ins-text-gray)] text-xs uppercase font-bold block mb-1">Actualizado por</span>
+                  <p className="font-semibold text-sm">{user.status_changed_by || "Sistema"}</p>
+                  <p className="text-xs text-[var(--ins-text-gray)] mt-1">
                     {user.status_changed_at ? new Date(user.status_changed_at).toLocaleDateString() : "N/A"}
                   </p>
                 </div>
               </div>
+
+              {isCancelledStatus && (
+                <div className="mt-4">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full md:w-auto"
+                    href="/tickets?type=APELACION&subject=Apelacion%20de%20baneo"
+                  >
+                    Iniciar apelacion
+                  </Button>
+                </div>
+              )}
             </div>
+
+            {isStreamerRole && (
+              <form className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm space-y-4" onSubmit={handleStreamerSubmit}>
+                <h2 className="text-xl font-bold">Perfil de Streamer</h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label="Link"
+                    value={streamerForm.link}
+                    onChange={(event) => handleStreamerChange("link", event.target.value)}
+                    placeholder="Pega aqui el link donde haces streams"
+                  />
+
+                  <Input
+                    label="Nombre de comunidad"
+                    value={streamerForm.communityName}
+                    onChange={(event) => handleStreamerChange("communityName", event.target.value)}
+                    placeholder="Ej. tonotos "
+                  />
+                </div>
+
+                <div className="flex flex-col md:flex-row md:items-end gap-3 md:gap-4">
+                  <FilePickerButton
+                    label="Imagen de perfil de plataforma"
+                    buttonText="Subir imagen"
+                    accept="image/*"
+                    onFileSelect={handleStreamerImageSelect}
+                    fileName={streamerImageFile?.name || ""}
+                    disabled={isSavingStreamer}
+                    className="md:max-w-sm"
+                  />
+
+                  <div className="md:ml-auto">
+                    <Button type="submit" variant="primary" size="sm" disabled={isSavingStreamer}>
+                      {isSavingStreamer ? "Guardando..." : "Guardar"}
+                    </Button>
+                  </div>
+                </div>
+
+                {streamerForm.image && (
+                  <div className="rounded-xl bg-white/5 p-3">
+                    <p className="text-xs text-[var(--ins-text-gray)] mb-2">Imagen actual</p>
+                    <img
+                      src={streamerForm.image}
+                      alt="Imagen de streamer"
+                      className="h-28 w-28 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+
+                {streamerNotice && (
+                  <p className="text-sm text-[var(--ins-text-gray)]">{streamerNotice}</p>
+                )}
+
+              </form>
+            )}
 
             {/* SECURITY */}
             <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm">

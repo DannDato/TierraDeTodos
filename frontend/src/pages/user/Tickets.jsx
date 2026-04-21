@@ -19,6 +19,7 @@ import Button from "../../elements/Button";
 import Input from "../../elements/Input";
 import Select from "../../elements/Select";
 import Textarea from "../../elements/Textarea";
+import { useSearchParams } from "react-router-dom";
 
 const createInitialForm = (types = [], priorities = []) => ({
   type: String(types[0]?.key || ""),
@@ -40,6 +41,7 @@ const STATUS_STYLE = {
 const statusStyle = (key) => STATUS_STYLE[key] ?? STATUS_STYLE["CERRADO"];
 
 function Tickets() {
+  const [searchParams] = useSearchParams();
   const currentUser = {
     id:       Number(localStorage.getItem("userId")),
     username: localStorage.getItem("username") || "Jugador",
@@ -126,6 +128,23 @@ function Tickets() {
     loadPlayers();
     loadMyTickets();
   }, []);
+
+  useEffect(() => {
+    if (!ticketTypes.length || !priorityOptions.length) return;
+
+    const requestedType = String(searchParams.get("type") || "").trim().toUpperCase();
+    const requestedSubject = String(searchParams.get("subject") || "").trim();
+
+    if (!requestedType && !requestedSubject) return;
+
+    const existsType = ticketTypes.some((item) => String(item?.key || "").toUpperCase() === requestedType);
+
+    setFormData((prev) => ({
+      ...prev,
+      type: existsType ? requestedType : prev.type,
+      subject: requestedSubject || prev.subject,
+    }));
+  }, [searchParams, ticketTypes, priorityOptions]);
 
   // ── derived ────────────────────────────────────────────────────────────────
   const typeSelectOptions     = useMemo(() => ticketTypes.map((i)     => ({ value: i.key, label: i.name })), [ticketTypes]);

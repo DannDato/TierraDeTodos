@@ -93,6 +93,14 @@ export default (sequelize, DataTypes) => {
         color: '#8b5cf6',
         active: 'YES',
         immutable: true
+      },
+      {
+        key: 'APELACION',
+        name: 'Apelación',
+        detail: 'Solicitud de revisión de sanción o baneo',
+        color: '#f97316',
+        active: 'YES',
+        immutable: true
       }
     ];
 

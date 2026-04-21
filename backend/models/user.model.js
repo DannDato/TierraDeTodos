@@ -92,6 +92,11 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'userId',
       as: 'newsComments'
     });
+
+    Users.hasOne(models.streamer, {
+      foreignKey: 'userID',
+      as: 'streamerProfile'
+    });
   };
 
   Users.seed = async () => {
