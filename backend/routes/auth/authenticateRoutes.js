@@ -12,6 +12,7 @@ const router = express.Router();
 router.post("/login", ctrlAuthenticate.authenticate);
 router.post("/register", ctrlRegister.register);
 router.post("/verify-code", ctrlVerify.verifyAccess);
+router.post("/resend-verify-code", ctrlVerify.resendAccessCode);
 router.post("/logout", verifyToken, ctrlLogout.logout);
 router.get("/google/authorized", ctrlGoogleAuth.handleGoogleAuth);
 router.get("/google/unauthorized", ctrlGoogleAuth.handleGoogleNoAuth);

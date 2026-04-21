@@ -6,6 +6,7 @@ import {
   Eye,
   Ban,
   Mail,
+  X,
 } from "lucide-react";
 import Button from "../../elements/Button";
 import Input from "../../elements/Input";
@@ -15,7 +16,7 @@ import api from "../../api/axios";
 
 import UserDetailsModal from "../../components/UserDetailsModal";
 import LoadingOverlay from "../../components/LoadingOverlay";
-import AlertModal from "../../Elements/AlertModal";
+import AlertModal from "../../elements/AlertModal";
 
 // const roleOptions = [
 //   { value: "TODOS", label: "Role: Todos" },
@@ -495,13 +496,24 @@ function Users() {
         <div className="bg-black/20 rounded-[2rem] border border-[var(--white-color)]/5 overflow-hidden shadow-md p-6">
           <div className="flex flex-col md:flex-row md:items-end gap-4 mb-6">
             <div className="flex-1 relative">
-              <Input
+              <input
+                type="text"
                 placeholder="Buscar jugador por nombre o email..."
                 value={searchTerm}
-                context="dark"
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-[var(--black-color)]/30 border border-[var(--white-color)]/10 rounded-xl px-4 py-2.5 text-sm text-[var(--ins-text-white)] placeholder:text-[var(--ins-text-gray)] focus:outline-none focus:border-[var(--secondary-color)]/50 transition-colors pr-10"
               />
-              <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--white-color)] pointer-events-none" size={20} />
+              {searchTerm ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              ) : (
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)] pointer-events-none" size={16} />
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">

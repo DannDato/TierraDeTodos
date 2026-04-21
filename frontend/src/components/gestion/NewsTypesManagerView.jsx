@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MoreVertical, Plus, Save, Search, Trash2 } from "lucide-react";
+import { MoreVertical, Plus, Save, Search, Trash2, X } from "lucide-react";
 
 import api from "../../api/axios";
 import Button from "../../elements/Button";
@@ -175,12 +175,20 @@ function NewsTypesManagerView() {
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <div className="relative">
-            <Input
+            <input
+              type="text"
               placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-[var(--black-color)]/30 border border-[var(--white-color)]/10 rounded-xl px-4 py-2.5 text-sm text-[var(--ins-text-white)] placeholder:text-[var(--ins-text-gray)] focus:outline-none focus:border-[var(--secondary-color)]/50 transition-colors pr-10"
             />
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--ins-text-white)]/50 pointer-events-none" size={20} />
+            {searchTerm ? (
+              <button type="button" onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] transition-colors">
+                <X size={14} />
+              </button>
+            ) : (
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)] pointer-events-none" size={16} />
+            )}
           </div>
           <Button
             variant="primary"

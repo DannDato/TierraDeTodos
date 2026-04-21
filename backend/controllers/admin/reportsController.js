@@ -6,18 +6,18 @@ import handleError from '../../handlers/handleError.js';
 
 const normalizeText = (value) => String(value || '').trim();
 const parseBool = (value) => String(value).toLowerCase() === 'true';
+const POLICE_TICKET_TYPE_KEYS = ['REPORTE', 'REPORTE_ROBO'];
 
 class AdminReportsController {
-  hasClosePermission = async (userId) => {
-    const [permissionAccess] = await db.query(
+  getTicketPermissions = async (userId) => {
+    const permissionRows = await db.query(
       `
         SELECT s.key
         FROM user_permissions up
         INNER JOIN Permissions s ON s.key = up.permission
         WHERE up.userId = :userId
         AND s.active = 1
-        AND s.key = 'tickets.close'
-        LIMIT 1
+        AND s.key IN ('tickets.view', 'tickets.manage', 'tickets.police', 'tickets.close')
       `,
       {
         replacements: { userId },
@@ -25,13 +25,40 @@ class AdminReportsController {
       }
     );
 
-    return Boolean(permissionAccess);
+    return new Set(permissionRows.map((row) => row.key));
+  };
+
+  getTicketAccessScope = (permissionKeys) => {
+    const canManageTickets = permissionKeys.has('tickets.manage');
+    const canViewAllTickets = canManageTickets || permissionKeys.has('tickets.view');
+    const canViewPoliceTickets = permissionKeys.has('tickets.police');
+    const canCloseTickets = permissionKeys.has('tickets.close');
+
+    return {
+      canManageTickets,
+      canViewAllTickets,
+      canViewPoliceTickets,
+      canCloseTickets
+    };
+  };
+
+  canAccessTicketType = (ticketTypeKey, accessScope) => {
+    if (accessScope.canViewAllTickets) return true;
+    if (!accessScope.canViewPoliceTickets) return false;
+    return POLICE_TICKET_TYPE_KEYS.includes(String(ticketTypeKey || '').trim().toUpperCase());
   };
 
   // GET /admin/reports/tickets
   // Default: solo ABIERTO. Con switches se complementa CERRADO/RECHAZADO.
   getTickets = async (req, res) => {
     try {
+      const permissionKeys = await this.getTicketPermissions(req.user.id);
+      const accessScope = this.getTicketAccessScope(permissionKeys);
+
+      if (!accessScope.canViewAllTickets && !accessScope.canViewPoliceTickets) {
+        return res.status(403).json({ message: 'No autorizado para este apartado' });
+      }
+
       const q = normalizeText(req.query?.q);
       const includeClosed = parseBool(req.query?.includeClosed);
       const includeRejected = parseBool(req.query?.includeRejected);
@@ -43,6 +70,10 @@ class AdminReportsController {
       const where = {
         statusKey: { [Op.in]: statuses }
       };
+
+      if (!accessScope.canViewAllTickets && accessScope.canViewPoliceTickets) {
+        where.typeKey = { [Op.in]: POLICE_TICKET_TYPE_KEYS };
+      }
 
       if (q) {
         const maybeId = Number(q);
@@ -91,7 +122,7 @@ class AdminReportsController {
         })
       );
 
-      const canCloseTicket = await this.hasClosePermission(req.user.id);
+      const canCloseTicket = accessScope.canCloseTickets;
 
       return res.status(200).json({ tickets: ticketsWithUnread, canCloseTicket });
     } catch (error) {
@@ -102,6 +133,13 @@ class AdminReportsController {
   // GET /admin/reports/tickets/:id/messages
   getMessages = async (req, res) => {
     try {
+      const permissionKeys = await this.getTicketPermissions(req.user.id);
+      const accessScope = this.getTicketAccessScope(permissionKeys);
+
+      if (!accessScope.canViewAllTickets && !accessScope.canViewPoliceTickets) {
+        return res.status(403).json({ message: 'No autorizado para este apartado' });
+      }
+
       const ticketId = Number(req.params.id);
       if (!ticketId) return res.status(400).json({ message: 'ID inválido' });
 
@@ -118,6 +156,10 @@ class AdminReportsController {
       });
 
       if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
+
+      if (!this.canAccessTicketType(ticket.typeKey, accessScope)) {
+        return res.status(403).json({ message: 'No autorizado para ver este ticket' });
+      }
 
       await models.tickets_messages.update(
         { seenByAdmin: true },

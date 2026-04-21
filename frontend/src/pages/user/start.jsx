@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Button from "../../elements/Button";
 import api from "../../api/axios";
+import tdtNewsImage from "../../img/tdtnews.png";
 import LoadingOverlay from "../../components/LoadingOverlay";
 import { useNavigate } from "react-router-dom";
 
@@ -88,7 +89,7 @@ function Start() {
         title: item?.title || "Sin titulo",
         date: dateLabel,
         excerpt: item?.description || item?.excerpt || "",
-        image: item?.image || item?.cover || "https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/key-art/MCV_HOL25Drop_MoM_DotNet_Homepage_2560x932.jpg",
+        image: item?.image || item?.cover || tdtNewsImage,
         fechaRaw: item?.fecha || item?.createdAt || null,
       };
     })

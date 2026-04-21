@@ -6,6 +6,7 @@ import api from "../../api/axios";
 import Button from "../../elements/Button";
 import Input from "../../elements/Input";
 import Select from "../../elements/Select";
+import AlertModal from "../../elements/AlertModal";
 import LoadingOverlay from "../../components/LoadingOverlay";
 import tdtNewsImage from "../../img/tdtnews.png";
 
@@ -43,8 +44,33 @@ function News() {
   const [commentText, setCommentText] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsSubmitting, setCommentsSubmitting] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "info",
+    title: "Aviso",
+    message: "",
+    onConfirm: null,
+    confirmText: "Aceptar",
+    cancelText: "Cancelar",
+  });
   const createImageInputRef = useRef(null);
   const editImageInputRef = useRef(null);
+
+  const closeAlert = useCallback(() => {
+    setAlertConfig((prev) => ({ ...prev, isOpen: false, onConfirm: null }));
+  }, []);
+
+  const openAlert = useCallback(({ type = "info", title = "Aviso", message = "", onConfirm = null, confirmText = "Aceptar", cancelText = "Cancelar" }) => {
+    setAlertConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onConfirm,
+      confirmText,
+      cancelText,
+    });
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -267,13 +293,21 @@ function News() {
     }
 
     if (!file.type?.startsWith("image/")) {
-      window.alert("Solo se permiten imágenes.");
+      openAlert({
+        type: "warning",
+        title: "Archivo no valido",
+        message: "Solo se permiten imágenes.",
+      });
       event.target.value = "";
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      window.alert("La imagen no debe superar 5MB.");
+      openAlert({
+        type: "warning",
+        title: "Archivo demasiado grande",
+        message: "La imagen no debe superar 5MB.",
+      });
       event.target.value = "";
       return;
     }
@@ -326,7 +360,11 @@ function News() {
     };
 
     if (!payload.title || !payload.fecha || !payload.description) {
-      window.alert("Título, fecha y descripción son obligatorios.");
+      openAlert({
+        type: "warning",
+        title: "Campos obligatorios",
+        message: "Título, fecha y descripción son obligatorios.",
+      });
       return;
     }
 
@@ -351,7 +389,11 @@ function News() {
 
       setIsCreateModalOpen(false);
     } catch (error) {
-      window.alert(error.response?.data?.message || "No se pudo crear la noticia.");
+      openAlert({
+        type: "error",
+        title: "No se pudo crear",
+        message: error.response?.data?.message || "No se pudo crear la noticia.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -369,7 +411,11 @@ function News() {
     };
 
     if (!payload.title || !payload.fecha || !payload.description) {
-      window.alert("Título, fecha y descripción son obligatorios.");
+      openAlert({
+        type: "warning",
+        title: "Campos obligatorios",
+        message: "Título, fecha y descripción son obligatorios.",
+      });
       return;
     }
 
@@ -403,7 +449,11 @@ function News() {
       setEditImageFile(null);
       setEditImagePreview("");
     } catch (error) {
-      window.alert(error.response?.data?.message || "No se pudo editar la noticia.");
+      openAlert({
+        type: "error",
+        title: "No se pudo editar",
+        message: error.response?.data?.message || "No se pudo editar la noticia.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -417,7 +467,11 @@ function News() {
     };
 
     if (!payload.comment) {
-      window.alert("Escribe un comentario antes de publicar.");
+      openAlert({
+        type: "warning",
+        title: "Comentario vacio",
+        message: "Escribe un comentario antes de publicar.",
+      });
       return;
     }
 
@@ -430,17 +484,20 @@ function News() {
       }
       setCommentText("");
     } catch (error) {
-      window.alert(error.response?.data?.message || "No se pudo publicar el comentario.");
+      openAlert({
+        type: "error",
+        title: "No se pudo comentar",
+        message: error.response?.data?.message || "No se pudo publicar el comentario.",
+      });
     } finally {
       setCommentsSubmitting(false);
     }
   };
 
-  const handleDeleteSelected = async () => {
+  const performDeleteSelected = async () => {
     if (!selectedNews?.id || !hasDeletePermission) return;
 
-    const ok = window.confirm("Esta accion eliminara la noticia de forma permanente. Deseas continuar?");
-    if (!ok) return;
+    closeAlert();
 
     try {
       setSubmitting(true);
@@ -448,15 +505,42 @@ function News() {
       setNews((prev) => (Array.isArray(prev) ? prev.filter((item) => item.id !== selectedNews.id) : []));
       closeNewsModal();
     } catch (error) {
-      window.alert(error.response?.data?.message || "No se pudo eliminar la noticia.");
+      openAlert({
+        type: "error",
+        title: "No se pudo eliminar",
+        message: error.response?.data?.message || "No se pudo eliminar la noticia.",
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleDeleteSelected = () => {
+    if (!selectedNews?.id || !hasDeletePermission) return;
+
+    openAlert({
+      type: "warning",
+      title: "Eliminar noticia",
+      message: "Esta accion eliminara la noticia de forma permanente. Deseas continuar?",
+      onConfirm: performDeleteSelected,
+      confirmText: "Eliminar",
+      cancelText: "Cancelar",
+    });
+  };
+
   return (
     <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
       <LoadingOverlay isVisible={loading || submitting} message={submitting ? "Publicando noticia..." : "Cargando noticias"} />
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={closeAlert}
+        onConfirm={alertConfig.onConfirm}
+        confirmText={alertConfig.confirmText}
+        cancelText={alertConfig.cancelText}
+      />
 
       <div className="w-full max-w-7xl px-4 md:mx-10 mx-0">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
@@ -475,12 +559,23 @@ function News() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-            <div className="w-full sm:w-[340px]">
-              <Input
-                placeholder="Buscar noticia por título, tipo, fecha o reportero..."
+            <div className="relative w-full sm:w-[340px]">
+              <input
+                type="text"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar noticia por título, tipo, fecha o reportero..."
+                className="w-full bg-[var(--black-color)]/30 border border-[var(--white-color)]/10 rounded-xl px-4 py-2.5 text-sm text-[var(--ins-text-white)] placeholder:text-[var(--ins-text-gray)] focus:outline-none focus:border-[var(--secondary-color)]/50 transition-colors"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
 
             {hasCreatePermission && (
@@ -620,11 +715,11 @@ function News() {
                   </div>
 
                   {!isEditingSelected && canEditSelected && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2 max-w-[52vw] md:max-w-none">
                       <Button
                         type="button"
                         variant="primary"
-                        className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+                        className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white text-xs md:text-sm px-3 py-2 md:px-6 md:py-3 rounded-xl md:rounded-3xl"
                         onClick={startEditSelected}
                       >
                         Editar noticia
@@ -634,7 +729,7 @@ function News() {
                         <Button
                           type="button"
                           variant="cancel"
-                          className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white"
+                          className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white text-xs md:text-sm px-3 py-2 md:px-6 md:py-3 rounded-xl md:rounded-3xl"
                           onClick={handleDeleteSelected}
                         >
                           Eliminar
@@ -647,7 +742,7 @@ function News() {
                     <Button
                       type="button"
                       variant="cancel"
-                      className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white"
+                      className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white text-xs md:text-sm px-3 py-2 md:px-6 md:py-3 rounded-xl md:rounded-3xl"
                       onClick={handleDeleteSelected}
                     >
                       Eliminar
@@ -719,7 +814,7 @@ function News() {
                       <span>Reportero: {selectedNews.Reporter}</span>
                     </div>
 
-                    <p className="text-2xl text-black text-justify whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                    <p className="text-lg md:text-2xl text-black text-justify whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
                       {selectedNews.description}
                     </p>
 

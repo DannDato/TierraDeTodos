@@ -8,6 +8,7 @@ import Banner from "../../elements/Banner";
 import Footer from "../../components/Footer";
 import LoadingOverlay from "../../components/LoadingOverlay";
 import SocialsAuth from "../../components/SocialsAuth";
+import { setPendingVerifyAccessUser, setVerifyAccessResendAvailableAt } from "../../utils/verifyAccessStorage";
 
 import { ArrowLeft, Pencil } from "lucide-react";
 
@@ -39,8 +40,8 @@ function Login() {
 
       // nvo dispositivo
       if (data.type === "new_device") {
-        // return navigate("/verifyAccess", { state: { usuario } });
-        localStorage.setItem("tempUser", usuario);
+        setPendingVerifyAccessUser(usuario);
+        setVerifyAccessResendAvailableAt(Date.now() + 60_000);
         return navigate("/verifyAccess");
       }
 

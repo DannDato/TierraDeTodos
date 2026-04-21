@@ -42,10 +42,12 @@ function UserDetailsModal({
   isSaving,
 }) {
   const [activeTab, setActiveTab] = useState("data");
+  const [permissionSearch, setPermissionSearch] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab("data");
+      setPermissionSearch("");
     }
   }, [isOpen]);
 
@@ -53,6 +55,17 @@ function UserDetailsModal({
     () => [...(availablePermissions || [])].sort((a, b) => a.name.localeCompare(b.name)),
     [availablePermissions]
   );
+
+  const filteredPermissions = useMemo(() => {
+    const q = permissionSearch.trim().toLowerCase();
+    if (!q) return orderedPermissions;
+    return orderedPermissions.filter(
+      (p) =>
+        p.name?.toLowerCase().includes(q) ||
+        p.key?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q)
+    );
+  }, [orderedPermissions, permissionSearch]);
   const selectedRoleOption = useMemo(
     () => (roleOptions || []).find((option) => option.value === selectedRole) || null,
     [roleOptions, selectedRole]
@@ -387,13 +400,36 @@ function UserDetailsModal({
           ) : activeTab === "permissions" ? (
             // Pestaña de Permisos
             <div className="space-y-3 animate-[fadeIn_0.3s_ease-out]">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={permissionSearch}
+                  onChange={(e) => setPermissionSearch(e.target.value)}
+                  placeholder="Buscar permiso..."
+                  className="w-full bg-[var(--black-color)]/30 border border-[var(--white-color)]/10 rounded-xl px-4 py-2.5 text-sm text-[var(--ins-text-white)] placeholder:text-[var(--ins-text-gray)] focus:outline-none focus:border-[var(--secondary-color)]/50 transition-colors"
+                />
+                {permissionSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setPermissionSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
               {orderedPermissions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-[var(--ins-text-gray)] bg-[var(--black-color)]/20 rounded-2xl">
                   <Info size={32} className="mb-3 opacity-50" />
                   <p className="text-sm font-medium">No hay permisos disponibles para asignar.</p>
                 </div>
+              ) : filteredPermissions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-[var(--ins-text-gray)] bg-[var(--black-color)]/20 rounded-2xl">
+                  <Info size={32} className="mb-3 opacity-50" />
+                  <p className="text-sm font-medium">Sin resultados para &ldquo;{permissionSearch}&rdquo;.</p>
+                </div>
               ) : (
-                orderedPermissions.map((permission) => {
+                filteredPermissions.map((permission) => {
                   const enabled = selectedPermissions.includes(permission.key);
 
                   return (

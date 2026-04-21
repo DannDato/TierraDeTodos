@@ -8,6 +8,70 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+export const sendAccessCodeEmail = async ({ user, code, req, apartado = "VerifyAccess" }) => {
+    try {
+        if (process.env.NODE_ENV === 'development') {
+            console.log("======================================");
+            console.log(`Usuario: ${user.email}`);
+            console.log(`Nuevo dispositivo detectado`);
+            console.log(`Codigo de verificacion: ${code}`);
+            console.log("Este codigo expira en 10 minutos");
+            console.log("======================================");
+        }
+
+        if(process.env.SEND_MAIL === 'true'){
+            const templatePath = path.join(__dirname, '../emails/nuevo-dispositivo.html');
+            const htmlContent = fs.readFileSync(templatePath, 'utf-8').replace('{{CODE}}', code);
+            let transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    type: 'login',
+                    user: process.env.DANNBOT_MAIL_USER,
+                    pass: process.env.DANNBOT_MAIL_PASS
+                }
+            });
+            const mailOptions = {
+                from: "Tierra de Todos <" + process.env.DANNBOT_MAIL_USER + ">",
+                to: user.email,
+                subject: 'Nuevo dispositivo detectado - Código de verificación',
+                text: `Tu código de verificación es: ${code}`,
+                html: htmlContent
+
+            };
+            if(await transporter.sendMail(mailOptions)){
+                await req.logAction({
+                    accion: "Código de verificación enviado por email",
+                    apartado,
+                    userId: user.id,
+                    username: user.username,
+                    type:"info"
+                });
+                return true;
+            }
+
+            await req.logAction({
+                accion: "Error al enviar el email con el código de verificación",
+                apartado,
+                userId: user.id,
+                username: user.username,
+                type:"error"
+            });
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        await req.logAction({
+            accion: error.message,
+            apartado,
+            userId: user?.id,
+            username: user?.username,
+            type: 'error'
+        });
+        return false;
+    }
+};
+
 
 export const createAccessCode = async (user, deviceHash, req, res) => {
     try {
@@ -43,54 +107,8 @@ export const createAccessCode = async (user, deviceHash, req, res) => {
             ip_address: req.ip,
             expires_at: expiration
         });
-        // -------- SIMULACION ENVIO EMAIL --------
-        if (process.env.NODE_ENV === 'development') {
-            console.log("======================================");
-            console.log(`Usuario: ${user.email}`);
-            console.log(`Nuevo dispositivo detectado`);
-            console.log(`Codigo de verificacion: ${code}`);
-            console.log("Este codigo expira en 10 minutos");
-            console.log("======================================");
-        }
-        if(process.env.SEND_MAIL === 'true'){
-            const templatePath = path.join(__dirname, '../emails/nuevo-dispositivo.html');
-            const htmlContent = fs.readFileSync(templatePath, 'utf-8').replace('{{CODE}}', code);
-            let transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    type: 'login',
-                    user: process.env.DANNBOT_MAIL_USER,
-                    pass: process.env.DANNBOT_MAIL_PASS
-                }
-            });
-            const mailOptions = {
-                from: "Tierra de Todos <" + process.env.DANNBOT_MAIL_USER + ">",
-                to: user.email,
-                subject: 'Nuevo dispositivo detectado - Código de verificación',
-                text: `Tu código de verificación es: ${code}`,
-                html: htmlContent
-
-            };
-            if(await transporter.sendMail(mailOptions)){
-                req.logAction({
-                    accion: "Código de verificación enviado por email",
-                    apartado: "VerifyAccess",
-                    userId: user.id,
-                    username: user.username,
-                    type:"info"
-                });
-            }
-            else{
-                req.logAction({
-                    accion: "Error al enviar el email con el código de verificación",
-                    apartado: "VerifyAccess",
-                    userId: user.id,
-                    username: user.username,
-                    type:"error"
-                });
-                return false;
-            }
-        }
+        const emailSent = await sendAccessCodeEmail({ user, code, req, apartado: 'VerifyAccess' });
+        if (!emailSent) {return false;}
 
         await req.logAction({
             accion: "Login desde dispositivo nuevo",

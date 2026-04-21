@@ -3,6 +3,7 @@ import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
 import generateDeviceHash from '../../utils/generateDeviceHash.js';
 import { verifyAccessCode } from '../../helpers/verifyCodes.js';
+import { sendAccessCodeEmail } from '../../helpers/createCodes.js';
 import { CreateSession } from '../../helpers/CreateSession.js';
 
 class VerifyController {
@@ -103,6 +104,83 @@ class VerifyController {
         return res.status(500).json({
             message: `Error interno del servidor`
         });
+    }
+  };
+
+  resendAccessCode = async (req, res) => {
+    const { usuario } = req.body;
+
+    try {
+        if (!usuario) {
+            return res.status(400).json({ message: 'Usuario requerido' });
+        }
+
+        const user = await models.Users.findOne({
+            where: {
+                [Op.or]: [
+                    { username: usuario },
+                    { email: usuario }
+                ]
+            }
+        });
+
+        if (!user) {
+            await req.logAction({
+                accion: "Reenvío de código fallido - usuario no encontrado",
+                apartado: "VerifyAccess",
+                tabla: "Users",
+                condicion: "username/email lookup",
+                valor: usuario,
+                type: "warn"
+            });
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        const deviceHash = generateDeviceHash(req);
+        const activeCode = await models.AccessCodes.findOne({
+            where: {
+                user: user.id,
+                device_hash: deviceHash,
+                is_used: 'UNUSED',
+                expires_at: {
+                    [Op.gt]: new Date()
+                }
+            },
+            order: [['expires_at', 'DESC'], ['id', 'DESC']]
+        });
+
+        if (!activeCode) {
+            await req.logAction({
+                accion: "Reenvío de código fallido - sin código activo",
+                apartado: "VerifyAccess",
+                userId: user.id,
+                username: user.username,
+                valor: `deviceHash=${deviceHash}`,
+                type: "warn"
+            });
+            return res.status(404).json({ message: 'No hay un código activo para reenviar. Vuelve a iniciar sesión.' });
+        }
+
+        const emailSent = await sendAccessCodeEmail({
+            user,
+            code: String(activeCode.codigo),
+            req,
+            apartado: 'VerifyAccess'
+        });
+
+        if (!emailSent) {
+            return res.status(500).json({ message: 'No se pudo reenviar el código' });
+        }
+
+        return res.status(200).json({ message: 'Código reenviado correctamente' });
+    } catch (error) {
+        console.error("RESEND VERIFY ACCESS ERROR:", error);
+        await req.logAction({
+            accion: error.message,
+            apartado: "VerifyAccess",
+            type: 'error'
+        });
+        return res.status(500).json({ message: 'Error interno del servidor' });
     }
   };
 }

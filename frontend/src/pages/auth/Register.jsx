@@ -10,6 +10,7 @@ import LoadingOverlay from "../../components/LoadingOverlay";
 import SocialsAuth from "../../components/SocialsAuth"
 import AlertModal from "../../elements/AlertModal";
 import { ArrowLeft, LogIn } from "lucide-react";
+import { setPendingVerifyAccessUser, setVerifyAccessResendAvailableAt } from "../../utils/verifyAccessStorage";
 
 function Register() {
   const navigate = useNavigate();
@@ -62,8 +63,8 @@ function Register() {
 
       // nvo dispositivo
       if (data.type === "new_device") {
-        // return navigate("/verifyAccess", { state: { usuario } });
-        localStorage.setItem("tempUser", username);
+        setPendingVerifyAccessUser(username);
+        setVerifyAccessResendAvailableAt(Date.now() + 60_000);
         return navigate("/verifyAccess");
       }
 

@@ -76,6 +76,7 @@ export default (sequelize, DataTypes) => {
       { key: 'gest.system', name: 'Gestionar sistema', description: 'Permite administrar preferencias globales del sistema', active: true },
       { key: 'tickets.view', name: 'Ver tickets admin', description: 'Permite ver la bandeja de reports y los mensajes de tickets', active: true },
       { key: 'tickets.manage', name: 'Responder tickets admin', description: 'Permite responder tickets desde la pantalla de reports', active: true },
+      { key: 'tickets.police', name: 'Ver reportes de policia', description: 'Permite ver solo tickets de tipo REPORTE y REPORTE_ROBO en la pantalla de reports', active: true },
       { key: 'tickets.close', name: 'Cerrar tickets', description: 'Permite cerrar tickets desde la pantalla de reports', active: true },
       { key: 'user.view', name: 'Ver usuarios', description: 'Permite ver la lista de usuarios y sus detalles', active: true },
       { key: 'user.edit', name: 'Editar usuarios', description: 'Permite modificar los datos de los usuarios, incluyendo roles y permisos', active: true }
