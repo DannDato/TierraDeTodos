@@ -46,7 +46,6 @@ function News() {
   const [commentText, setCommentText] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsSubmitting, setCommentsSubmitting] = useState(false);
-  const [likedNewsMap, setLikedNewsMap] = useState({});
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
     type: "info",
@@ -75,18 +74,6 @@ function News() {
     });
   }, []);
 
-  useEffect(() => {
-    try {
-      const rawMap = localStorage.getItem(LIKE_STORAGE_KEY);
-      if (!rawMap) return;
-      const parsed = JSON.parse(rawMap);
-      if (parsed && typeof parsed === "object") {
-        setLikedNewsMap(parsed);
-      }
-    } catch (_error) {
-      setLikedNewsMap({});
-    }
-  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -218,9 +205,11 @@ function News() {
     return "#f59e0b";
   };
 
+
   const isNewsLiked = useCallback((newsId) => {
-    return Boolean(likedNewsMap[String(newsId)]);
-  }, [likedNewsMap]);
+    const found = news.find((item) => String(item.id) === String(newsId));
+    return Boolean(found?.likedByCurrentUser);
+  }, [news]);
 
   const handleToggleLike = async (event, article) => {
     event.stopPropagation();
@@ -228,58 +217,46 @@ function News() {
     const articleId = Number(article?.id);
     if (!articleId) return;
 
-    const articleKey = String(articleId);
-    const wasLiked = Boolean(likedNewsMap[articleKey]);
-    const willLike = !wasLiked;
-
-    setLikedNewsMap((prev) => {
-      const next = { ...prev, [articleKey]: willLike };
-      localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
-
-    setNews((prev) => (Array.isArray(prev)
-      ? prev.map((item) => {
+    // Usar el estado actual de news (no normalizedNews) para evitar bug visual
+    // Optimista: UI rápida, pero siempre sincroniza con backend
+    setNews((prev) => {
+      return prev.map((item) => {
         if (Number(item.id) !== articleId) return item;
+        const wasLiked = Boolean(item.likedByCurrentUser);
+        const willLike = !wasLiked;
         return {
           ...item,
           likesCount: Math.max(0, Number(item.likesCount || 0) + (willLike ? 1 : -1)),
+          likedByCurrentUser: willLike
         };
-      })
-      : prev
-    ));
+      });
+    });
 
     try {
+      // Determinar el valor real a enviar según el estado actual
+      const wasLiked = Boolean(article.likedByCurrentUser);
+      const willLike = !wasLiked;
       const { data } = await api.post(`/user/news/${articleId}/likes`, { liked: willLike });
-      const confirmedLikes = Number(data?.likesCount);
-
-      if (Number.isFinite(confirmedLikes)) {
-        setNews((prev) => (Array.isArray(prev)
-          ? prev.map((item) => (Number(item.id) === articleId
-            ? { ...item, likesCount: Math.max(0, confirmedLikes) }
-            : item
-          ))
-          : prev
-        ));
-      }
+      // El backend responde con el estado real tras la operación
+      setNews((prev) => prev.map((item) => {
+        if (Number(item.id) !== articleId) return item;
+        return {
+          ...item,
+          likesCount: Number.isFinite(data?.likesCount) ? Math.max(0, data.likesCount) : item.likesCount,
+          likedByCurrentUser: !!data?.liked
+        };
+      }));
     } catch (error) {
-      setLikedNewsMap((prev) => {
-        const next = { ...prev, [articleKey]: wasLiked };
-        localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(next));
-        return next;
-      });
-
-      setNews((prev) => (Array.isArray(prev)
-        ? prev.map((item) => {
-          if (Number(item.id) !== articleId) return item;
-          return {
-            ...item,
-            likesCount: Math.max(0, Number(item.likesCount || 0) + (wasLiked ? 1 : -1)),
-          };
-        })
-        : prev
-      ));
-
+      // Rollback visual
+      setNews((prev) => prev.map((item) => {
+        if (Number(item.id) !== articleId) return item;
+        const wasLiked = Boolean(item.likedByCurrentUser);
+        return {
+          ...item,
+          likesCount: Math.max(0, Number(item.likesCount || 0) + (wasLiked ? 1 : -1)),
+          likedByCurrentUser: wasLiked
+        };
+      }));
       openAlert({
         type: "error",
         title: "No se pudo actualizar el like",

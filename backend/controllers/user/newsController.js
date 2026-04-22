@@ -35,19 +35,26 @@ class NewsController {
         include: [
           {
             model: models.news_likes,
-            as: 'likesData',
-            attributes: ['likes'],
+            as: 'likes',
+            attributes: ['userId'],
             required: false
           }
         ],
         order: [['fecha', 'DESC'], ['id', 'DESC']]
       });
 
+      // Si hay usuario autenticado, obtener su id
+      const currentUserId = req.user?.id;
+
       const parsedNews = rows.map((row) => {
         const plain = row.toJSON();
+        const likesArr = Array.isArray(plain.likes) ? plain.likes : [];
+        const likesCount = likesArr.length;
+        const likedByCurrentUser = currentUserId ? likesArr.some(like => like.userId === currentUserId) : false;
         return {
           ...plain,
-          likesCount: Number(plain?.likesData?.likes || 0)
+          likesCount,
+          likedByCurrentUser
         };
       });
 
@@ -386,6 +393,12 @@ class NewsController {
         return res.status(400).json({ message: 'El campo liked debe ser booleano.' });
       }
 
+      const userId = req.user?.id;
+      if (!userId) {
+        await tx.rollback();
+        return res.status(401).json({ message: 'Usuario no autenticado.' });
+      }
+
       const targetNews = await models.news.findByPk(newsId, {
         attributes: ['id'],
         transaction: tx,
@@ -397,30 +410,31 @@ class NewsController {
         return res.status(404).json({ message: 'Noticia no encontrada.' });
       }
 
-      let likesRow = await models.news_likes.findOne({
-        where: { newsId },
+      const likeRow = await models.news_likes.findOne({
+        where: { newsId, userId },
         transaction: tx,
         lock: tx.LOCK.UPDATE
       });
 
-      if (!likesRow) {
-        likesRow = await models.news_likes.create({
-          newsId,
-          likes: 0
-        }, { transaction: tx });
+      if (liked) {
+        if (!likeRow) {
+          await models.news_likes.create({ newsId, userId }, { transaction: tx });
+        }
+      } else {
+        if (likeRow) {
+          await likeRow.destroy({ transaction: tx });
+        }
       }
 
-      likesRow.likes = liked
-        ? Number(likesRow.likes || 0) + 1
-        : Math.max(0, Number(likesRow.likes || 0) - 1);
+      // Contar likes actuales
+      const likesCount = await models.news_likes.count({ where: { newsId }, transaction: tx });
 
-      await likesRow.save({ transaction: tx });
       await tx.commit();
 
       return res.status(200).json({
         newsId,
         liked,
-        likesCount: Number(likesRow.likes || 0)
+        likesCount
       });
     } catch (_error) {
       await tx.rollback();

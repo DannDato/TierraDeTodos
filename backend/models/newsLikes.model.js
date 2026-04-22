@@ -8,26 +8,29 @@ export default (sequelize, DataTypes) => {
     newsId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true,
-      field: 'news_id'
+      field: 'news_id',
     },
-    likes: {
+    userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0
+      field: 'user_id',
     }
   }, {
     tableName: 'news_likes',
     timestamps: true,
     indexes: [
       {
-        name: 'news_likes_news_unique',
+        name: 'news_likes_news_user_unique',
         unique: true,
+        fields: ['news_id', 'user_id']
+      },
+      {
+        name: 'news_likes_news_idx',
         fields: ['news_id']
       },
       {
-        name: 'news_likes_likes_idx',
-        fields: ['likes']
+        name: 'news_likes_user_idx',
+        fields: ['user_id']
       }
     ]
   });
@@ -36,6 +39,11 @@ export default (sequelize, DataTypes) => {
     news_likes.belongsTo(models.news, {
       foreignKey: 'newsId',
       as: 'news',
+      onDelete: 'CASCADE'
+    });
+    news_likes.belongsTo(models.Users, {
+      foreignKey: 'userId',
+      as: 'user',
       onDelete: 'CASCADE'
     });
   };
