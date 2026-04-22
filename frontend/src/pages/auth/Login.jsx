@@ -100,7 +100,7 @@ function Login() {
               />
 
               <div className="flex justify-end">
-                <a href="/forgot-password"
+                <a href="/password-recovery"
                    className="text-xs font-semibold text-[var(--ins-text-dark)] hover:text-[var(--secondary-color)] transition-colors">
                   ¿Olvidaste tu contraseña?
                 </a>

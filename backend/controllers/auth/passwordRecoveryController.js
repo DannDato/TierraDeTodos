@@ -87,7 +87,7 @@ class PasswordRecoveryController {
       });
       for (const prev of prevPasswords) {
         if (await bcrypt.compare(password, prev.password)) {
-          return res.status(400).json({ message: "No puedes reutilizar una contraseña anterior." });
+          return res.status(400).json({ message: "Tu contraseña no puede ser igual a una de tus contraseñas anteriores." });
         }
       }
       // Guardar la contraseña actual antes de cambiarla

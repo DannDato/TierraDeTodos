@@ -1,15 +1,36 @@
 import { useState, useEffect, useRef } from "react";
-import { LogOut, PencilIcon, Monitor, ShieldAlert } from "lucide-react";
+import { LogOut, PencilIcon, Monitor, ShieldAlert, User } from "lucide-react";
+
 import Button from "../../elements/Button";
 import Input from "../../elements/Input";
 import FilePickerButton from "../../elements/FilePickerButton";
 import AlertModal from "../../elements/AlertModal";
 import api from "../../api/axios";
 import Credencial from "../../components/Credencial";
+
 import LoadingOverlay from "../../components/LoadingOverlay";
 
 function Profile() {
   const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
+
+  // Cambiar contraseña (deben estar dentro del componente)
+  const [showPasswordAlert, setShowPasswordAlert] = useState(false);
+  const [showPasswordSuccess, setShowPasswordSuccess] = useState(false);
+  const [showPasswordError, setShowPasswordError] = useState(false);
+  const [isLoadingPassword, setIsLoadingPassword] = useState(false);
+
+  const handleChangePassword = async () => {
+    setShowPasswordAlert(false);
+    setIsLoadingPassword(true);
+    try {
+      await api.post("/auth/request-password-recovery", { email: user.email });
+      setShowPasswordSuccess(true);
+    } catch (err) {
+      setShowPasswordError(true);
+    } finally {
+      setIsLoadingPassword(false);
+    }
+  };
 
   const [isFlipped, setIsFlipped] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -350,10 +371,12 @@ function Profile() {
 
   return (
     <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
+
       <LoadingOverlay
-        isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer}
-        message={!user ? "Cargando cuenta..." : "Guardando cambios..."}
+        isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer || isLoadingPassword}
+        message={isLoadingPassword ? "Enviando correo de recuperación..." : (!user ? "Cargando cuenta..." : "Guardando cambios...")}
       />
+
 
       <AlertModal
         isOpen={showAlert}
@@ -362,6 +385,40 @@ function Profile() {
         message={logoutMode === "all" ? "Estas a punto de cerrar sesión en todos los dispositivos." : "Estas a punto de cerrar sesión."}
         onClose={() => setShowAlert(false)}
         onConfirm={handleLogout}
+      />
+
+      {/* Cambiar contraseña: alerta de confirmación */}
+      <AlertModal
+        isOpen={showPasswordAlert}
+        type="warning"
+        title="Cambiar contraseña"
+        message="Se enviará un correo a tu cuenta para que puedas restablecer tu contraseña. ¿Deseas continuar?"
+        onClose={() => setShowPasswordAlert(false)}
+        onConfirm={handleChangePassword}
+        cancelText="Cancelar"
+        confirmText="Aceptar"
+      />
+
+      {/* Cambiar contraseña: éxito */}
+      <AlertModal
+        isOpen={showPasswordSuccess}
+        type="success"
+        title="Correo enviado"
+        message="Revisa tu correo y sigue los pasos para cambiar tu contraseña."
+        onClose={() => setShowPasswordSuccess(false)}
+        confirmText="Cerrar"
+        cancelText=""
+      />
+
+      {/* Cambiar contraseña: error */}
+      <AlertModal
+        isOpen={showPasswordError}
+        type="error"
+        title="Error al enviar correo"
+        message="No se pudo enviar el correo de recuperación. Intenta más tarde."
+        onClose={() => setShowPasswordError(false)}
+        confirmText="Cerrar"
+        cancelText=""
       />
 
       <AlertModal
@@ -438,6 +495,24 @@ function Profile() {
 
           {/* RIGHT: ADDITIONAL INFO - SIN CAMBIOS */}
           <div className="w-full lg:flex-1 min-w-0 space-y-6">
+            {/* INFORMACION */}
+            <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <User size={24} />
+                Tu información
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-wider block">Nombre de usuario</span>
+                  <span className="text-lg font-bold">{user.username}</span>
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-wider block">Correo electrónico</span>
+                  <span className="text-lg font-bold">{user.email}</span>
+                </div>
+              </div>
+            </div>
 
             {/* STATUS */}
             <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm">
@@ -545,11 +620,20 @@ function Profile() {
 
             {/* SECURITY */}
             <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <ShieldAlert size={20} className="text-[var(--secondary-color)]" />
-                Seguridad
-              </h2>
-
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <ShieldAlert size={20} className="text-[var(--secondary-color)]" />
+                  Seguridad
+                </h2>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="mb-4 w-full md:w-auto "
+                  onClick={() => setShowPasswordAlert(true)}
+                >
+                  Cambiar contraseña
+                </Button>
+              </div>
               <div className="space-y-3 max-h-64 overflow-y-auto pr-2 tdt-scrollbar">
                 {user.devices?.map((device) => (
                   <div

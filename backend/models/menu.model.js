@@ -160,6 +160,19 @@ export default (sequelize, DataTypes) => {
         active: true
       },
       {
+        id: 6,
+        key: 'menu.community',
+        name: 'Comunidad',
+        icon: 'Users',
+        path: '/community',
+        target: '_self',
+        shortAccess: true,
+        orderIndex: 7,
+        required_permissions: ['menu.community'],
+        menuGroup: 'user',
+        active: true
+      },
+      {
         id: 3,
         key: 'menu.users',
         name: 'Usuarios',
@@ -167,7 +180,7 @@ export default (sequelize, DataTypes) => {
         path: '/users',
         target: '_self',
         shortAccess: false,
-        orderIndex: 7,
+        orderIndex: 8,
         required_permissions: ['menu.userscontrol'],
         menuGroup: 'admin',
         active: true
@@ -177,11 +190,11 @@ export default (sequelize, DataTypes) => {
         key: 'menu.aboutapp',
         name: 'Acerca de',
         icon: 'Info',
-        path: '/aboutapp',
+        path: '/',
         target: '_self',
         shortAccess: false,
         orderIndex: 9,
-        required_permissions: ['menu.aboutapp'],
+        required_permissions: [],
         menuGroup: 'user',
         active: true
       },

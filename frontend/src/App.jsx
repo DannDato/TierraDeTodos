@@ -9,6 +9,7 @@ import Login from "./pages/auth/Login"
 import Register from "./pages/auth/Register"
 import Profile from "./pages/user/Profile";
 import VerifyAccess from "./pages/auth/VerifyAccess"
+import PasswordRecovery from "./pages/auth/passwordRecovery"
 // Layouts
 import DashboardLayout from "./layouts/DashboardLayout";
 // Páginas de usuario
@@ -72,6 +73,7 @@ const App = function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verifyAccess" element={<VerifyAccess />} />
+        <Route path="/password-recovery" element={<PasswordRecovery />} />
 
         <Route path="/profile" element={<DashboardLayout><Profile /></DashboardLayout>}/>
         <Route path="/aboutapp" element={<DashboardLayout><AboutApp /></DashboardLayout>}/>

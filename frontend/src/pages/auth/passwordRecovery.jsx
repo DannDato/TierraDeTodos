@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Input from "../../elements/Input";
@@ -52,7 +52,7 @@ export default function PasswordRecovery() {
     setLoading(true);
     try {
       await api.post("/auth/request-password-recovery", { email });
-      setSuccess("Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.");
+      setSuccess("Correo enviado. Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.");
       setEmailSent(true);
     } catch (err) {
       setError(err.response?.data?.message || "Error al enviar el correo de recuperación");
@@ -115,7 +115,7 @@ export default function PasswordRecovery() {
                   autoFocus
                 />
                 {error && <div className="text-red-400 mt-2 text-sm">{error}</div>}
-                {success && <div className="text-gray-500 mt-2 text-sm">{success}</div>}
+                {success && <div className="text-gray-500 mt-2 text-sm"><Check className="inline-block mr-2" /> {success}</div>}
                 <Button
                   type="submit"
                   variant="primary"
@@ -170,8 +170,7 @@ export default function PasswordRecovery() {
               <img src="/img/tdtLine.png" alt="Tierra de Todos Logo" className="mb-6 w-48" />
             </a>
             <p className="text-sm font-light mb-10 text-center leading-relaxed opacity-90">
-              Ingresa tu nueva contraseña para recuperar el acceso a tu cuenta.<br />
-              Si no solicitaste este cambio, puedes ignorar este mensaje.
+              Necesitamos tu correo electrónico para enviarte un enlace seguro que te permitirá restablecer tu contraseña. Si el correo está registrado, recibirás un mensaje con las instrucciones para crear una nueva contraseña y recuperar el acceso a tu cuenta.
             </p>
             <div className="grid w-full gap-3 grid-cols-1 md:grid-cols-2">
               <Button variant="ghost" href="/" className="flex items-center justify-center gap-2 border-none hover:bg-white/10">
