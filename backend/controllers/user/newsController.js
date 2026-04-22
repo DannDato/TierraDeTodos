@@ -32,11 +32,27 @@ class NewsController {
             [Op.gte]: minDate.toISOString().slice(0, 10)
           }
         },
+        include: [
+          {
+            model: models.news_likes,
+            as: 'likesData',
+            attributes: ['likes'],
+            required: false
+          }
+        ],
         order: [['fecha', 'DESC'], ['id', 'DESC']]
       });
 
+      const parsedNews = rows.map((row) => {
+        const plain = row.toJSON();
+        return {
+          ...plain,
+          likesCount: Number(plain?.likesData?.likes || 0)
+        };
+      });
+
       return res.status(200).json({
-        news: rows
+        news: parsedNews
       });
     } catch (error) {
       return res.status(500).json({ message: 'Error interno del servidor' });
@@ -351,6 +367,63 @@ class NewsController {
         }
       });
     } catch (_error) {
+      return res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  };
+
+  toggleNewsLike = async (req, res) => {
+    const tx = await db.transaction();
+    try {
+      const newsId = Number(req.params.id);
+      if (!newsId) {
+        await tx.rollback();
+        return res.status(400).json({ message: 'ID de noticia invalido.' });
+      }
+
+      const liked = req.body?.liked;
+      if (typeof liked !== 'boolean') {
+        await tx.rollback();
+        return res.status(400).json({ message: 'El campo liked debe ser booleano.' });
+      }
+
+      const targetNews = await models.news.findByPk(newsId, {
+        attributes: ['id'],
+        transaction: tx,
+        lock: tx.LOCK.UPDATE
+      });
+
+      if (!targetNews) {
+        await tx.rollback();
+        return res.status(404).json({ message: 'Noticia no encontrada.' });
+      }
+
+      let likesRow = await models.news_likes.findOne({
+        where: { newsId },
+        transaction: tx,
+        lock: tx.LOCK.UPDATE
+      });
+
+      if (!likesRow) {
+        likesRow = await models.news_likes.create({
+          newsId,
+          likes: 0
+        }, { transaction: tx });
+      }
+
+      likesRow.likes = liked
+        ? Number(likesRow.likes || 0) + 1
+        : Math.max(0, Number(likesRow.likes || 0) - 1);
+
+      await likesRow.save({ transaction: tx });
+      await tx.commit();
+
+      return res.status(200).json({
+        newsId,
+        liked,
+        likesCount: Number(likesRow.likes || 0)
+      });
+    } catch (_error) {
+      await tx.rollback();
       return res.status(500).json({ message: 'Error interno del servidor' });
     }
   };

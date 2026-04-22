@@ -56,6 +56,11 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'newsId',
       as: 'comments'
     });
+
+    news.hasOne(models.news_likes, {
+      foreignKey: 'newsId',
+      as: 'likesData'
+    });
   };
 
   return news;

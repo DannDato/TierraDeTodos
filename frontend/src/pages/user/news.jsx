@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Plus, UserRound, X } from "lucide-react";
+import { ChevronRight, Heart, Plus, UserRound, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
@@ -10,11 +10,13 @@ import AlertModal from "../../elements/AlertModal";
 import LoadingOverlay from "../../components/LoadingOverlay";
 import tdtNewsImage from "../../img/tdtnews.png";
 
+const LIKE_STORAGE_KEY = "tdt_news_liked_map_v1";
+
 const createInitialNewsForm = () => ({
   title: "",
   type: "NOTICIA",
   fecha: new Date().toISOString().slice(0, 10),
-  description: "",
+  // description: "",
   note: "",
 });
 
@@ -44,6 +46,7 @@ function News() {
   const [commentText, setCommentText] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsSubmitting, setCommentsSubmitting] = useState(false);
+  const [likedNewsMap, setLikedNewsMap] = useState({});
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
     type: "info",
@@ -70,6 +73,19 @@ function News() {
       confirmText,
       cancelText,
     });
+  }, []);
+
+  useEffect(() => {
+    try {
+      const rawMap = localStorage.getItem(LIKE_STORAGE_KEY);
+      if (!rawMap) return;
+      const parsed = JSON.parse(rawMap);
+      if (parsed && typeof parsed === "object") {
+        setLikedNewsMap(parsed);
+      }
+    } catch (_error) {
+      setLikedNewsMap({});
+    }
   }, []);
 
   useEffect(() => {
@@ -147,6 +163,7 @@ function News() {
         note: item.note || "",
         Reporter: item.Reporter || item.reporter || "Sistema",
         featured: Boolean(item.featured),
+        likesCount: Math.max(0, Number(item.likesCount || item.likes || 0)),
       };
     });
   }, [news]);
@@ -199,6 +216,76 @@ function News() {
     const color = typeColorMap[String(type || "").toUpperCase()];
     if (color) return color;
     return "#f59e0b";
+  };
+
+  const isNewsLiked = useCallback((newsId) => {
+    return Boolean(likedNewsMap[String(newsId)]);
+  }, [likedNewsMap]);
+
+  const handleToggleLike = async (event, article) => {
+    event.stopPropagation();
+
+    const articleId = Number(article?.id);
+    if (!articleId) return;
+
+    const articleKey = String(articleId);
+    const wasLiked = Boolean(likedNewsMap[articleKey]);
+    const willLike = !wasLiked;
+
+    setLikedNewsMap((prev) => {
+      const next = { ...prev, [articleKey]: willLike };
+      localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+
+    setNews((prev) => (Array.isArray(prev)
+      ? prev.map((item) => {
+        if (Number(item.id) !== articleId) return item;
+        return {
+          ...item,
+          likesCount: Math.max(0, Number(item.likesCount || 0) + (willLike ? 1 : -1)),
+        };
+      })
+      : prev
+    ));
+
+    try {
+      const { data } = await api.post(`/user/news/${articleId}/likes`, { liked: willLike });
+      const confirmedLikes = Number(data?.likesCount);
+
+      if (Number.isFinite(confirmedLikes)) {
+        setNews((prev) => (Array.isArray(prev)
+          ? prev.map((item) => (Number(item.id) === articleId
+            ? { ...item, likesCount: Math.max(0, confirmedLikes) }
+            : item
+          ))
+          : prev
+        ));
+      }
+    } catch (error) {
+      setLikedNewsMap((prev) => {
+        const next = { ...prev, [articleKey]: wasLiked };
+        localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+
+      setNews((prev) => (Array.isArray(prev)
+        ? prev.map((item) => {
+          if (Number(item.id) !== articleId) return item;
+          return {
+            ...item,
+            likesCount: Math.max(0, Number(item.likesCount || 0) + (wasLiked ? 1 : -1)),
+          };
+        })
+        : prev
+      ));
+
+      openAlert({
+        type: "error",
+        title: "No se pudo actualizar el like",
+        message: error.response?.data?.message || "Intenta de nuevo en un momento.",
+      });
+    }
   };
 
   const openNewsModal = useCallback((article) => {
@@ -613,7 +700,18 @@ function News() {
                   <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(featuredNews.type) }}>
                     {featuredNews.type}
                   </span>
-                  <h2 className="text-3xl font-extrabold text-white mb-2 drop-shadow-lg leading-tight">{featuredNews.title}</h2>
+                  <div className="flex items-center justify-between gap-4 mb-2">
+                    <h2 className="text-3xl font-extrabold text-white drop-shadow-lg leading-tight">{featuredNews.title}</h2>
+                    <button
+                      type="button"
+                      className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-black/30 hover:bg-black/45 border border-white/20 transition-colors"
+                      onClick={(event) => handleToggleLike(event, featuredNews)}
+                      aria-label={isNewsLiked(featuredNews.id) ? "Quitar like" : "Dar like"}
+                    >
+                      <Heart size={16} className={isNewsLiked(featuredNews.id) ? "text-red-500 fill-red-500" : "text-white"} />
+                      <span className="text-xs font-bold text-white">{Number(featuredNews.likesCount || 0)}</span>
+                    </button>
+                  </div>
                   <p className="text-gray-200 text-sm max-w-xl drop-shadow-md line-clamp-2">{featuredNews.description}</p>
                 </div>
               </div>
@@ -633,7 +731,7 @@ function News() {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
-                  <div className="p-6 flex flex-col flex-1">
+                  <div className="p-6 flex flex-col flex-1 relative pb-16">
                     <div className="flex items-center justify-between mb-3">
                       <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded-md" style={{ backgroundColor: getBadgeColor(article.type) }}>
                         {article.type}
@@ -650,6 +748,15 @@ function News() {
                       onClick={() => openNewsModal(article)}
                     >
                       Leer más <ChevronRight size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 bg-black/25 hover:bg-black/40 border border-white/15 transition-colors"
+                      onClick={(event) => handleToggleLike(event, article)}
+                      aria-label={isNewsLiked(article.id) ? "Quitar like" : "Dar like"}
+                    >
+                      <Heart size={15} className={isNewsLiked(article.id) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-white)]"} />
+                      <span className="text-xs font-semibold text-[var(--ins-text-white)]">{Number(article.likesCount || 0)}</span>
                     </button>
                   </div>
                 </div>

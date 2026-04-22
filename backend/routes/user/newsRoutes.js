@@ -10,6 +10,7 @@ const router = express.Router();
 router.get('/news', verifyToken, ctrlNews.getNews);
 router.get('/news/types', verifyToken, ctrlNews.getNewsTypes);
 router.get('/news/:id/comments', verifyToken, ctrlNews.getNewsComments);
+router.post('/news/:id/likes', verifyToken, ctrlNews.toggleNewsLike);
 router.post('/news', verifyToken, checkPermissions(['news.create']), ctrlNews.createNews);
 router.put('/news/:id', verifyToken, checkPermissions(['news.edit']), ctrlNews.updateNews);
 router.delete('/news/:id', verifyToken, checkPermissions(['news.delete']), ctrlNews.deleteNews);
