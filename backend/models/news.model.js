@@ -63,5 +63,16 @@ export default (sequelize, DataTypes) => {
     });
   };
 
+  news.seed = async () => {
+    const validate = await news.findAll();
+    if (validate.length > 0) return;
+    await news.bulkCreate([
+        { title: 'Noticia de prueba', type: 'NOTICIA', fecha: new Date(), description: 'Descripción de la noticia de prueba', image: null, note: null, Reporter: 'Admin' },
+        { title: 'Noticia de prueba', type: 'NOTICIA', fecha: new Date(), description: 'Descripción de la noticia de prueba', image: null, note: null, Reporter: 'Admin' },
+        { title: 'Noticia de prueba', type: 'NOTICIA', fecha: new Date(), description: 'Descripción de la noticia de prueba', image: null, note: null, Reporter: 'Admin' },
+        { title: 'Noticia de prueba', type: 'NOTICIA', fecha: new Date(), description: 'Descripción de la noticia de prueba', image: null, note: null, Reporter: 'Admin' }
+      ]);
+    };
+
   return news;
 };

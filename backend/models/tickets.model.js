@@ -85,5 +85,17 @@ export default (sequelize, DataTypes) => {
     });
   };
 
+  tickets.seed = async () => {
+    const existing = await tickets.findOne({ where: { subject: 'Ejemplo de ticket' } });
+    if (existing) return;
+    await tickets.bulkCreate([
+        { subject: 'Ejemplo de ticket', typeKey: 'GENERAL', priorityKey: 'MEDIA', statusKey: 'ABIERTO', description: 'Descripción del ticket de prueba', userId: 1, involvedPlayer: null, coordX: null, coordY: null, coordZ: null, evidence: null },
+        { subject: 'Ejemplo de ticket', typeKey: 'GENERAL', priorityKey: 'MEDIA', statusKey: 'ABIERTO', description: 'Descripción del ticket de prueba', userId: 2, involvedPlayer: null, coordX: null, coordY: null, coordZ: null, evidence: null },
+        { subject: 'Ejemplo de ticket', typeKey: 'GENERAL', priorityKey: 'MEDIA', statusKey: 'ABIERTO', description: 'Descripción del ticket de prueba', userId: 3, involvedPlayer: null, coordX: null, coordY: null, coordZ: null, evidence: null },
+        { subject: 'Ejemplo de ticket', typeKey: 'GENERAL', priorityKey: 'MEDIA', statusKey: 'ABIERTO', description: 'Descripción del ticket de prueba', userId: 4, involvedPlayer: null, coordX: null, coordY: null, coordZ: null, evidence: null },
+        { subject: 'Ejemplo de ticket', typeKey: 'GENERAL', priorityKey: 'MEDIA', statusKey: 'ABIERTO', description: 'Descripción del ticket de prueba', userId: 1, involvedPlayer: null, coordX: null, coordY: null, coordZ: null, evidence: null }
+      ]);
+    };
+
   return tickets;
 };

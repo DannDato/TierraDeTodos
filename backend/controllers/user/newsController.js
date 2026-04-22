@@ -21,7 +21,7 @@ class NewsController {
     return `${process.env.R2_ENDPOINT}/${process.env.R2_BUCKET}`.replace(/\/$/, '');
   };
 
-  getNews = async (_req, res) => {
+  getNews = async (req, res) => {
     try {
       const minDate = new Date();
       minDate.setMonth(minDate.getMonth() - 4);
@@ -66,7 +66,7 @@ class NewsController {
     }
   };
 
-  getNewsTypes = async (_req, res) => {
+  getNewsTypes = async (req, res) => {
     try {
       const types = await models.news_types.findAll({
         order: [['name', 'ASC'], ['id', 'ASC']]
