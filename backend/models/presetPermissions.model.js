@@ -55,6 +55,7 @@ export default (sequelize, DataTypes) => {
       { role: 'SUPER-ADMIN', permissionKey: 'menu.download', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'menu.aboutapp', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'menu.community', active: true },
+      { role: 'SUPER-ADMIN', permissionKey: 'community.manage', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'menu.gestion', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'gest.roles', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'gest.permissions', active: true },
@@ -125,6 +126,7 @@ export default (sequelize, DataTypes) => {
       { role: 'STREAMER', permissionKey: 'menu.download', active: true },
       { role: 'STREAMER', permissionKey: 'menu.aboutapp', active: true },
       { role: 'STREAMER', permissionKey: 'menu.community', active: true },
+      { role: 'STREAMER', permissionKey: 'community.manage', active: true },
 
       { role: 'USER', permissionKey: 'menu.start', active: true },
       { role: 'USER', permissionKey: 'menu.tickets', active: true },

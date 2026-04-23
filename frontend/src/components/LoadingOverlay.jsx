@@ -31,13 +31,13 @@ function LoadingOverlay({ message = "Cargando...", isVisible = true }) {
       {/* Spinner con colores de TDT */}
       <div className={`relative flex items-center justify-center transition-transform duration-200 ${isActive ? 'scale-100' : 'scale-95'}`}>
         <div className="w-16 h-16 border-4 border-[var(--secondary-color)]/20 border-t-[var(--secondary-color)] rounded-full animate-spin"></div>
-        {/* <img 
-          src="/img/cubo.webp" 
-          alt="Cubo" 
-          className="absolute w-6 animate-pulse" 
+        {/* <img
+          src="/img/cubo.webp"
+          alt="Cubo"
+          className="absolute w-6 animate-pulse"
         /> */}
       </div>
-      
+
       <p className="mt-4 text-white font-bold tracking-widest uppercase text-md animate-pulse">
         {message}
       </p>

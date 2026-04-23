@@ -24,8 +24,8 @@ try {
     await loadModels();
     await db.authenticate();
     if (process.env.NODE_ENV === 'development') {
-        await db.sync({ alter: true });
         // await db.sync({ force: true });
+        await db.sync({ alter: true });
     } else {
         // en producción, sincronizar sin perder datos
         await db.sync({ alter: true });

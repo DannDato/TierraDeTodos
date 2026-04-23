@@ -56,6 +56,10 @@ export default (sequelize, DataTypes) => {
       as: 'user',
       onDelete: 'CASCADE'
     });
+    models.Users.hasOne(UserProfileImages, {
+      foreignKey: 'userId',
+      as: 'profileImage',
+    });
   };
 
   return UserProfileImages;

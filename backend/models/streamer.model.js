@@ -31,10 +31,6 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    communityName: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
   }, {
     tableName: 'streamer',
     timestamps: true,
@@ -51,6 +47,10 @@ export default (sequelize, DataTypes) => {
     streamer.belongsTo(models.Users, {
       foreignKey: 'userID',
       as: 'user',
+    });
+    models.Users.hasOne(streamer, {
+      foreignKey: 'userID',
+      as: 'streamer',
     });
   };
 
