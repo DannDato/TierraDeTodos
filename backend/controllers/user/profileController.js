@@ -1,8 +1,112 @@
 
 import { db } from '../../models/index.js';
 import generateDeviceHash from '../../utils/generateDeviceHash.js';
+import handleError from '../../handlers/handleError.js';
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
+import { models } from '../../models/index.js';
+
+function generateVerifyCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function sendVerifyMail(to, code, type = 'email') {
+    // Usa tu configuración real de nodemailer aquí
+    const transporter = nodemailer.createTransport({
+        // ...
+        // Ejemplo: host, port, auth, etc.
+    });
+    const subject = type === 'username' ? 'Verifica tu nuevo usuario' : 'Verifica tu nuevo correo';
+    const html = `<p>Tu código de verificación es: <b>${code}</b></p>`;
+    await transporter.sendMail({
+        from: process.env.EMAIL_FROM || 'no-reply@tierradetodos.com',
+        to,
+        subject,
+        html
+    });
+}
 
 class ProfileController {
+    // PATCH /profile/email
+    requestEmailChange = async (req, res) => {
+        try {
+            const userId = req.user.id;
+            const { newEmail } = req.body;
+            if (!newEmail || typeof newEmail !== 'string') {
+                return res.status(400).json({ message: 'Correo inválido' });
+            }
+            // Verifica que no exista ya ese correo
+            const exists = await models.Users.findOne({ where: { email: newEmail } });
+            if (exists) {
+                return res.status(409).json({ message: 'Ese correo ya está en uso' });
+            }
+            // Genera código y guarda en user_mails
+            const verifyCode = generateVerifyCode();
+            const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutos
+            await models.UserMails.create({ userId, newEmail, verifyCode, expiresAt });
+            await sendVerifyMail(newEmail, verifyCode, 'email');
+            return res.json({ message: 'Se envió un código de verificación al nuevo correo' });
+        } catch (err) {
+            return handleError(res, req, err, 'Error al iniciar cambio de correo');
+        }
+    };
+
+    // PATCH /profile/username
+    requestUsernameChange = async (req, res) => {
+        try {
+            const userId = req.user.id;
+            const { newUsername } = req.body;
+            if (!newUsername || typeof newUsername !== 'string') {
+                return res.status(400).json({ message: 'Usuario inválido' });
+            }
+            // Verifica que no exista ya ese username
+            const exists = await models.Users.findOne({ where: { username: newUsername } });
+            if (exists) {
+                return res.status(409).json({ message: 'Ese usuario ya está en uso' });
+            }
+            // Validar que solo se pueda cambiar cada 3 meses
+            const lastChange = await models.UserUsernames.findOne({
+                where: { userId, verified: true },
+                order: [['updatedAt', 'DESC']]
+            });
+            if (lastChange) {
+                const lastDate = new Date(lastChange.updatedAt);
+                const now = new Date();
+                const diffMonths = (now.getFullYear() - lastDate.getFullYear()) * 12 + (now.getMonth() - lastDate.getMonth());
+                if (diffMonths < 3) {
+                    return res.status(429).json({ message: 'Solo puedes cambiar tu usuario una vez cada 3 meses.' });
+                }
+            }
+            // Aplica el cambio directamente (sin código)
+            await models.Users.update({ username: newUsername }, { where: { id: userId } });
+            await models.UserUsernames.create({ userId, newUsername, verifyCode: null, expiresAt: null, verified: true });
+            return res.json({ message: 'Usuario actualizado correctamente' });
+        } catch (err) {
+            return handleError(res, req, err, 'Error al cambiar el usuario');
+        }
+    };
+
+    // POST /profile/verify-change
+    verifyProfileChange = async (req, res) => {
+        try {
+            const userId = req.user.id;
+            const { code, type } = req.body;
+            if (!code || !type) return res.status(400).json({ message: 'Faltan datos' });
+            if (type === 'email') {
+                const pending = await models.UserMails.findOne({ where: { userId, verifyCode: code, verified: false, expiresAt: { [models.Sequelize.Op.gt]: new Date() } } });
+                if (!pending) return res.status(400).json({ message: 'Código inválido o expirado' });
+                // Actualiza el correo real
+                await models.Users.update({ email: pending.newEmail }, { where: { id: userId } });
+                pending.verified = true;
+                await pending.save();
+                return res.json({ message: 'Correo actualizado correctamente' });
+            } else {
+                return res.status(400).json({ message: 'Tipo inválido' });
+            }
+        } catch (err) {
+            return handleError(res, req, err, 'Error al verificar el cambio');
+        }
+    };
   profile = async (req, res) => {
     try {
         const user = req.user.id;

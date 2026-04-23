@@ -11,6 +11,86 @@ import Credencial from "../../components/Credencial";
 import LoadingOverlay from "../../components/LoadingOverlay";
 
 function Profile() {
+    // User state must be declared first
+    const [user, setUser] = useState(null);
+
+    // Inline edit state for profile info
+    const [editProfileMode, setEditProfileMode] = useState(false);
+    const [editUsername, setEditUsername] = useState("");
+    const [editEmail, setEditEmail] = useState("");
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const [profileError, setProfileError] = useState("");
+    const [profileSuccess, setProfileSuccess] = useState("");
+    const [showEmailVerification, setShowEmailVerification] = useState(false);
+    const [emailVerificationCode, setEmailVerificationCode] = useState("");
+    const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+
+    // Keep edit fields in sync with user data
+    useEffect(() => {
+      if (user && !editProfileMode) {
+        setEditUsername(user.username || "");
+        setEditEmail(user.email || "");
+      }
+    }, [user, editProfileMode]);
+
+    const handleCancelEdit = () => {
+      setEditProfileMode(false);
+      setEditUsername(user?.username || "");
+      setEditEmail(user?.email || "");
+      setProfileError("");
+      setProfileSuccess("");
+    };
+
+    const handleSaveProfile = async () => {
+      setProfileError("");
+      setProfileSuccess("");
+      setIsSavingProfile(true);
+      let changed = false;
+      try {
+        // Save username if changed
+        if (editUsername !== user.username) {
+          await api.patch("/user/profile/username", { newUsername: editUsername });
+          setUser((prev) => ({ ...prev, username: editUsername }));
+          changed = true;
+        }
+        // Save email if changed
+        if (editEmail !== user.email) {
+          await api.patch("/user/profile/email", { newEmail: editEmail });
+          setShowEmailVerification(true);
+          setEditProfileMode(false);
+          setIsSavingProfile(false);
+          setProfileSuccess("Se envió un código de verificación al nuevo correo. Ingresa el código para confirmar el cambio.");
+          return;
+        }
+        if (changed) {
+          setProfileSuccess("Datos actualizados correctamente.");
+        }
+        setEditProfileMode(false);
+      } catch (err) {
+        setProfileError(err.response?.data?.message || err.message || "No se pudo actualizar el perfil");
+      } finally {
+        setIsSavingProfile(false);
+      }
+    };
+
+    const handleVerifyEmailCode = async () => {
+      setIsVerifyingEmail(true);
+      setProfileError("");
+      setProfileSuccess("");
+      try {
+        await api.post("/user/profile/verify-change", {
+          code: emailVerificationCode,
+          email: editEmail,
+        });
+        setUser((prev) => ({ ...prev, email: editEmail }));
+        setShowEmailVerification(false);
+        setProfileSuccess("Correo verificado y actualizado correctamente.");
+      } catch (err) {
+        setProfileError(err.response?.data?.message || err.message || "No se pudo verificar el código");
+      } finally {
+        setIsVerifyingEmail(false);
+      }
+    };
   const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
 
   // Cambiar contraseña (deben estar dentro del componente)
@@ -18,6 +98,7 @@ function Profile() {
   const [showPasswordSuccess, setShowPasswordSuccess] = useState(false);
   const [showPasswordError, setShowPasswordError] = useState(false);
   const [isLoadingPassword, setIsLoadingPassword] = useState(false);
+
 
   const handleChangePassword = async () => {
     setShowPasswordAlert(false);
@@ -38,7 +119,6 @@ function Profile() {
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
   const [isSavingAvatarPosition, setIsSavingAvatarPosition] = useState(false);
   const [showDeleteAvatarAlert, setShowDeleteAvatarAlert] = useState(false);
-  const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [logoutMode, setLogoutMode] = useState("current");
@@ -452,20 +532,7 @@ function Profile() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="primary" size="sm" className="flex items-center gap-2 shadow-sm">
-              <PencilIcon size={16} /> Editar Perfil
-            </Button>
 
-            <Button
-              variant="cancel"
-              size="sm"
-              className="flex items-center gap-2 shadow-sm"
-              onClick={() => showAlertLogout("current")}
-            >
-              <LogOut size={16} /> Cerrar Sesión
-            </Button>
-          </div>
 
         </div>
 
@@ -502,17 +569,110 @@ function Profile() {
                 Tu información
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Inline Edit State */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                 <div>
                   <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-wider block">Nombre de usuario</span>
-                  <span className="text-lg font-bold">{user.username}</span>
+                  {editProfileMode ? (
+                    <Input
+                      value={editUsername}
+                      onChange={e => setEditUsername(e.target.value)}
+                      disabled={isSavingProfile}
+                      className="text-lg font-bold mt-1"
+                    />
+                  ) : (
+                    <span className="text-lg font-bold">{user.username}</span>
+                  )}
                 </div>
                 <div>
                   <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-wider block">Correo electrónico</span>
-                  <span className="text-lg font-bold">{user.email}</span>
+                  {editProfileMode ? (
+                    <Input
+                      value={editEmail}
+                      onChange={e => setEditEmail(e.target.value)}
+                      disabled={isSavingProfile}
+                      className="text-lg font-bold mt-1"
+                    />
+                  ) : (
+                    <span className="text-lg font-bold">{user.email}</span>
+                  )}
+                </div>
+                <div className="flex md:justify-end mt-2 md:mt-0 gap-2">
+                  {editProfileMode ? (
+                    <>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleSaveProfile}
+                        disabled={isSavingProfile || (!editUsername || !editEmail) || (editUsername === user.username && editEmail === user.email)}
+                      >
+                        Guardar
+                      </Button>
+                      <Button
+                        variant="cancel"
+                        size="sm"
+                        onClick={handleCancelEdit}
+                        disabled={isSavingProfile}
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="flex items-center gap-2 shadow-sm"
+                      onClick={() => {
+                        setEditProfileMode(true);
+                        setEditUsername(user.username);
+                        setEditEmail(user.email);
+                        setProfileError("");
+                      }}
+                    >
+                      <PencilIcon size={16} /> Editar Perfil
+                    </Button>
+                  )}
                 </div>
               </div>
+
+              {/* Verification code input for email change */}
+              {showEmailVerification && (
+                <div className="mt-4 flex flex-col md:flex-row md:items-end gap-2">
+                  <Input
+                    label="Código de verificación (enviado al nuevo correo)"
+                    value={emailVerificationCode}
+                    onChange={e => setEmailVerificationCode(e.target.value)}
+                    disabled={isVerifyingEmail}
+                    className="md:max-w-xs"
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleVerifyEmailCode}
+                    disabled={isVerifyingEmail || !emailVerificationCode}
+                  >
+                    Verificar
+                  </Button>
+                  <Button
+                    variant="cancel"
+                    size="sm"
+                    onClick={() => setShowEmailVerification(false)}
+                    disabled={isVerifyingEmail}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              )}
+
+
+              {profileError && (
+                <div className="mt-2 text-[var(--danger-color)] text-sm font-semibold">{profileError}</div>
+              )}
+              {profileSuccess && (
+                <div className="mt-2 text-emerald-400 text-sm font-semibold">{profileSuccess}</div>
+              )}
             </div>
+
 
             {/* STATUS */}
             <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm">
@@ -625,14 +785,24 @@ function Profile() {
                   <ShieldAlert size={20} className="text-[var(--secondary-color)]" />
                   Seguridad
                 </h2>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="mb-4 w-full md:w-auto "
-                  onClick={() => setShowPasswordAlert(true)}
-                >
-                  Cambiar contraseña
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full md:w-auto "
+                    onClick={() => setShowPasswordAlert(true)}
+                  >
+                    Cambiar contraseña
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center "
+                    onClick={() => showAlertLogout("current")}
+                  >
+                    <LogOut size={16} /> Cerrar Sesión
+                  </Button>
+                </div>
               </div>
               <div className="space-y-3 max-h-64 overflow-y-auto pr-2 tdt-scrollbar">
                 {user.devices?.map((device) => (

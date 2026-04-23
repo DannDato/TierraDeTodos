@@ -65,6 +65,7 @@ export default (sequelize, DataTypes) => {
       { key: 'news.delete', name: 'Eliminar noticias', description: 'Permite eliminar noticias del sistema', active: true },
       { key: 'menu.download', name: 'Descargas', description: 'Permite ver la sección de descargas', active: true },
       { key: 'menu.aboutapp', name: 'Acerca de', description: 'Permite ver about app', active: true },
+      { key: 'menu.community', name: 'Comunidad', description: 'Permite ver la sección de comunidad', active: true },
       { key: 'menu.gestion', name: 'Gestión', description: 'Permite ver gestión de sistema', active: true },
       // derechos de gestion
       { key: 'gest.roles', name: 'Gestionar roles', description: 'Permite crear, editar y eliminar roles', active: true },

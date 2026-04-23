@@ -20,6 +20,7 @@ import Tickets from "./pages/user/Tickets";
 import Download from "./pages/user/download";
 import Players from "./pages/user/players";
 import News from "./pages/user/news";
+import Community from "./pages/user/Community";
 // Páginas de admin
 import Users from "./pages/admin/users";
 import Gestion from "./pages/admin/gestion";
@@ -86,6 +87,7 @@ const App = function App() {
         <Route path="/gestion" element={<DashboardLayout><Gestion /></DashboardLayout>}/>
         <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>}/>
 
+        <Route path="/community" element={<DashboardLayout><Community /></DashboardLayout>}/>
         <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>}/>
         <Route path="*" element={<NotFound />} />
       </Routes>

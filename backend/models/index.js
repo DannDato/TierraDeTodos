@@ -15,15 +15,11 @@ const loadModels = async () => {
 
   // cargar modelos
   for (const file of files) {
-
     if (file.endsWith('.model.js') && file !== 'index.js') {
-
       const modelPath = path.join(__dirname, file);
       const modelUrl = pathToFileURL(modelPath).href;
-
       const modelModule = await import(modelUrl);
       const model = modelModule.default(db, DataTypes);
-
       models[model.name] = model;
     }
   }

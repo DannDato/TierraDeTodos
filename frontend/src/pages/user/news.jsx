@@ -21,6 +21,8 @@ const createInitialNewsForm = () => ({
 });
 
 function News() {
+    // Estado para bloquear likes mientras se procesa
+    const [likeLoadingIds, setLikeLoadingIds] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
   const currentUser = {
     role: localStorage.getItem("role") || "USER",
@@ -213,31 +215,30 @@ function News() {
 
   const handleToggleLike = async (event, article) => {
     event.stopPropagation();
-
     const articleId = Number(article?.id);
     if (!articleId) return;
+    // Bloquear doble click
+    if (likeLoadingIds.includes(articleId)) return;
+    setLikeLoadingIds((prev) => [...prev, articleId]);
 
-    // Usar el estado actual de news (no normalizedNews) para evitar bug visual
-    // Optimista: UI rápida, pero siempre sincroniza con backend
-    setNews((prev) => {
-      return prev.map((item) => {
-        if (Number(item.id) !== articleId) return item;
-        const wasLiked = Boolean(item.likedByCurrentUser);
-        const willLike = !wasLiked;
-        return {
-          ...item,
-          likesCount: Math.max(0, Number(item.likesCount || 0) + (willLike ? 1 : -1)),
-          likedByCurrentUser: willLike
-        };
-      });
-    });
+    // Guardar estado previo para rollback seguro
+    const prevNews = news.map((item) => ({ ...item }));
+    const prevItem = prevNews.find((item) => Number(item.id) === articleId);
+    const wasLiked = Boolean(prevItem?.likedByCurrentUser);
+    const willLike = !wasLiked;
+
+    // Optimista
+    setNews((prev) => prev.map((item) => {
+      if (Number(item.id) !== articleId) return item;
+      return {
+        ...item,
+        likesCount: Math.max(0, Number(item.likesCount || 0) + (willLike ? 1 : -1)),
+        likedByCurrentUser: willLike
+      };
+    }));
 
     try {
-      // Determinar el valor real a enviar según el estado actual
-      const wasLiked = Boolean(article.likedByCurrentUser);
-      const willLike = !wasLiked;
       const { data } = await api.post(`/user/news/${articleId}/likes`, { liked: willLike });
-      // El backend responde con el estado real tras la operación
       setNews((prev) => prev.map((item) => {
         if (Number(item.id) !== articleId) return item;
         return {
@@ -247,21 +248,15 @@ function News() {
         };
       }));
     } catch (error) {
-      // Rollback visual
-      setNews((prev) => prev.map((item) => {
-        if (Number(item.id) !== articleId) return item;
-        const wasLiked = Boolean(item.likedByCurrentUser);
-        return {
-          ...item,
-          likesCount: Math.max(0, Number(item.likesCount || 0) + (wasLiked ? 1 : -1)),
-          likedByCurrentUser: wasLiked
-        };
-      }));
+      // Rollback exacto
+      setNews(prevNews);
       openAlert({
         type: "error",
         title: "No se pudo actualizar el like",
         message: error.response?.data?.message || "Intenta de nuevo en un momento.",
       });
+    } finally {
+      setLikeLoadingIds((prev) => prev.filter((id) => id !== articleId));
     }
   };
 
@@ -684,6 +679,7 @@ function News() {
                       className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-black/30 hover:bg-black/45 border border-white/20 transition-colors"
                       onClick={(event) => handleToggleLike(event, featuredNews)}
                       aria-label={isNewsLiked(featuredNews.id) ? "Quitar like" : "Dar like"}
+                      disabled={likeLoadingIds.includes(featuredNews.id)}
                     >
                       <Heart size={16} className={isNewsLiked(featuredNews.id) ? "text-red-500 fill-red-500" : "text-white"} />
                       <span className="text-xs font-bold text-white">{Number(featuredNews.likesCount || 0)}</span>
@@ -731,6 +727,7 @@ function News() {
                       className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 bg-black/25 hover:bg-black/40 border border-white/15 transition-colors"
                       onClick={(event) => handleToggleLike(event, article)}
                       aria-label={isNewsLiked(article.id) ? "Quitar like" : "Dar like"}
+                      disabled={likeLoadingIds.includes(article.id)}
                     >
                       <Heart size={15} className={isNewsLiked(article.id) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-white)]"} />
                       <span className="text-xs font-semibold text-[var(--ins-text-white)]">{Number(article.likesCount || 0)}</span>

@@ -153,7 +153,7 @@ export default (sequelize, DataTypes) => {
         icon: 'User',
         path: '/profile',
         target: '_self',
-        shortAccess: true,
+        shortAccess: false,
         orderIndex: 6,
         required_permissions: ['menu.profile'],
         menuGroup: 'user',
