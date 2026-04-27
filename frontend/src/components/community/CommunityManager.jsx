@@ -168,7 +168,7 @@ export default function CommunityManager({ isOpen, onClose }) {
         isVisible={loading}
         message="Cargando información de la comunidad..."
       />
-      <div className="relative w-full max-w-5xl rounded-2xl border border-white/15 bg-[var(--ins-background)]/95 p-8 shadow-2xl ring-1 ring-white/10 animate-fadeInUp" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+      <div className="relative w-full max-w-5xl rounded-2xl  bg-[var(--ins-background)]/95 p-8 shadow-2xl ring-1 ring-white/10 animate-fadeInUp" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
         <button onClick={onClose} className="absolute top-4 right-4 text-[var(--ins-text-gray)] hover:text-[var(--secondary-color)] text-2xl font-bold">×</button>
         <h2 className="text-2xl font-bold mb-6 text-[var(--white-color)] flex items-center gap-2">
           <Video size={28} style={{ color: "var(--secondary-color)" }} /> Gestionar comunidad
@@ -193,44 +193,48 @@ export default function CommunityManager({ isOpen, onClose }) {
               <div className="flex flex-col md:flex-row gap-4 items-center">
                 <Input label="Nombre de la comunidad" name="nombreComunidad" value={formData.nombreComunidad} onChange={e => handleChange("nombreComunidad", e.target.value)} placeholder="Nombre de la comunidad" />
                 <Input label="Nombre corto" name="nombreCorto" value={formData.nombreCorto} onChange={e => handleChange("nombreCorto", e.target.value)} placeholder="Por si necesitamos un nombre mas cortito" />
-                <div className="flex flex-row gap-6 items-end">
-                  <div className="flex flex-col items-center gap-1">
-                    <Input label="Color primario" value={formData.color} onChange={e => handleChange("color", e.target.value)} placeholder="#FFFFFF" className="w-32" />
-                    <label className="relative w-10 h-10 rounded-xl border-2 border-[var(--black-color)]/40 cursor-pointer block overflow-hidden transition-transform hover:scale-105" style={{ backgroundColor: formData.color }} title="Elegir color primario">
-                      <input type="color" value={formData.color} onChange={e => handleChange("color", e.target.value)} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
-                    </label>
-                  </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <Input label="Color secundario" value={formData.color2} onChange={e => handleChange("color2", e.target.value)} placeholder="#222222" className="w-32" />
-                    <label className="relative w-10 h-10 rounded-xl border-2 border-[var(--black-color)]/40 cursor-pointer block overflow-hidden transition-transform hover:scale-105" style={{ backgroundColor: formData.color2 }} title="Elegir color secundario">
-                      <input type="color" value={formData.color2} onChange={e => handleChange("color2", e.target.value)} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
-                    </label>
+
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="my-6 flex flex-col items-center">
+                  <h4 className="text-md font-bold mb-2 text-[var(--secondary-color)]">Previsualización</h4>
+                  <div style={{ maxWidth: 340, width: '100%' }}>
+                    <CommunityCard community={{
+                      ...communityData,
+                      // Sobrescribe con los datos del form si se están editando
+                      name: formData.nombreComunidad || communityData?.name,
+                      description: formData.descripcionComunidad || communityData?.description,
+                      color: formData.color || communityData?.color,
+                      color2: formData.color2 || communityData?.color2,
+                      logo_url: formData.streamerLogo ? URL.createObjectURL(formData.streamerLogo) : (communityData?.logo_url),
+                      leader: {
+                        ...((communityData && communityData.leader) || {}),
+                        profileImage: formData.streamerLogo ? URL.createObjectURL(formData.streamerLogo) : (communityData?.leader?.profileImage),
+                        streamer: { platform: formData.plataforma || communityData?.leader?.streamer?.platform }
+                      }
+                    }} />
                   </div>
                 </div>
-              </div>
-                          {/* Previsualización de la tarjeta de comunidad */}
-                          <div className="my-6 flex flex-col items-center">
-                            <h4 className="text-md font-bold mb-2 text-[var(--secondary-color)]">Previsualización</h4>
-                            <div style={{ maxWidth: 340, width: '100%' }}>
-                              <CommunityCard community={{
-                                ...communityData,
-                                // Sobrescribe con los datos del form si se están editando
-                                name: formData.nombreComunidad || communityData?.name,
-                                description: formData.descripcionComunidad || communityData?.description,
-                                color: formData.color || communityData?.color,
-                                color2: formData.color2 || communityData?.color2,
-                                logo_url: formData.streamerLogo ? URL.createObjectURL(formData.streamerLogo) : (communityData?.logo_url),
-                                leader: {
-                                  ...((communityData && communityData.leader) || {}),
-                                  profileImage: formData.streamerLogo ? URL.createObjectURL(formData.streamerLogo) : (communityData?.leader?.profileImage),
-                                  streamer: { platform: formData.plataforma || communityData?.leader?.streamer?.platform }
-                                }
-                              }} />
-                            </div>
-                          </div>
-              <Input label="Descripción de la comunidad" name="descripcionComunidad" value={formData.descripcionComunidad} onChange={e => handleChange("descripcionComunidad", e.target.value)} placeholder="Describe tu comunidad" />
-              <div className="flex justify-end mt-2">
-                <Button type="submit" variant="primary">Guardar cambios</Button>
+                <div className="flex flex-col gap-4 justify-end">
+                  <div className="flex flex-row gap-6 items-end">
+                  <div className="flex flex-col items-center gap-1">
+                    <Input label="Color primario" value={formData.color} onChange={e => handleChange("color", e.target.value)} placeholder="#FFFFFF" className="w-32" />
+                      <label className="relative w-10 h-10 rounded-xl  cursor-pointer block overflow-hidden transition-transform hover:scale-105" style={{ backgroundColor: formData.color }} title="Elegir color primario">
+                        <input type="color" value={formData.color} onChange={e => handleChange("color", e.target.value)} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+                      </label>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <Input label="Color secundario" value={formData.color2} onChange={e => handleChange("color2", e.target.value)} placeholder="#222222" className="w-32" />
+                      <label className="relative w-10 h-10 rounded-xl  cursor-pointer block overflow-hidden transition-transform hover:scale-105" style={{ backgroundColor: formData.color2 }} title="Elegir color secundario">
+                        <input type="color" value={formData.color2} onChange={e => handleChange("color2", e.target.value)} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+                      </label>
+                    </div>
+                  </div>
+                  <Input label="Descripción de la comunidad" name="descripcionComunidad" value={formData.descripcionComunidad} onChange={e => handleChange("descripcionComunidad", e.target.value)} placeholder="Describe tu comunidad" />
+                  <div className="flex justify-end mt-2 ">
+                    <Button type="submit" variant="primary">Guardar cambios</Button>
+                  </div>
+                </div>
               </div>
             </form>
             <MembersTable members={members} />

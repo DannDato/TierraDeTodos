@@ -4,7 +4,7 @@ export default function CommunityCard({ community }) {
   if (!community) return null;
   return (
     <div
-      className="rounded-xl shadow-lg p-6 flex flex-col items-center gap-3"
+      className="rounded-xl shadow-lg p-6 flex flex-col items-center gap-3 hover:shadow-2xl transition-shadow duration-300 z-2"
       style={{ background: community.color }}
     >
       <img
@@ -22,7 +22,18 @@ export default function CommunityCard({ community }) {
           className="w-8 h-8 rounded-full border object-cover"
           style={{ borderColor: community.color2 || '#222222' }}
         />
-        <span className="text-xs" style={{ color: community.color2 }}>{community.leader?.streamer?.platform}</span>
+        <img
+          src={community.leader?.profileImage || community.logo_url}
+          alt={community.leader?.streamer?.username}
+          className="w-8 h-8 rounded-full border object-cover"
+          style={{ borderColor: community.color2 || '#222222' }}
+        />
+        <img
+          src={community.leader?.profileImage || community.logo_url}
+          alt={community.leader?.streamer?.username}
+          className="w-8 h-8 rounded-full border object-cover"
+          style={{ borderColor: community.color2 || '#222222' }}
+        />
       </div>
     </div>
   );

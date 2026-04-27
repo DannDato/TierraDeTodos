@@ -42,7 +42,7 @@ export default function FilePickerButton({
         type="button"
         onClick={handleOpenPicker}
         disabled={disabled}
-        className="w-full md:w-auto px-4 py-2 rounded-xl bg-[var(--ins-text-gray)]/20 text-[var(--ins-text-white)] text-sm font-semibold hover:bg-[var(--ins-text-gray)]/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full md:w-auto px-4 py-2 rounded-xl bg-[var(--ins-text-gray)]/20 text-[var(--ins-text-white)] text-sm font-semibold hover:bg-[var(--ins-text-gray)]/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-4"
       >
         {buttonText}
       </button>

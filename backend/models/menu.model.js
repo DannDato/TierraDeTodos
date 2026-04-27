@@ -44,6 +44,12 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0
     },
+    basic:{
+      type: DataTypes.ENUM('TRUE', 'FALSE'),
+      allowNull: false,
+      defaultValue: 'FALSE',
+      field: 'basic'
+    },
 
     menuGroup: {
       type: DataTypes.ENUM('user', 'admin'),
@@ -127,7 +133,7 @@ export default (sequelize, DataTypes) => {
         icon: 'ClipboardList',
         path: '/tickets',
         target: '_self',
-        shortAccess: true,
+        shortAccess: false,
         orderIndex: 4,
         required_permissions: ['menu.tickets'],
         menuGroup: 'user',
@@ -153,8 +159,8 @@ export default (sequelize, DataTypes) => {
         icon: 'User',
         path: '/profile',
         target: '_self',
-        shortAccess: false,
-        orderIndex: 6,
+        shortAccess: true,
+        orderIndex: 7,
         required_permissions: ['menu.profile'],
         menuGroup: 'user',
         active: true
@@ -167,7 +173,7 @@ export default (sequelize, DataTypes) => {
         path: '/community',
         target: '_self',
         shortAccess: true,
-        orderIndex: 7,
+        orderIndex: 6,
         required_permissions: ['menu.community'],
         menuGroup: 'user',
         active: true

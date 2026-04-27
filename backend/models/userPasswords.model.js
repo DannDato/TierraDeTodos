@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
       defaultValue: DataTypes.NOW
     }
   }, {
-    tableName: 'UserPasswords',
+    tableName: 'User_passwords',
     timestamps: false,
     indexes: [
       { name: 'userpasswords_userId_index', fields: ['userId'] }

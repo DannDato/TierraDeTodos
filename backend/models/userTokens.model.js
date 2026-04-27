@@ -7,7 +7,7 @@ export default (sequelize, DataTypes) => {
     token: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      // unique: true,
     },
     type: {
       type: DataTypes.STRING,
@@ -26,6 +26,19 @@ export default (sequelize, DataTypes) => {
   }, {
     tableName: "user_tokens",
     timestamps: true,
+    indexes: [
+      {
+        name: "user_tokens_token_unique",
+        unique: true,
+        fields: ["token"],
+      },
+    ],
   });
+
+  UserTokens.associate = (models) => {
+    UserTokens.belongsTo(models.Users, { foreignKey: 'userId', as: 'user' });
+  };
+
+
   return UserTokens;
 };

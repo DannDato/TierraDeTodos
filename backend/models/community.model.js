@@ -14,8 +14,8 @@ export default (sequelize, DataTypes) => {
     },
     shortname: {
       type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
+      allowNull: false
+      // unique: true // Se maneja por índice
     },
     lider: {
       type: DataTypes.INTEGER,
@@ -51,7 +51,14 @@ export default (sequelize, DataTypes) => {
     }
   }, {
     tableName: 'community',
-    timestamps: true
+    timestamps: true,
+    indexes: [
+      {
+        name: 'community_shortname_unique',
+        unique: true,
+        fields: ['shortname']
+      }
+    ]
   });
 
   Community.associate = (models) => {

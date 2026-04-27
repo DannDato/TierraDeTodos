@@ -7,21 +7,10 @@ const router = express.Router();
 
 
 // Obtener comunidades
-router.get('/communities', communityController.getAll);
-
-// Obtener la comunidad del usuario logueado
+router.get('/communities', verifyToken, communityController.getAll);
 router.get('/my-community', verifyToken, communityController.getMyCommunity);
-
-// Crear comunidad
 router.post('/communities', verifyToken, /* checkPermissions(['community.manage']), */ communityController.create);
-
-// Subir logo de comunidad a R2
-router.post(
-	'/communities/logo',
-	verifyToken,
-	uploadsCheck({ type: 'image', field: 'logo', maxSizeMb: 5 }),
-	communityController.uploadCommunityLogo
-);
+router.post('/communities/logo',verifyToken,uploadsCheck({ type: 'image', field: 'logo', maxSizeMb: 5 }),communityController.uploadCommunityLogo);
 
 export default router;
 // Obtener miembros de la comunidad del usuario logueado

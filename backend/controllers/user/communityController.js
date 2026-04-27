@@ -1,4 +1,4 @@
-import { models } from '../../models/index.js';
+import { models, db } from '../../models/index.js';
 import handleError from '../../handlers/handleError.js';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
@@ -123,9 +123,41 @@ class CommunityController {
         ],
         order: [['name', 'ASC']]
       });
+      // Obtener miembros para cada comunidad
+      const communitiesWithMembers = await Promise.all(communities.map(async c => {
+        // Busca los miembros de la comunidad
+        const userCommunities = await models.user_community.findAll({
+          where: { communityId: c.id },
+          include: [
+            {
+              model: models.Users,
+              as: 'user',
+              attributes: ['id', 'username', 'account'],
+              include: [
+                {
+                  model: models.user_profile_images,
+                  as: 'profileImage',
+                  attributes: ['img']
+                },
+                {
+                  model: models.userStatuses,
+                  as: 'statuses',
+                  attributes: ['color', 'status'],
+                  where: { status: db.col('user.account') }, // <-- esto filtra por el estatus actual
+                  required: false
+                }
+              ]
+            }
+          ]
+        });
 
-      // Formatear respuesta para el front
-      const result = communities.map(c => {
+        const members = userCommunities.map(uc => ({
+          id: uc.user.id,
+          username: uc.user.username,
+          account: uc.user.account,
+          profileImage: uc.user.profileImage ? uc.user.profileImage.img : null,
+          statusColor: uc.user.statuses[0].color
+        }));
         const leader = c.leader || {};
         const streamer = leader.streamer || {};
         const profileImage = leader.profileImage || {};
@@ -149,10 +181,12 @@ class CommunityController {
               link: streamer.link,
               image: streamer.image
             }
-          }
+          },
+          members: members
         };
-      });
-      return res.status(200).json({ communities: result });
+      }));
+      const isManager = req.user.permissions && req.user.permissions.includes('community.manage');
+      return res.status(200).json({ communities: communitiesWithMembers, isManager });
     } catch (error) {
       handleError(res, req, error, 'Error al obtener comunidades');
     }
