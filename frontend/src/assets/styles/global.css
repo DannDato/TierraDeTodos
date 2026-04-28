@@ -57,7 +57,7 @@ section[id] {
 /* Scrollbar global del proyecto */
 .tdt-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(231, 223, 200, 0.45) transparent;
+  scrollbar-color: rgba(85, 84, 81, 0.377) transparent;
 }
 
 .tdt-scrollbar::-webkit-scrollbar {
@@ -92,11 +92,11 @@ section[id] {
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
-  border-right-width: 5px;
+  border-right-width: 10px;
 }
 
 .tdt-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(231, 223, 200, 0.72), rgba(188, 183, 167, 0.72));
+  background: linear-gradient(180deg, rgba(231, 223, 200, 0.26), rgba(188, 183, 167, 0.72));
   background-clip: content-box;
 }
 

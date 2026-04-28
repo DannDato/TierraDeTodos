@@ -451,7 +451,7 @@ function Profile() {
   };
 
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24 ">
+    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24 min-h-screen h-screen">
 
       <LoadingOverlay
         isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer || isLoadingPassword}

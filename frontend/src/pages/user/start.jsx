@@ -9,7 +9,8 @@ import {
   Clock,
   Trophy,
   Coins,
-  Swords
+  Swords,
+  Users
 } from "lucide-react";
 import Button from "../../elements/Button";
 import api from "../../api/axios";
@@ -148,9 +149,9 @@ function Start() {
   };
 
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
+    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24 ">
       <LoadingOverlay isVisible={loadingNews} message="Cargando noticias" />
-      <div className="flex-row w-full  px-4 md:mx-10 mx-0">
+      <div className="flex-row w-full  px-4 md:mx-10 mx-0 min-h-screen h-screen">
 
         {/* ENCABEZADO */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
@@ -324,6 +325,28 @@ function Start() {
               </div>
             </div>
           </div>
+
+        </div>
+        {/* ========================================================= */}
+        {/* ACCESOS DIRECTOS RÁPIDOS */}
+        {/* ========================================================= */}
+        <div className="flex gap-4 mt-8 mb-8 w-full justify-center w-full bg-black/20 rounded-3xl p-6 shadow-md">
+          <button
+            onClick={() => navigate('/community')}
+            className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-[var(--secondary-color)]/20 hover:bg-[var(--secondary-color)]/30 transition-colors shadow-md"
+            type="button"
+          >
+            <Users size={28} className="text-[var(--secondary-color)]" />
+            <span className="text-xs font-bold text-[var(--secondary-color)] uppercase">Comunidades</span>
+          </button>
+          <button
+            onClick={() => navigate('/tickets')}
+            className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 transition-colors shadow-md"
+            type="button"
+          >
+            <AlertTriangle size={28} className="text-amber-500" />
+            <span className="text-xs font-bold text-amber-500 uppercase">Tickets</span>
+          </button>
         </div>
       </div>
     </section>

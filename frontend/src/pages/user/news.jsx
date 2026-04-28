@@ -588,7 +588,7 @@ function News() {
   };
 
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
+    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24 ">
       <LoadingOverlay isVisible={loading || submitting} message={submitting ? "Publicando noticia..." : "Cargando noticias"} />
       <AlertModal
         isOpen={alertConfig.isOpen}
@@ -601,7 +601,7 @@ function News() {
         cancelText={alertConfig.cancelText}
       />
 
-      <div className="w-full  px-4 md:mx-10 mx-0">
+      <div className="w-full  px-4 md:mx-10 mx-0 min-h-screen h-screen">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">

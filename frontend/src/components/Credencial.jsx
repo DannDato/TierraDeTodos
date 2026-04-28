@@ -94,7 +94,7 @@ function Credencial({
 
   return (
     <div className="w-full max-w-[370px] lg:max-w-[420px] mx-auto lg:mx-0 lg:shrink-0">
-      <div className="rounded-3xl bg-black/20 p-10">
+      <div className="rounded-3xl bg-black/20 lg:p-10">
       <style>{`
         .credential-container {
           perspective: 1000px;

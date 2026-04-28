@@ -245,7 +245,7 @@ function Tickets() {
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
+    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24 min-h-screen h-screen">
       <LoadingOverlay
         isVisible={catalogLoading || ticketsLoading || submitting}
         message={submitting ? "Enviando ticket..." : "Cargando datos..."}
@@ -257,7 +257,7 @@ function Tickets() {
         message={alertConfig.message}
         onClose={closeAlert}
       />
-      <div className="w-full max-w-7xl px-4 md:px-8 text-[var(--ins-text-white)]">
+      <div className="w-full px-4 md:px-8 text-[var(--ins-text-white)]">
 
         {/* Header */}
         <div className="mb-8">

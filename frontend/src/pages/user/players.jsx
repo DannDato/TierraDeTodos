@@ -6,7 +6,18 @@ import api from "../../api/axios";
 import Credencial from "../../components/Credencial";
 import LoadingOverlay from "../../components/LoadingOverlay";
 
+// Oculta el scroll global del body cuando este componente está montado
+function useHideBodyScrollbar() {
+	useEffect(() => {
+		document.body.classList.add("scrollbar-hidden");
+		return () => {
+			document.body.classList.remove("scrollbar-hidden");
+		};
+	}, []);
+}
+
 function Players() {
+		useHideBodyScrollbar();
 	const BATCH_SIZE = 18;
 	const PREFETCH_ROWS = 2;
 	const ESTIMATED_CARD_HEIGHT = 560;
@@ -131,9 +142,9 @@ function Players() {
 	};
 
 	return (
-		<section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
+		<div className="min-h-screen h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
 			<LoadingOverlay isVisible={loading} message="Cargando credenciales" />
-			<div className="w-full  px-4 md:px-8 text-[var(--ins-text-white)]">
+			<div className="w-full px-4 md:px-8 text-[var(--ins-text-white)]">
 				<div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
 					<div>
 						<div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
@@ -166,7 +177,7 @@ function Players() {
 					</div>
 				) : (
 					<>
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 justify-items-center  bg-black/10 rounded-3xl p-6">
 							{visiblePlayers.map((player) => {
 							const normalizedStatus = String(player?.status || "").toUpperCase();
 							const currentStatus = {
@@ -209,7 +220,7 @@ function Players() {
 					<ArrowUp size={20} />
 				</button>
 			)}
-		</section>
+		</div>
 	);
 }
 

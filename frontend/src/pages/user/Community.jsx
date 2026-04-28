@@ -71,7 +71,7 @@ function Community() {
     }, []);
     return (
         <div>
-        <section className="min-h-screen py-10 flex flex-col items-center bg-[var(--ins-background)] pb-24 text-[var(--white-color)] z-[1]">
+        <section className="min-h-screen py-10 flex flex-col items-center bg-[var(--ins-background)] pb-24 text-[var(--white-color)] z-[1] min-h-screen h-screen">
 
             <div className="w-full  px-4 md:px-8 text-[var(--ins-text-white)]">
                 {/* HEADER */}

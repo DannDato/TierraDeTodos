@@ -88,7 +88,7 @@ function Gestion() {
     <section className="h-screen py-6 flex items-start justify-center bg-[var(--ins-background)] overflow-hidden pb-24">
       <LoadingOverlay isVisible={sectionLoading} message="Cargando gestión..." />
 
-      <div className="flex flex-col h-full animate-[fadeIn_0.3s_ease-out] p-8 max-w-[1400px] mx-auto w-full bg-[var(--ins-background)]">
+      <div className="flex flex-col h-full animate-[fadeIn_0.3s_ease-out] p-8 mx-auto w-full bg-[var(--ins-background)]">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
             <span>{currentUser.role}</span>

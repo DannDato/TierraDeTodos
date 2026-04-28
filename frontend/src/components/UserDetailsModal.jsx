@@ -251,7 +251,7 @@ function UserDetailsModal({
         </div>
 
         {/* Contenedor pestaña */}
-        <div className="flex-1 min-h-0 p-8 pt-4 overflow-y-auto tdt-scrollbar">
+        <div className="flex-1 min-h-0 p-8 pt-4 ">
           {activeTab === "data" ? (
             <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
               <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
@@ -358,7 +358,7 @@ function UserDetailsModal({
                         No hay movimientos de estatus registrados para este usuario.
                       </div>
                     ) : (
-                      <div className="overflow-x-auto tdt-scrollbar">
+                      <div className="overflow-x-auto ">
                         <table className="w-full min-w-[680px] text-left text-sm">
                           <thead className="bg-[var(--white-color)]/5 text-[10px] uppercase tracking-[0.22em] text-[var(--ins-text-gray)]">
                             <tr>
