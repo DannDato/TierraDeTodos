@@ -4,6 +4,16 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 class CommunityController {
   // GET /user/community/members
+
+  async canManage(req, res) {
+    try {
+      const canManage = req.user.permissions && req.user.permissions.includes('community.manage');
+      return res.status(200).json({ canManage: !!canManage });
+    } catch (error) {
+      handleError(res, req, error, 'Error al verificar permisos de gestión de comunidad');
+    }
+  }
+
   async getMembers(req, res) {
     try {
       const userId = req.user.id;
@@ -126,37 +136,22 @@ class CommunityController {
       // Obtener miembros para cada comunidad
       const communitiesWithMembers = await Promise.all(communities.map(async c => {
         // Busca los miembros de la comunidad
-        const userCommunities = await models.user_community.findAll({
-          where: { communityId: c.id },
-          include: [
-            {
-              model: models.Users,
-              as: 'user',
-              attributes: ['id', 'username', 'account'],
-              include: [
-                {
-                  model: models.user_profile_images,
-                  as: 'profileImage',
-                  attributes: ['img']
-                },
-                {
-                  model: models.userStatuses,
-                  as: 'statuses',
-                  attributes: ['color', 'status'],
-                  where: { status: db.col('user.account') }, // <-- esto filtra por el estatus actual
-                  required: false
-                }
-              ]
-            }
-          ]
-        });
+        // const userCommunities = await models.user_community.findAll({
+        //   where: { communityId: c.id },
+        //   include: [{ model: models.Users, as: 'user', attributes: ['id', 'username'] }]
+        // });
+        const [userCommunities] = await db.query(`
+          SELECT uc.*, u.id as userId, u.username, upi.img as profileImage
+          FROM user_community uc
+          JOIN Users u ON uc.userId = u.id
+          LEFT JOIN user_profile_images upi ON u.id = upi.userId
+          WHERE uc.communityId = ${c.id}
+        `)
 
         const members = userCommunities.map(uc => ({
-          id: uc.user.id,
-          username: uc.user.username,
-          account: uc.user.account,
-          profileImage: uc.user.profileImage ? uc.user.profileImage.img : null,
-          statusColor: uc.user.statuses[0].color
+          id: uc.userId,
+          nombre: uc.username,
+          profileImage: uc.profileImage || null
         }));
         const leader = c.leader || {};
         const streamer = leader.streamer || {};

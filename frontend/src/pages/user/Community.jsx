@@ -127,11 +127,6 @@ function Community() {
                     </div>
                 </div>
             </div>
-            {/* Modal de gestión de comunidad fuera del mapeo para evitar múltiples instancias */}
-            <CommunityManager isOpen={showForm} onClose={() => setShowForm(false)} />
-            {/* Modal de detalle de comunidad */}
-            <CommunityDetailModal isOpen={showModal} community={selected} onClose={handleClose} onJoin={handleJoin} />
-            {/* AlertModal debe ir al final para estar sobre cualquier modal */}
             <AlertModal
                 isOpen={showJoinAlert}
                 type="warning"
@@ -143,6 +138,11 @@ function Community() {
                 onConfirm={handleJoin}
                 className="z-[300]"
             />
+            {/* Modal de gestión de comunidad fuera del mapeo para evitar múltiples instancias */}
+            <CommunityManager isOpen={showForm} onClose={() => setShowForm(false)} />
+            {/* Modal de detalle de comunidad */}
+            <CommunityDetailModal isOpen={showModal} community={selected} onClose={handleClose} onJoin={handleJoin} />
+            {/* AlertModal debe ir al final para estar sobre cualquier modal */}
         </section>
         </div>
     );
@@ -228,10 +228,10 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
                                     {index + 1}
                                     </td>
                                     <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                                    {entry.nombre || "N/A"}
+                                    {entry.username || "N/A"}
                                     </td>
                                     <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                                    {entry.role === "leader" ? (
+                                    {entry.account === "leader" ? (
                                         <span className="px-2 py-1 text-xs font-mono rounded-full bg-green-500/20 text-green-400">Líder</span>
                                     ) : (
                                         <span className="px-2 py-1 text-xs font-mono rounded-full bg-blue-500/20 text-blue-400">Miembro</span>

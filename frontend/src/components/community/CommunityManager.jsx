@@ -57,8 +57,7 @@ export default function CommunityManager({ isOpen, onClose }) {
   const [communityData, setCommunityData] = useState(null);
 
   const hasCommunityManage = () => {
-    const perms = JSON.parse(localStorage.getItem("permissions") || "[]");
-    return perms.includes("community.manage") || localStorage.getItem("role") === "SUPER-ADMIN";
+    return api.get("/user/communities/can-manage").then(res => res.data.canManage).catch(() => false);
   };
 
   useEffect(() => {
