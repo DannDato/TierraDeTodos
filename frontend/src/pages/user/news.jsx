@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Heart, Plus, UserRound, X } from "lucide-react";
+import { ChevronRight, Heart, Newspaper, Plus, UserRound, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
@@ -601,7 +601,7 @@ function News() {
         cancelText={alertConfig.cancelText}
       />
 
-      <div className="w-full max-w-7xl px-4 md:mx-10 mx-0">
+      <div className="w-full  px-4 md:mx-10 mx-0">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
@@ -656,85 +656,98 @@ function News() {
         ) : (
           <>
             {featuredNews && (
-              <div
-                className="relative h-80 w-full rounded-3xl overflow-hidden shadow-md group cursor-pointer mb-4"
-                onDoubleClick={() => openNewsModal(featuredNews)}
-                onClick={() => openNewsModal(featuredNews)}
-              >
-                <img
-                  src={featuredNews.image}
-                  alt={featuredNews.title}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+              <div className="p-10 bg-black/20 rounded-3xl">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
+                    <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
+                    Última noticia
+                </h2>
+                <div
+                  className="relative h-80 w-full rounded-3xl overflow-hidden shadow-md group cursor-pointer "
+                  onDoubleClick={() => openNewsModal(featuredNews)}
+                  onClick={() => openNewsModal(featuredNews)}
+                >
+                  <img
+                    src={featuredNews.image}
+                    alt={featuredNews.title}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
-                <div className="absolute bottom-0 left-0 p-8 w-full">
-                  <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(featuredNews.type) }}>
-                    {featuredNews.type}
-                  </span>
-                  <div className="flex items-center justify-between gap-4 mb-2">
-                    <h2 className="text-3xl font-extrabold text-white drop-shadow-lg leading-tight">{featuredNews.title}</h2>
-                    <button
-                      type="button"
-                      className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-black/30 hover:bg-black/45 border border-white/20 transition-colors"
-                      onClick={(event) => handleToggleLike(event, featuredNews)}
-                      aria-label={isNewsLiked(featuredNews.id) ? "Quitar like" : "Dar like"}
-                      disabled={likeLoadingIds.includes(featuredNews.id)}
-                    >
-                      <Heart size={16} className={isNewsLiked(featuredNews.id) ? "text-red-500 fill-red-500" : "text-white"} />
-                      <span className="text-xs font-bold text-white">{Number(featuredNews.likesCount || 0)}</span>
-                    </button>
+                  <div className="absolute bottom-0 left-0 p-8 w-full">
+                    <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-3xl mb-3" style={{ backgroundColor: getBadgeColor(featuredNews.type) }}>
+                      {featuredNews.type}
+                    </span>
+                    <div className="flex items-center justify-between gap-4 mb-2">
+                      <h2 className="text-3xl font-extrabold text-white drop-shadow-lg leading-tight">{featuredNews.title}</h2>
+                      <button
+                        type="button"
+                        className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-black/30 hover:bg-black/45 border border-white/20 transition-colors"
+                        onClick={(event) => handleToggleLike(event, featuredNews)}
+                        aria-label={isNewsLiked(featuredNews.id) ? "Quitar like" : "Dar like"}
+                        disabled={likeLoadingIds.includes(featuredNews.id)}
+                      >
+                        <Heart size={16} className={isNewsLiked(featuredNews.id) ? "text-red-500 fill-red-500" : "text-white"} />
+                        <span className="text-xs font-bold text-white">{Number(featuredNews.likesCount || 0)}</span>
+                      </button>
+                    </div>
+                    <p className="text-gray-200 text-sm max-w-xl drop-shadow-md line-clamp-2">{featuredNews.description}</p>
                   </div>
-                  <p className="text-gray-200 text-sm max-w-xl drop-shadow-md line-clamp-2">{featuredNews.description}</p>
                 </div>
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-              {regularNews.map((article) => (
-                <div
-                  key={article.id}
-                  className="bg-black/10 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group flex flex-col"
-                  onDoubleClick={() => openNewsModal(article)}
-                >
-                  <div className="h-40 overflow-hidden relative">
-                    <img
-                      src={article.image}
-                      alt={article.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  </div>
-                  <div className="p-6 flex flex-col flex-1 relative pb-16">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded-md" style={{ backgroundColor: getBadgeColor(article.type) }}>
-                        {article.type}
-                      </span>
-                      <span className="text-xs text-[var(--white-color)] font-medium">{article.dateLabel}</span>
+            <div className="p-8 rounded-3xl bg-black/20 mt-4">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
+                <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
+                Noticias recientes
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4 ">
+                {regularNews.map((article) => (
+                  <div
+                    key={article.id}
+                    className="bg-black/20 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group flex flex-col"
+                    onDoubleClick={() => openNewsModal(article)}
+                  >
+                    <div className="h-40 overflow-hidden relative">
+                      <img
+                        src={article.image}
+                        alt={article.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
                     </div>
-                    <h3 className="text-lg font-bold text-[var(--ins-text-white)] mb-2 leading-tight group-hover:text-[var(--secondary-color)] transition-colors">
-                      {article.title}
-                    </h3>
-                    <p className="text-sm text-[var(--gray-color)] flex-1 line-clamp-3">{article.description}</p>
-                    <button
-                      type="button"
-                      className="mt-4 flex items-center text-[var(--secondary-color)] text-sm font-bold"
-                      onClick={() => openNewsModal(article)}
-                    >
-                      Leer más <ChevronRight size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 bg-black/25 hover:bg-black/40 border border-white/15 transition-colors"
-                      onClick={(event) => handleToggleLike(event, article)}
-                      aria-label={isNewsLiked(article.id) ? "Quitar like" : "Dar like"}
-                      disabled={likeLoadingIds.includes(article.id)}
-                    >
-                      <Heart size={15} className={isNewsLiked(article.id) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-white)]"} />
-                      <span className="text-xs font-semibold text-[var(--ins-text-white)]">{Number(article.likesCount || 0)}</span>
-                    </button>
+                    <div className="p-6 flex flex-col flex-1 relative pb-16">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded-3xl" style={{ backgroundColor: getBadgeColor(article.type) }}>
+                          {article.type}
+                        </span>
+                        <span className="text-xs text-[var(--white-color)] font-medium">{article.dateLabel}</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-[var(--ins-text-white)] mb-2 leading-tight group-hover:text-[var(--secondary-color)] transition-colors">
+                        {article.title}
+                      </h3>
+                      <p className="text-sm text-[var(--gray-color)] flex-1 line-clamp-3">{article.description}</p>
+                      <button
+                        type="button"
+                        className="mt-4 flex items-center text-[var(--secondary-color)] text-sm font-bold"
+                        onClick={() => openNewsModal(article)}
+                      >
+                        Leer más <ChevronRight size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 bg-black/25 hover:bg-black/40 border border-white/15 transition-colors"
+                        onClick={(event) => handleToggleLike(event, article)}
+                        aria-label={isNewsLiked(article.id) ? "Quitar like" : "Dar like"}
+                        disabled={likeLoadingIds.includes(article.id)}
+                      >
+                        <Heart size={15} className={isNewsLiked(article.id) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-white)]"} />
+                        <span className="text-xs font-semibold text-[var(--ins-text-white)]">{Number(article.likesCount || 0)}</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </>
         )}
@@ -920,7 +933,7 @@ function News() {
                     <p className="text-sm text-[var(--ins-text-gray)]">Aun no hay comentarios. Se la primera persona en comentar.</p>
                   ) : (
                     comments.map((entry) => (
-                      <div key={entry.id} className="rounded-2xl bg-black/15 p-3 border border-white/5">
+                      <div key={entry.id} className="rounded-3xl bg-black/15 p-3 border border-white/5">
                         <div className="flex items-start gap-3">
                           <Link
                             to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}

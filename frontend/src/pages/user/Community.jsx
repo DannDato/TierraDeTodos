@@ -7,6 +7,7 @@ import AlertModal from "../../elements/AlertModal";
 import LoadingOverlay from "../../components/LoadingOverlay";
 import CommunityManager from "../../components/community/CommunityManager";
 import CommunityCard from "../../components/community/CommunityCard";
+import InfoRow from "../../elements/InfoRow";
 
 import { Video,  Mail, User, Calendar, Users, Info, File } from "lucide-react";
 
@@ -72,7 +73,7 @@ function Community() {
         <div>
         <section className="min-h-screen py-10 flex flex-col items-center bg-[var(--ins-background)] pb-24 text-[var(--white-color)] z-[1]">
 
-            <div className="w-full max-w-7xl px-4 md:px-8 text-[var(--ins-text-white)]">
+            <div className="w-full  px-4 md:px-8 text-[var(--ins-text-white)]">
                 {/* HEADER */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
                     <div>
@@ -102,12 +103,12 @@ function Community() {
             {/* FORMULARIO DE COMUNIDAD VISIBLE PARA USUARIOS CON community.manage */}
 
             </div>
-            <div className="flex flex-col lg:flex-row gap-8 items-start w-full max-w-7xl px-4 md:px-8 my-5">
+            <div className="flex flex-col lg:flex-row gap-8 items-start w-full  px-4 md:px-8 my-5">
                 <div className="w-full ">
-                    <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm p-10">
+                    <div className="bg-black/20 rounded-3xl p-6 backdrop-blur-sm p-10">
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                             <Video size={24} style={{ color: "var(--secondary-color)" }}/>
-                            Comunidades registradas
+                            Todas las comunidades
                         </h2>
                         {loadingCommunities ? (
                             <div className="text-[var(--ins-text-gray)]">Cargando comunidades...</div>
@@ -159,7 +160,7 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
         <div className="fixed inset-0 z-[120] flex items-center justify-center transition-opacity duration-200">
 
             <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full max-w-5xl rounded-2xl  bg-[var(--ins-background)]/95 p-8 shadow-2xl ring-1 ring-white/10 animate-fadeInUp" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="relative w-full max-w-5xl rounded-3xl  bg-[var(--ins-background)]/95 p-8 shadow-2xl ring-1 ring-white/10 animate-fadeInUp" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
                 <button onClick={onClose} className="absolute top-4 right-4 text-[var(--ins-text-gray)] hover:text-[var(--secondary-color)] text-2xl font-bold">×</button>
                 <div className="grid grid-cols-1 lg:grid-cols-3">
                     <div className="">
@@ -197,7 +198,7 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
                     </div>
                 </div>
                 <div>
-                    <div className="rounded-2xl bg-[var(--black-color)]/20 overflow-hidden mt-4">
+                    <div className="rounded-3xl bg-[var(--black-color)]/20 overflow-hidden mt-4">
                         <div className="px-5 py-4 flex items-center justify-between gap-3">
                         <div>
                             <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--ins-text-gray)]">Miembros</p>
@@ -251,28 +252,6 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
     );
 }
 
-function InfoRow({ icon, label, value, href, target }) {
-  const link = href || getLinkFromValue(value);
-  const content = (
-    <div className="rounded-2xl bg-black/20 p-4 flex items-start gap-4 hover:bg-[var(--white-color)]/10 transition-colors">
-      <div className="p-2.5 bg-[var(--black-color)]/30 rounded-xl text-[var(--ins-text-gray)]">
-        {icon}
-      </div>
-      <div className="overflow-hidden">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--ins-text-gray)]">{label}</p>
-        <p className="text-sm font-bold text-[var(--ins-text-white)] mt-1 truncate" title={typeof value === 'string' ? value : undefined}>
-          {value || "N/A"}
-        </p>
-      </div>
-    </div>
-  );
-  if (link && link !== "#") {
-    return (
-      <a href={link} target={target || "_blank"} rel="noopener noreferrer" className="block w-full">{content}</a>
-    );
-  }
-  return content;
-}
 
 function getLinkFromValue(value) {
   if (!value) return null;

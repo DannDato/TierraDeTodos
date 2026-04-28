@@ -133,7 +133,7 @@ function Players() {
 	return (
 		<section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
 			<LoadingOverlay isVisible={loading} message="Cargando credenciales" />
-			<div className="w-full max-w-7xl px-4 md:px-8 text-[var(--ins-text-white)]">
+			<div className="w-full  px-4 md:px-8 text-[var(--ins-text-white)]">
 				<div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
 					<div>
 						<div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
@@ -166,7 +166,7 @@ function Players() {
 					</div>
 				) : (
 					<>
-						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
 							{visiblePlayers.map((player) => {
 							const normalizedStatus = String(player?.status || "").toUpperCase();
 							const currentStatus = {

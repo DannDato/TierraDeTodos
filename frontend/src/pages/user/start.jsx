@@ -150,7 +150,7 @@ function Start() {
   return (
     <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
       <LoadingOverlay isVisible={loadingNews} message="Cargando noticias" />
-      <div className="flex-row w-full max-w-7xl px-4 md:mx-10 mx-0">
+      <div className="flex-row w-full  px-4 md:mx-10 mx-0">
 
         {/* ENCABEZADO */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
@@ -174,7 +174,7 @@ function Start() {
             {alerts.map((alert) => {
               const style = getAlertStyle(alert.level);
               return (
-                <div key={alert.id} className={`flex items-center gap-4 p-4 rounded-2xl ${style.wrapper} transition-all`}>
+                <div key={alert.id} className={`flex items-center gap-4 p-4 rounded-3xl ${style.wrapper} transition-all`}>
                   <div className="flex-shrink-0">
                     {style.icon}
                   </div>
@@ -189,7 +189,7 @@ function Start() {
         {/* ========================================================= */}
         {/* ESTADISTICAS DEL JUGADOR */}
         {/* ========================================================= */}
-        <div className="bg-black/10 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8">
+        <div className="bg-black/20 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8">
 
           <div className="flex items-center justify-between mb-4 relative z-10">
             <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-widest">Tu Progreso</span>
@@ -199,7 +199,7 @@ function Start() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10">
-            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
+            <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
                 <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Insignias</p>
               <div className="p-2 bg-purple-500/10 rounded-xl text-yellow-600">
                 <Trophy size={18} />
@@ -208,7 +208,7 @@ function Start() {
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
+            <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
               <div>
                 <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Tiempo Jugado</p>
               </div>
@@ -218,9 +218,9 @@ function Start() {
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
+            <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
               <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Monedas</p>
-              <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-600 flex-row items-center gap-4 flex">
+              <div className="p-2 bg-emerald-500/10 rounded-3xl text-emerald-600 flex-row items-center gap-4 flex">
                 <Coins size={18} />
                 <p className="text-sm font-extrabold text-[var(--ins-text-white)]">$15,420</p>
               </div>
@@ -228,9 +228,9 @@ function Start() {
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
+            <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
               <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Kills / Muertes</p>
-              <div className="p-2 bg-red-500/10 rounded-xl text-red-300 flex-row items-center gap-4 flex">
+              <div className="p-2 bg-red-500/10 rounded-3xl text-red-300 flex-row items-center gap-4 flex">
                 <Swords size={18} />
                 <p className="text-sm font-extrabold text-[var(--ins-text-white)]">34 / 12</p>
               </div>
@@ -242,7 +242,7 @@ function Start() {
         </div>
         {/* CONTENIDO PRINCIPAL*/}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-          <div className="col-span-2 flex flex-col gap-6">
+          <div className="col-span-2 flex flex-col gap-6 p-8 bg-black/20 rounded-3xl shadow-md max-h-80">
             {featuredNews && (
               <div
                 className="relative h-80 w-full rounded-3xl overflow-hidden shadow-md group cursor-pointer"
@@ -257,7 +257,7 @@ function Start() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
                 <div className="absolute bottom-0 left-0 p-8 w-full">
-                  <span className={`inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3 ${getBadgeColor(featuredNews.type)}`}>
+                  <span className={`inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-3xl mb-3 ${getBadgeColor(featuredNews.type)}`}>
                     {featuredNews.type}
                   </span>
                   <h2 className="text-3xl font-extrabold text-white mb-2 drop-shadow-lg leading-tight">
@@ -272,7 +272,7 @@ function Start() {
           </div>
 
           <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="bg-black/10 rounded-3xl p-6 shadow-md h-80 flex flex-col items-center text-center relative overflow-hidden gap-5">
+            <div className="bg-black/20 rounded-3xl p-6 shadow-md h-80 flex flex-col items-center text-center relative overflow-hidden gap-5 max-h-80">
               <div className="absolute -top-24 -right-24 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
 
               <div className="w-full mb-3 relative z-10">

@@ -4,10 +4,10 @@ export default function CommunityCard({ community }) {
   if (!community) return null;
   return (
     <div
-      className="rounded-xl shadow-lg p-6 flex flex-col items-center gap-3 hover:shadow-2xl transition-shadow duration-300 z-2 h-62"
+      className="rounded-xl shadow-lg p-6 flex flex-col items-center gap-3 hover:shadow-2xl transition-shadow duration-300 z-2 h-62 min-w-xs "
       style={{ background: community.color }}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full flex items-center justify-center">
+      <div className="grid grid-cols-2 gap-4 w-full items-center">
         <div>
             <img
                 src={community.leader?.profileImage || community.logo_url}

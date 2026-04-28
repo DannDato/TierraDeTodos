@@ -93,7 +93,8 @@ function Credencial({
       };
 
   return (
-    <div className="w-full max-w-[340px] lg:max-w-[360px] mx-auto lg:mx-0 lg:shrink-0">
+    <div className="w-full max-w-[370px] lg:max-w-[420px] mx-auto lg:mx-0 lg:shrink-0">
+      <div className="rounded-3xl bg-black/20 p-10">
       <style>{`
         .credential-container {
           perspective: 1000px;
@@ -152,7 +153,7 @@ function Credencial({
       `}</style>
 
       {isInactiveStatus ? (
-        <div className="h-[520px] rounded-2xl paper-texture border border-[rgba(139,110,58,0.3)] flex items-center justify-center p-6 text-center">
+        <div className="h-[520px] rounded-3xl paper-texture border border-[rgba(139,110,58,0.3)] flex items-center justify-center p-6 text-center">
           <div className="space-y-3">
             <p className="text-[13px] uppercase tracking-[0.2em] font-bold text-[var(--gray-color)]">Estado de Solicitud</p>
             <h3 className="text-2xl font-extrabold text-gray-900">Tramite en proceso</h3>
@@ -177,10 +178,10 @@ function Credencial({
             />
           )}
 
-          <div className="credential-flipper">
-            <div className="credential-front">
+          <div className="credential-flipper ">
+            <div className="credential-front ">
               <div
-                className="h-full rounded-2xl paper-texture flex flex-col pt-5 pb-3 px-6 text-gray-900 border border-[rgba(139,110,58,0.3)]"
+                className="h-full rounded-3xl paper-texture flex flex-col pt-5 pb-3 px-6 text-gray-900 border border-[rgba(139,110,58,0.3)]"
                 style={credentialPaperStyle}
               >
                 <div className="flex items-center gap-3 pb-3 border-b border-[rgba(139,110,58,0.5)] mb-3">
@@ -240,7 +241,7 @@ function Credencial({
                     </button>
 
                     {!readOnly && resolvedAvatarPreview && isAvatarMenuOpen && (
-                      <div className="absolute z-20 top-[calc(100%+6px)] left-0 rounded-lg border border-black/30 bg-[var(--ins-background)] shadow-lg overflow-hidden text-xs min-w-[120px]">
+                      <div className="absolute z-20 top-[calc(100%+6px)] left-0 rounded-3xl bg-[var(--ins-background)] shadow-lg overflow-hidden text-xs min-w-[120px]">
                         <button
                           type="button"
                           onClick={onOpenAvatarEditor}
@@ -315,7 +316,7 @@ function Credencial({
 
             <div className="credential-back">
               <div
-                className="h-full rounded-2xl paper-texture flex items-center justify-center p-4 border border-[rgba(139,110,58,0.3)]"
+                className="h-full rounded-3xl paper-texture flex items-center justify-center p-4 border border-[rgba(139,110,58,0.3)]"
                 style={credentialPaperStyle}
               >
                 <div className="w-full h-full rounded-lg bg-black/10 flex items-center justify-center p-3 shadow-inner overflow-hidden border border-[rgba(139,110,58,0.15)]">
@@ -352,6 +353,7 @@ function Credencial({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
