@@ -194,7 +194,7 @@ function Start() {
         {/* ========================================================= */}
         {/* ESTADISTICAS DEL JUGADOR */}
         {/* ========================================================= */}
-        <div className="bg-black/20 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8">
+        <div className="bg-black/20 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8 backdrop-blur-lg">
 
           <div className="flex items-center justify-between mb-4 relative z-10">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
@@ -250,7 +250,7 @@ function Start() {
         </div>
         {/* CONTENIDO PRINCIPAL*/}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-          <div className="col-span-2 flex flex-col gap-6 p-8 bg-black/20 rounded-3xl shadow-md max-h-120">
+          <div className="col-span-2 flex flex-col gap-6 p-8 bg-black/20 rounded-3xl shadow-md max-h-120 backdrop-blur-lg">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
               <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
               Ultima noticia destacada
@@ -284,7 +284,7 @@ function Start() {
           </div>
 
           <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="bg-black/20 rounded-3xl p-6 shadow-md h-80 flex flex-col items-center relative overflow-hidden gap-5 h-120">
+            <div className="bg-black/20 rounded-3xl p-6 shadow-md h-80 flex flex-col items-center relative overflow-hidden gap-5 h-120 backdrop-blur-lg">
               <div className="absolute -top-24 -right-24 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
 
               <div className="w-full relative z-10">
@@ -376,7 +376,7 @@ function Start() {
         {/* ========================================================= */}
         {/* ACCESOS DIRECTOS RÁPIDOS */}
         {/* ========================================================= */}
-        <div className="flex gap-4 mt-8 mb-8 w-full justify-center w-full bg-black/20 rounded-3xl p-6 shadow-md">
+        <div className="flex gap-4 mt-8 mb-8 w-full justify-center w-full bg-black/20 rounded-3xl p-6 shadow-md backdrop-blur-lg">
 
         </div>
       </div>

@@ -3,7 +3,7 @@ function Background({
   // backgroundImage = "/img/banner.gif",
   backgroundImage = "/img/banner2.gif",
   // backgroundImage = "/img/bannergif.webp",
-  overlayColor = "rgba(48, 46, 45, 0.81)",
+  overlayColor = "rgba(48, 46, 45, 0)",
   blur = "10px",
   children,
   className = "",

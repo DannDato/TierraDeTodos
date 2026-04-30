@@ -177,7 +177,7 @@ function Players() {
 					</div>
 				) : (
 					<>
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 justify-items-center  bg-black/10 rounded-3xl p-6">
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 justify-items-center  bg-black/10 rounded-3xl lg:p-6">
 							{visiblePlayers.map((player) => {
 							const normalizedStatus = String(player?.status || "").toUpperCase();
 							const currentStatus = {

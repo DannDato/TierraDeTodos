@@ -588,7 +588,7 @@ function News() {
   };
 
   return (
-    <div className="min-h-screen h-screen py-10 flex items-start justify-center pb-24">
+    <div className="min-h-screen h-screen py-10 flex items-start justify-center ">
       <LoadingOverlay isVisible={loading || submitting} message={submitting ? "Publicando noticia..." : "Cargando noticias"} />
       <AlertModal
         isOpen={alertConfig.isOpen}
@@ -650,7 +650,7 @@ function News() {
         </div>
 
         {sortedNews.length === 0 ? (
-          <div className="rounded-3xl border border-white/10 bg-black/10 py-14 text-center ">
+          <div className="rounded-3xl border border-white/10 bg-black/10 py-14 text-center backdrop-blur-lg">
             No hay noticias para mostrar.
           </div>
         ) : (
@@ -696,7 +696,7 @@ function News() {
               </div>
             )}
 
-            <div className="p-8 rounded-3xl bg-black/20 mt-4">
+            <div className="p-8 rounded-3xl bg-black/20 mt-4 ">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
                 <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
                 Noticias recientes
@@ -748,6 +748,9 @@ function News() {
                   </div>
                 ))}
               </div>
+            </div>
+            <div className="my-10">
+              <span className="text-[#ffffff00]"> -</span>
             </div>
           </>
         )}
@@ -1003,7 +1006,7 @@ function News() {
             </div>
 
             {isEditingSelected && (
-              <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3 bg-black/10">
+              <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3 bg-black/10 backdrop-blur-lg">
                 <Button type="button" variant="ghost" className="text-white" onClick={cancelEditSelected} disabled={submitting}>Cancelar</Button>
                 <Button type="button" variant="primary" className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white" onClick={handleSaveEditedNews} disabled={submitting}>
                   Guardar cambios
@@ -1116,7 +1119,7 @@ function News() {
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-white/10 flex justify-end gap-3 bg-black/10">
+            <div className="px-6 py-4 border-t border-white/10 flex justify-end gap-3 bg-black/10 backdrop-blur-lg">
               <Button type="button" variant="ghost" className="text-white" onClick={closeCreateModal}>
                 Cancelar
               </Button>

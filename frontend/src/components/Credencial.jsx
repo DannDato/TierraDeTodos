@@ -1,5 +1,5 @@
 import { User, Upload } from "lucide-react";
-import cancelledStamp from "../img/cancelled.webp";
+import cancelledStamp from "../img/cancelled.png";
 
 function Credencial({
   user,
@@ -93,8 +93,8 @@ function Credencial({
       };
 
   return (
-    <div className="w-full max-w-[370px] lg:max-w-[420px] mx-auto lg:mx-0 lg:shrink-0">
-      <div className="rounded-3xl bg-black/20 lg:p-5">
+    <div className="w-full max-w-[370px] lg:max-w-[420px] lg:shrink-0">
+      <div className="rounded-3xl ">
       <style>{`
         .credential-container {
           perspective: 1000px;
@@ -146,6 +146,11 @@ function Credencial({
           letter-spacing: -0.5px;
         }
 
+        .is-cancelled {
+          filter: grayscale(1) contrast(0.80) !important;
+          transition: filter 0.3s ease;
+        }
+
         .minecraft-mugshot {
           border: 1px solid #3a3a3a42;
           image-rendering: pixelated;
@@ -178,7 +183,8 @@ function Credencial({
             />
           )}
 
-          <div className="credential-flipper min-w-[340px]">
+          {/* <div className="credential-flipper min-w-[340px] ${isCancelledStatus ? 'is-cancelled' : ''}"> */}
+          <div className={`credential-flipper min-w-[340px] ${isCancelledStatus ? 'is-cancelled' : ''}`}>
             <div className="credential-front ">
               <div
                 className="h-full rounded-3xl paper-texture flex flex-col pt-5 pb-3 px-6 text-gray-900 border border-[rgba(139,110,58,0.3)]"
@@ -269,13 +275,17 @@ function Credencial({
 
                   <div className="flex-1 h-36 flex flex-col justify-between">
                     <div className="grid grid-cols-3 gap-x-3 gap-y-2 font-mono-dossier text-sm flex-1 mt-2">
-                      <div className="col-span-1 space-y-0.5 border-b border-[rgba(139,110,58,0.25)] pb-1">
+                      <div className="col-span- border-b border-[rgba(139,110,58,0.25)] ">
                         <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Pais</span>
                         <span className="credential-data block text-[12px] font-bold">{user.country || "MX"}</span>
                       </div>
-                      <div className="col-span-2 space-y-0.5 border-b border-[rgba(139,110,58,0.25)] pb-1">
+                      {/* <div className="col-span-2 space-y-0.5 border-b border-[rgba(139,110,58,0.25)] pb-1">
                         <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">ID Ciudadano</span>
                         <span className="credential-id block text-[12px] font-bold">{user.folio || `TDT-${user.id?.toString().padStart(8, "0") || "XXXXXXXX"}`}</span>
+                      </div> */}
+                      <div className="text-right border-b border-gray-900 pb-0.5 pr-1 min-w-[120px]">
+                        <span className="credential-label text-[9px] font-bold uppercase tracking-widest block leading-none">Firma Titular</span>
+                        <span className="credential-data font-serif italic text-base">{user.username}</span>
                       </div>
 
                       <div className="col-span-3 space-y-0.5 border-b border-[rgba(139,110,58,0.25)] pb-1">
@@ -293,20 +303,10 @@ function Credencial({
                   </div>
                 </div>
 
-                <div className="border-b border-[rgba(139,110,58,0.25)] pb-2 mb-2">
+                <div className="border-b border-[rgba(139,110,58,0.25)] pb-2 mb-2 h-auto flex-1 flex flex-col">
                   <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Insignias</span>
-                  <div className="mt-1 h-12 rounded border border-dashed border-[rgba(139,110,58,0.35)] bg-black/5" />
+                  <div className="mt-1 flex-1 h-full rounded border border-dashed border-[rgba(139,110,58,0.35)] bg-black/5" />
                 </div>
-
-                <div>
-                  <div className="flex items-center justify-end gap-1 pt-0.5">
-                    <div className="text-right border-b border-gray-900 pb-0.5 pr-1 min-w-[120px]">
-                      <span className="credential-label text-[9px] font-bold uppercase tracking-widest block leading-none">Firma Titular</span>
-                      <span className="credential-data font-serif italic text-base">{user.username}</span>
-                    </div>
-                  </div>
-                </div>
-
                 <div className="text-center pt-2 border-t border-[rgba(139,110,58,0.4)] text-[8px] mt-auto">
                   <p className="credential-label font-medium tracking-tight">Identidad única verificada | © TierraDeTodos</p>
                   <p className="credential-label mt-0.5 italic">Haz doble clic para ver el reverso</p>
@@ -349,6 +349,14 @@ function Credencial({
                 decoding="async"
                 style={{ transform: "rotate(-12deg)" }}
               />
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 20,
+                pointerEvents: 'none',
+                filter: 'grayscale(1)',
+                mixBlendMode: 'saturation',
+              }} />
             </div>
           )}
         </div>
