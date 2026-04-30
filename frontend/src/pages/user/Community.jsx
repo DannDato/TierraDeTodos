@@ -71,13 +71,13 @@ function Community() {
     }, []);
     return (
         <div>
-        <section className="min-h-screen py-10 flex flex-col items-center bg-[var(--ins-background)] pb-24 text-[var(--white-color)] z-[1] min-h-screen h-screen">
+        <div className="min-h-screen py-10 flex flex-col items-center  pb-24 text-[var(--white-color)] z-[1] min-h-screen h-screen">
 
-            <div className="w-full  px-4 md:px-8 text-[var(--ins-text-white)]">
+            <div className="w-full  px-0 mx-0 text-[var(--ins-text-white)]">
                 {/* HEADER */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
                     <div>
-                        <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-2">
                         <span>{currentUser.role}</span>
                         <span>/</span>
                         <span className="text-[var(--secondary-color)]">Comunidades</span>
@@ -87,7 +87,7 @@ function Community() {
                         Comunidades
                         </h1>
 
-                        <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-lg">
+                        <p className="hidden lg:block text-sm text-[var(--ins-text-white)] mt-2 max-w-lg">
                         Las comunidades que participan en Tierra de Todos
                         </p>
                     </div>
@@ -103,7 +103,7 @@ function Community() {
             {/* FORMULARIO DE COMUNIDAD VISIBLE PARA USUARIOS CON community.manage */}
 
             </div>
-            <div className="flex flex-col lg:flex-row gap-8 items-start w-full  px-4 md:px-8 my-5">
+            <div className="flex flex-col lg:flex-row gap-8 items-start w-full  px-0 mx-0">
                 <div className="w-full ">
                     <div className="bg-black/20 rounded-3xl p-6 backdrop-blur-sm p-10">
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
@@ -111,11 +111,11 @@ function Community() {
                             Todas las comunidades
                         </h2>
                         {loadingCommunities ? (
-                            <div className="text-[var(--ins-text-gray)]">Cargando comunidades...</div>
+                            <div className="text-[var(--ins-text-white)]">Cargando comunidades...</div>
                         ) : errorCommunities ? (
                             <div className="text-red-500">{errorCommunities}</div>
                         ) : communities.length === 0 ? (
-                            <div className="text-[var(--ins-text-gray)]">No hay comunidades registradas.</div>
+                            <div className="text-[var(--ins-text-white)]">No hay comunidades registradas.</div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hover:bounce">
                                 {communities.map((community) => (
@@ -144,7 +144,7 @@ function Community() {
             {/* Modal de detalle de comunidad */}
             <CommunityDetailModal isOpen={showModal} community={selected} onClose={handleClose} onJoin={handleJoin} />
             {/* AlertModal debe ir al final para estar sobre cualquier modal */}
-        </section>
+        </div>
         </div>
     );
 }
@@ -160,8 +160,8 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
         <div className="fixed inset-0 z-[120] flex items-center justify-center transition-opacity duration-200">
 
             <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full max-w-5xl rounded-3xl  bg-[var(--ins-background)]/95 p-8 shadow-2xl ring-1 ring-white/10 animate-fadeInUp" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
-                <button onClick={onClose} className="absolute top-4 right-4 text-[var(--ins-text-gray)] hover:text-[var(--secondary-color)] text-2xl font-bold">×</button>
+            <div className="relative w-full max-w-5xl rounded-3xl  p-8 shadow-2xl ring-1 ring-white/10 animate-fadeInUp" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+                <button onClick={onClose} className="absolute top-4 right-4 text-[var(--ins-text-white)] hover:text-[var(--secondary-color)] text-2xl font-bold">×</button>
                 <div className="grid grid-cols-1 lg:grid-cols-3">
                     <div className="">
                         <CommunityCard community={community} className="w-full" />
@@ -201,21 +201,21 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
                     <div className="rounded-3xl bg-[var(--black-color)]/20 overflow-hidden mt-4">
                         <div className="px-5 py-4 flex items-center justify-between gap-3">
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--ins-text-gray)]">Miembros</p>
+                            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--ins-text-white)]">Miembros</p>
                         </div>
-                        <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-white/5 text-[var(--ins-text-gray)]">
+                        <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-white/5 text-[var(--ins-text-white)]">
                              {community.members ? community.members.length : 0} registros
                         </span>
                         </div>
 
                         {community.members && community.members.length === 0 ? (
-                        <div className="px-5 py-8 text-sm text-center text-[var(--ins-text-gray)]">
+                        <div className="px-5 py-8 text-sm text-center text-[var(--ins-text-white)]">
                             No hay movimientos de estatus registrados para este usuario.
                         </div>
                         ) : (
                         <div className="overflow-x-auto tdt-scrollbar">
                             <table className="w-full min-w-[680px] text-left text-sm">
-                            <thead className="bg-[var(--white-color)]/5 text-[10px] uppercase tracking-[0.22em] text-[var(--ins-text-gray)]">
+                            <thead className="bg-[var(--white-color)]/5 text-[10px] uppercase tracking-[0.22em] text-[var(--ins-text-white)]">
                                 <tr>
                                 <th className="px-5 py-3 font-bold">#</th>
                                 <th className="px-5 py-3 font-bold">Usuario</th>

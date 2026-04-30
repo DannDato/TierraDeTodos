@@ -132,7 +132,7 @@ function Reports() {
   }, []);
 
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
+    <section className="min-h-screen py-10 flex items-start justify-center pb-24">
       <LoadingOverlay isVisible={loading || chatLoading} message="Cargando reportes..." />
       <AlertModal
         isOpen={alertConfig.isOpen}
@@ -141,7 +141,7 @@ function Reports() {
         message={alertConfig.message}
         onClose={closeAlert}
       />
-      <div className="w-full max-w-7xl px-4 md:px-8 text-[var(--ins-text-white)]">
+      <div className="w-full max-w-7xl px-0 mx-0 text-[var(--ins-text-white)]">
 
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -356,7 +356,7 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl rounded-3xl bg-[var(--ins-background)] shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
 
         <div className="flex items-start justify-between gap-4 px-6 py-5 bg-black/10">
           <div className="flex-1 min-w-0">

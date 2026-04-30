@@ -142,9 +142,9 @@ function Players() {
 	};
 
 	return (
-		<div className="min-h-screen h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
-			<LoadingOverlay isVisible={loading} message="Cargando credenciales" />
-			<div className="w-full px-4 md:px-8 text-[var(--ins-text-white)]">
+		<div className="min-h-screen h-screen py-10 flex items-start justify-center pb-24">
+			<LoadingOverlay isVisible={loading} message="Cargando jugadores" />
+			<div className="w-full px-0 mx-0 text-[var(--ins-text-white)]">
 				<div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
 					<div>
 						<div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
@@ -153,8 +153,8 @@ function Players() {
 							<span className="text-[var(--secondary-color)]">Jugadores</span>
 						</div>
 
-						<h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Credenciales del Sistema</h1>
-						<p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-2xl">
+						<h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Jugadores</h1>
+						<p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-2xl leading-relaxed">
 							Visualiza todas las credenciales de jugadores registradas en TierraDeTodos.
 						</p>
 					</div>

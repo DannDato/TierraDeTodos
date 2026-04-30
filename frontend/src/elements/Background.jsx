@@ -1,17 +1,16 @@
 
-function Banner({
+function Background({
   // backgroundImage = "/img/banner.gif",
   backgroundImage = "/img/banner2.gif",
   // backgroundImage = "/img/bannergif.webp",
-  overlayColor = "rgba(32, 32, 32, 0.6)",
+  overlayColor = "rgba(48, 46, 45, 0.81)",
   blur = "10px",
   children,
   className = "",
   ...props
 }) {
   return (
-    <section id="inicio" className={`relative h-[600px] md:h-[800px] lg:h-[1000px] overflow-hidden ${className}`} {...props}>
-
+    <section id="inicio" className={`relative ${className}`} {...props}>
       {/* Imagen de fondo */}
       <div
         className="fixed top-0 left-0 w-full h-full bg-cover bg-center scale-110"
@@ -24,7 +23,7 @@ function Banner({
 
       {/* Overlay */}
       <div
-        className="fixed top-0 left-0 w-full h-full bg-cover inset-0 flex items-center justify-center text-center p-5 z-1"
+        className="fixed top-0 left-0 w-full h-full bg-cover inset-0 flex  p-5 z-1"
         style={{
           backgroundColor: overlayColor,
           zIndex: 10,
@@ -32,13 +31,13 @@ function Banner({
       >
       </div>
       <div
-        className="absolute bg-cover inset-0 flex items-center justify-center text-center p-5 z-1"
+        className="absolute bg-cover inset-0 flex items-center justify-center p-5 z-1"
         style={{
           zIndex: 10,
         }}
       >
          {/* max-w-[1000px] */}
-        <div className="w-full z-20 pt-10">
+        <div className="w-full z-20 align-middle">
           {children}
         </div>
       </div>
@@ -47,4 +46,4 @@ function Banner({
   );
 }
 
-export default Banner;
+export default Background;

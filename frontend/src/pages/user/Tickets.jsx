@@ -245,7 +245,7 @@ function Tickets() {
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24 min-h-screen h-screen">
+    <section className="min-h-screen py-10 flex items-start justify-center pb-24 min-h-screen h-screen">
       <LoadingOverlay
         isVisible={catalogLoading || ticketsLoading || submitting}
         message={submitting ? "Enviando ticket..." : "Cargando datos..."}
@@ -257,7 +257,7 @@ function Tickets() {
         message={alertConfig.message}
         onClose={closeAlert}
       />
-      <div className="w-full px-4 md:px-8 text-[var(--ins-text-white)]">
+      <div className="w-full px-0 mx-0 text-[var(--ins-text-white)]">
 
         {/* Header */}
         <div className="mb-8">
@@ -324,7 +324,7 @@ function Tickets() {
               />
               <UserSearch size={16} className="absolute right-2 top-[40px] text-[var(--ins-text-gray)] pointer-events-none" />
               {showPlayerOptions && filteredPlayers.length > 0 && (
-                <div className="absolute z-40 mt-2 w-full max-h-48 overflow-y-auto tdt-scrollbar rounded-xl bg-[var(--ins-background)]/95 shadow-lg">
+                <div className="absolute z-40 mt-2 w-full max-h-48 overflow-y-auto tdt-scrollbar rounded-xl shadow-lg">
                   {filteredPlayers.map((u) => (
                     <button key={u} type="button" onMouseDown={() => { handleChange("involvedPlayer", u); setShowPlayerOptions(false); }} className="w-full text-left px-3 py-2 text-sm text-[var(--ins-text-white)] hover:bg-white/10 transition-colors">{u}</button>
                   ))}
@@ -499,7 +499,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl rounded-3xl bg-[var(--ins-background)] shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
 
         {/* Header */}
         <div className="flex items-start justify-between gap-4 px-6 py-5 bg-black/10">

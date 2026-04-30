@@ -94,7 +94,7 @@ function Credencial({
 
   return (
     <div className="w-full max-w-[370px] lg:max-w-[420px] mx-auto lg:mx-0 lg:shrink-0">
-      <div className="rounded-3xl bg-black/20 lg:p-10">
+      <div className="rounded-3xl bg-black/20 lg:p-5">
       <style>{`
         .credential-container {
           perspective: 1000px;
@@ -178,7 +178,7 @@ function Credencial({
             />
           )}
 
-          <div className="credential-flipper ">
+          <div className="credential-flipper min-w-[340px]">
             <div className="credential-front ">
               <div
                 className="h-full rounded-3xl paper-texture flex flex-col pt-5 pb-3 px-6 text-gray-900 border border-[rgba(139,110,58,0.3)]"

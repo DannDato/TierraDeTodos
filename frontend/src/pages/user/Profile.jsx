@@ -451,7 +451,7 @@ function Profile() {
   };
 
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24 min-h-screen h-screen">
+    <section className="min-h-screen py-10 flex items-start justify-center pb-24 min-h-screen h-screen">
 
       <LoadingOverlay
         isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer || isLoadingPassword}
@@ -512,13 +512,13 @@ function Profile() {
       />
 
       {user && (
-      <div className="w-full  px-4 md:px-8 text-[var(--ins-text-white)]">
+      <div className="w-full  px-0 mx-0 text-[var(--ins-text-white)]">
 
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
 
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-2">
               <span>{currentUser.role}</span>
               <span>/</span>
               <span className="text-[var(--secondary-color)]">Credencial</span>
@@ -682,7 +682,7 @@ function Profile() {
 
 
             {/* STATUS */}
-            <div className="bg-black/20 rounded-3xl p-6 backdrop-blur-sm">
+            <div className="bg-black/20 rounded-3xl p-6 backdrop-blur-sm pb-9">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-full"

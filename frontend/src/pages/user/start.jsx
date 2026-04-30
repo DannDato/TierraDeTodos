@@ -10,7 +10,11 @@ import {
   Trophy,
   Coins,
   Swords,
-  Users
+  Users,
+  CircleDashed,
+  Newspaper,
+  Zap,
+  LogOut
 } from "lucide-react";
 import Button from "../../elements/Button";
 import api from "../../api/axios";
@@ -149,9 +153,9 @@ function Start() {
   };
 
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24 ">
+    <div className="min-h-screen h-screen py-10 flex items-start justify-center pb-2 text-[var(--white-color)] z-[1]">
       <LoadingOverlay isVisible={loadingNews} message="Cargando noticias" />
-      <div className="flex-row w-full  px-4 md:mx-10 mx-0 min-h-screen h-screen">
+      <div className="flex-row w-full  px-0 mx-0 min-h-screen h-screen">
 
         {/* ENCABEZADO */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
@@ -193,7 +197,10 @@ function Start() {
         <div className="bg-black/20 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8">
 
           <div className="flex items-center justify-between mb-4 relative z-10">
-            <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-widest">Tu Progreso</span>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
+                <CircleDashed size={24} style={{ color: "var(--secondary-color)" }}/>
+                Tu progreso actual
+            </h2>
             <span className="text-[10px] font-bold bg-[var(--secondary-color)]/10 text-[var(--secondary-color)] px-2 py-1 rounded-md">
               TDT
             </span>
@@ -201,7 +208,7 @@ function Start() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10">
             <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
-                <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Insignias</p>
+                <p className="text-[10px] font-bold  uppercase">Insignias</p>
               <div className="p-2 bg-purple-500/10 rounded-xl text-yellow-600">
                 <Trophy size={18} />
               </div>
@@ -211,7 +218,7 @@ function Start() {
 
             <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
               <div>
-                <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Tiempo Jugado</p>
+                <p className="text-[10px] font-bold  uppercase">Tiempo Jugado</p>
               </div>
               <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 flex-row items-center gap-4 flex">
                 <Clock size={18} />
@@ -220,7 +227,7 @@ function Start() {
             </div>
 
             <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
-              <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Monedas</p>
+              <p className="text-[10px] font-bold  uppercase">Monedas</p>
               <div className="p-2 bg-emerald-500/10 rounded-3xl text-emerald-600 flex-row items-center gap-4 flex">
                 <Coins size={18} />
                 <p className="text-sm font-extrabold text-[var(--ins-text-white)]">$15,420</p>
@@ -230,7 +237,7 @@ function Start() {
             </div>
 
             <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
-              <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Kills / Muertes</p>
+              <p className="text-[10px] font-bold  uppercase">Kills / Muertes</p>
               <div className="p-2 bg-red-500/10 rounded-3xl text-red-300 flex-row items-center gap-4 flex">
                 <Swords size={18} />
                 <p className="text-sm font-extrabold text-[var(--ins-text-white)]">34 / 12</p>
@@ -243,7 +250,11 @@ function Start() {
         </div>
         {/* CONTENIDO PRINCIPAL*/}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-          <div className="col-span-2 flex flex-col gap-6 p-8 bg-black/20 rounded-3xl shadow-md max-h-80">
+          <div className="col-span-2 flex flex-col gap-6 p-8 bg-black/20 rounded-3xl shadow-md max-h-120">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
+              <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
+              Ultima noticia destacada
+            </h2>
             {featuredNews && (
               <div
                 className="relative h-80 w-full rounded-3xl overflow-hidden shadow-md group cursor-pointer"
@@ -273,11 +284,14 @@ function Start() {
           </div>
 
           <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="bg-black/20 rounded-3xl p-6 shadow-md h-80 flex flex-col items-center text-center relative overflow-hidden gap-5 max-h-80">
+            <div className="bg-black/20 rounded-3xl p-6 shadow-md h-80 flex flex-col items-center relative overflow-hidden gap-5 h-120">
               <div className="absolute -top-24 -right-24 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
 
-              <div className="w-full mb-3 relative z-10">
-                <span className="text-xs font-bold text-[var(--white-color)] uppercase tracking-widest">¿Aún no lo instalas?</span>
+              <div className="w-full relative z-10">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
+                  <Play size={24} style={{ color: "var(--secondary-color)" }}/>
+                  ¿Aun no lo instalas?
+                </h2>
               </div>
 
               <div className="w-full relative z-10">
@@ -301,7 +315,7 @@ function Start() {
                     variant="primary"
                     size="lg"
                     fullWidth
-                    className="py-5 text-xl tracking-wide shadow-lg shadow-[var(--secondary-color)]/30 hover:shadow-[var(--secondary-color)]/50"
+                    // className="py-5 text-xl tracking-wide shadow-lg shadow-[var(--secondary-color)]/30 hover:shadow-[var(--secondary-color)]/50"
                     onClick={handlePlayClick}
                   >
                     <Play size={24} fill="currentColor" /> Descargar
@@ -314,14 +328,46 @@ function Start() {
                 size="lg"
                 target={"_blank"}
                 fullWidth
-                className="py-5 text-xl tracking-wide shadow-lg shadow-[var(--secondary-color)]/30 hover:shadow-[var(--secondary-color)]/50"
+                // className="py-5 text-xl tracking-wide shadow-lg shadow-[var(--secondary-color)]/30 hover:shadow-[var(--secondary-color)]/50"
                 href="https://discord.gg/tdt3"
               >
                 Únete a Discord
               </Button>
 
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-[var(--white-color)]">
-                <Server size={14} /> Servidor en línea • 124 Jugadores
+              <div className="mt-0  flex items-center justify-center gap-2 text-xs font-bold text-[var(--white-color)]">
+                {/* <Server size={14} /> Servidor en línea • 124 Jugadores */}
+              </div>
+              <div className="w-full relative z-10">
+                <h2 className="text-xl font-bold  flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
+                  <Zap size={24} style={{ color: "var(--secondary-color)" }}/>
+                  Acceso rápido
+                </h2>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-align-center mt-4 relative z-10">
+                <button
+                  onClick={() => navigate('/community')}
+                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-[var(--white-color)]/20 hover:bg-[var(--secondary-color)]/30 transition-colors shadow-md"
+                  type="button"
+                >
+                  <Users size={28} className="text-[var(--white-color)]" />
+                  {/* <span className="text-xs font-bold text-[var(--secondary-color)] uppercase">Comunidades</span> */}
+                </button>
+                <button
+                  onClick={() => navigate('/tickets')}
+                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 transition-colors shadow-md"
+                  type="button"
+                >
+                  <AlertTriangle size={28} className="text-amber-500" />
+                  {/* <span className="text-xs font-bold text-amber-500 uppercase">Tickets</span> */}
+                </button>
+                <button
+                  onClick={() => navigate('/logout')}
+                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-red-500/20 hover:bg-red-500/30 transition-colors shadow-md"
+                  type="button"
+                >
+                  <LogOut size={28} className="text-red-500" />
+                  {/* <span className="text-xs font-bold text-red-500 uppercase">Cerrar sesión</span> */}
+                </button>
               </div>
             </div>
           </div>
@@ -331,25 +377,10 @@ function Start() {
         {/* ACCESOS DIRECTOS RÁPIDOS */}
         {/* ========================================================= */}
         <div className="flex gap-4 mt-8 mb-8 w-full justify-center w-full bg-black/20 rounded-3xl p-6 shadow-md">
-          <button
-            onClick={() => navigate('/community')}
-            className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-[var(--secondary-color)]/20 hover:bg-[var(--secondary-color)]/30 transition-colors shadow-md"
-            type="button"
-          >
-            <Users size={28} className="text-[var(--secondary-color)]" />
-            <span className="text-xs font-bold text-[var(--secondary-color)] uppercase">Comunidades</span>
-          </button>
-          <button
-            onClick={() => navigate('/tickets')}
-            className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 transition-colors shadow-md"
-            type="button"
-          >
-            <AlertTriangle size={28} className="text-amber-500" />
-            <span className="text-xs font-bold text-amber-500 uppercase">Tickets</span>
-          </button>
+
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
