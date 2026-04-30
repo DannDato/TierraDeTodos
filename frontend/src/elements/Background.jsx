@@ -1,9 +1,10 @@
+import MinecraftBackground from "../components/MinecraftBackground";
 
 function Background({
   // backgroundImage = "/img/banner.gif",
   backgroundImage = "/img/banner2.gif",
   // backgroundImage = "/img/bannergif.webp",
-  overlayColor = "rgba(48, 46, 45, 0)",
+  overlayColor = "rgba(37, 36, 35, 0.75)",
   blur = "10px",
   children,
   className = "",
@@ -11,6 +12,7 @@ function Background({
 }) {
   return (
     <section id="inicio" className={`relative ${className}`} {...props}>
+
       {/* Imagen de fondo */}
       <div
         className="fixed top-0 left-0 w-full h-full bg-cover bg-center scale-110"
@@ -37,6 +39,7 @@ function Background({
         }}
       >
          {/* max-w-[1000px] */}
+        <MinecraftBackground/>
         <div className="w-full z-20 align-middle">
           {children}
         </div>
