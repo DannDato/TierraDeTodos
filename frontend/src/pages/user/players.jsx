@@ -5,6 +5,7 @@ import { useSearchParams } from "react-router-dom";
 import api from "../../api/axios";
 import Credencial from "../../components/Credencial";
 import LoadingOverlay from "../../components/LoadingOverlay";
+import Runas from "../../img/runas.png";
 
 // Oculta el scroll global del body cuando este componente está montado
 function useHideBodyScrollbar() {
@@ -142,7 +143,7 @@ function Players() {
 	};
 
 	return (
-		<div className="min-h-screen h-screen py-10 flex items-start justify-center pb-24">
+		<div className="min-h-screen h-screen py-15 flex items-start justify-center pb-24">
 			<LoadingOverlay isVisible={loading} message="Cargando jugadores" />
 			<div className="w-full px-0 mx-0 text-[var(--ins-text-white)]">
 				<div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
@@ -177,26 +178,28 @@ function Players() {
 					</div>
 				) : (
 					<>
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 justify-items-center  bg-black/10 rounded-3xl lg:p-6">
-							{visiblePlayers.map((player) => {
-							const normalizedStatus = String(player?.status || "").toUpperCase();
-							const currentStatus = {
-								label: statusConfig[normalizedStatus]?.label || "Desconocido",
-								color: player?.statusColor || "#8a8a8a",
-							};
+						<div className="bg-black/10 border border-[var(--white-color)]/10 rounded-3xl lg:p-6 relative overflow-hidden">
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 justify-items-center ">
+								{visiblePlayers.map((player) => {
+								const normalizedStatus = String(player?.status || "").toUpperCase();
+								const currentStatus = {
+									label: statusConfig[normalizedStatus]?.label || "Desconocido",
+									color: player?.statusColor || "#8a8a8a",
+								};
 
-							return (
-								<Credencial
-									key={player.id}
-									user={player}
-									currentStatus={currentStatus}
-									isInactiveStatus={normalizedStatus === "INACTIVE"}
-									isCancelledStatus={normalizedStatus === "BANNED"}
-									lazyImages
-									readOnly
-								/>
-							);
-							})}
+								return (
+									<Credencial
+										key={player.id}
+										user={player}
+										currentStatus={currentStatus}
+										isInactiveStatus={normalizedStatus === "INACTIVE"}
+										isCancelledStatus={normalizedStatus === "BANNED"}
+										lazyImages
+										readOnly
+									/>
+								);
+								})}
+							</div>
 						</div>
 
 						<div ref={sentinelRef} className="w-full h-12" />

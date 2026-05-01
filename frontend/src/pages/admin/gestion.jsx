@@ -85,7 +85,7 @@ function Gestion() {
   ];
 
   return (
-    <section className="h-screen py-6 flex items-start justify-center overflow-hidden pb-24">
+    <section className="h-screen py-15 flex items-start justify-center overflow-hidden pb-24">
       <LoadingOverlay isVisible={sectionLoading} message="Cargando gestión..." />
 
       <div className="flex flex-col h-full animate-[fadeIn_0.3s_ease-out] p-8  w-full ">
@@ -181,7 +181,7 @@ function Gestion() {
             </div>
 
             {/* ÁREA DE CONTENIDO DINÁMICO */}
-            <div className="flex-1 min-h-0 bg-[var(--black-color)]/20 rounded-[2rem] overflow-hidden flex flex-col relative">
+            <div className="flex-1 min-h-0 bg-black/10 backdrop-blur-lg border border-white/10 rounded-[2rem] overflow-hidden flex flex-col relative">
             <div className="flex-1 overflow-y-auto p-8 tdt-scrollbar">
               {activeSection === "editions" && <EditionsManagerView />}
                 {activeSection === "ticketCatalogs" && <TicketCatalogManagerView />}

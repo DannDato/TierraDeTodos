@@ -431,7 +431,7 @@ function Users() {
   );
 
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center pb-24">
+    <section className="min-h-screen py-15 flex items-start justify-center pb-24">
       <LoadingOverlay
         isVisible={isLoading || isSavingPermissions || isSavingRole}
         message={isLoading ? "Cargando usuarios..." : "Guardando cambios..."}

@@ -167,7 +167,7 @@ export default function CommunityManager({ isOpen, onClose }) {
         isVisible={loading}
         message="Cargando información de la comunidad..."
       />
-      <div className="relative w-full max-w-5xl rounded-2xl  bg-[var(--ins-background)]/95 p-8 shadow-2xl ring-1 ring-white/10 animate-fadeInUp" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+      <div className="relative w-full max-w-5xl rounded-2xl  bg-[var(--ins-background)]/50 backdrop-blur-lg border border-white/10 p-8 shadow-2xl ring-1 ring-white/10 animate-fadeInUp h-[90vh] mt-[-65px]" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
         <button onClick={onClose} className="absolute top-4 right-4 text-[var(--ins-text-gray)] hover:text-[var(--secondary-color)] text-2xl font-bold">×</button>
         <h2 className="text-2xl font-bold mb-6 text-[var(--white-color)] flex items-center gap-2">
           <Video size={28} style={{ color: "var(--secondary-color)" }} /> Gestionar comunidad

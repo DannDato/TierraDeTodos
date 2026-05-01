@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Heart, Newspaper, Plus, UserRound, X } from "lucide-react";
+import { ChevronRight, Heart, Plus, UserRound, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
@@ -21,8 +21,6 @@ const createInitialNewsForm = () => ({
 });
 
 function News() {
-    // Estado para bloquear likes mientras se procesa
-    const [likeLoadingIds, setLikeLoadingIds] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
   const currentUser = {
     role: localStorage.getItem("role") || "USER",
@@ -215,30 +213,31 @@ function News() {
 
   const handleToggleLike = async (event, article) => {
     event.stopPropagation();
+
     const articleId = Number(article?.id);
     if (!articleId) return;
-    // Bloquear doble click
-    if (likeLoadingIds.includes(articleId)) return;
-    setLikeLoadingIds((prev) => [...prev, articleId]);
 
-    // Guardar estado previo para rollback seguro
-    const prevNews = news.map((item) => ({ ...item }));
-    const prevItem = prevNews.find((item) => Number(item.id) === articleId);
-    const wasLiked = Boolean(prevItem?.likedByCurrentUser);
-    const willLike = !wasLiked;
-
-    // Optimista
-    setNews((prev) => prev.map((item) => {
-      if (Number(item.id) !== articleId) return item;
-      return {
-        ...item,
-        likesCount: Math.max(0, Number(item.likesCount || 0) + (willLike ? 1 : -1)),
-        likedByCurrentUser: willLike
-      };
-    }));
+    // Usar el estado actual de news (no normalizedNews) para evitar bug visual
+    // Optimista: UI rápida, pero siempre sincroniza con backend
+    setNews((prev) => {
+      return prev.map((item) => {
+        if (Number(item.id) !== articleId) return item;
+        const wasLiked = Boolean(item.likedByCurrentUser);
+        const willLike = !wasLiked;
+        return {
+          ...item,
+          likesCount: Math.max(0, Number(item.likesCount || 0) + (willLike ? 1 : -1)),
+          likedByCurrentUser: willLike
+        };
+      });
+    });
 
     try {
+      // Determinar el valor real a enviar según el estado actual
+      const wasLiked = Boolean(article.likedByCurrentUser);
+      const willLike = !wasLiked;
       const { data } = await api.post(`/user/news/${articleId}/likes`, { liked: willLike });
+      // El backend responde con el estado real tras la operación
       setNews((prev) => prev.map((item) => {
         if (Number(item.id) !== articleId) return item;
         return {
@@ -248,15 +247,21 @@ function News() {
         };
       }));
     } catch (error) {
-      // Rollback exacto
-      setNews(prevNews);
+      // Rollback visual
+      setNews((prev) => prev.map((item) => {
+        if (Number(item.id) !== articleId) return item;
+        const wasLiked = Boolean(item.likedByCurrentUser);
+        return {
+          ...item,
+          likesCount: Math.max(0, Number(item.likesCount || 0) + (wasLiked ? 1 : -1)),
+          likedByCurrentUser: wasLiked
+        };
+      }));
       openAlert({
         type: "error",
         title: "No se pudo actualizar el like",
         message: error.response?.data?.message || "Intenta de nuevo en un momento.",
       });
-    } finally {
-      setLikeLoadingIds((prev) => prev.filter((id) => id !== articleId));
     }
   };
 
@@ -588,7 +593,7 @@ function News() {
   };
 
   return (
-    <div className="min-h-screen h-screen py-10 flex items-start justify-center ">
+    <div className="min-h-screen h-screen py-15 flex items-start justify-center pb-2 text-[var(--white-color)] z-[1]">
       <LoadingOverlay isVisible={loading || submitting} message={submitting ? "Publicando noticia..." : "Cargando noticias"} />
       <AlertModal
         isOpen={alertConfig.isOpen}
@@ -601,7 +606,7 @@ function News() {
         cancelText={alertConfig.cancelText}
       />
 
-      <div className="w-full  px-0 mx-0 min-h-screen h-screen text-[var(--ins-text-white)]">
+      <div className="w-full px-4 md:mx-10 mx-0">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
@@ -610,9 +615,9 @@ function News() {
               <span className="text-[var(--secondary-color)]">Noticias</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--ins-text-white)] tracking-tight">
-              Noticias
+              Noticias!
             </h1>
-            <p className="hidden lg:block text-sm  mt-2 max-w-3xl leading-relaxed">
+            <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
               Mantente al tanto de las últimas novedades, eventos y anuncios relacionados con Tierra de Todos.
             </p>
           </div>
@@ -624,13 +629,13 @@ function News() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar noticia por título, tipo, fecha o reportero..."
-                className="w-full bg-[var(--black-color)]/30 border border-[var(--white-color)]/10 rounded-xl px-4 py-2.5 text-sm text-[var(--ins-text-white)] placeholder: focus:outline-none focus:border-[var(--secondary-color)]/50 transition-colors"
+                className="w-full bg-[var(--black-color)]/30 border border-[var(--white-color)]/10 rounded-xl px-4 py-2.5 text-sm text-[var(--ins-text-white)] placeholder:text-[var(--ins-text-gray)] focus:outline-none focus:border-[var(--secondary-color)]/50 transition-colors"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2  hover:text-[var(--ins-text-white)] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -650,116 +655,100 @@ function News() {
         </div>
 
         {sortedNews.length === 0 ? (
-          <div className="rounded-3xl border border-white/10 bg-black/10 py-14 text-center backdrop-blur-lg">
+          <div className="rounded-3xl border border-white/10 bg-black/10 py-14 text-center text-[var(--ins-text-gray)]">
             No hay noticias para mostrar.
           </div>
         ) : (
+          <div className="p-10 bg-black/10 rounded-3xl border border-white/10">
           <>
             {featuredNews && (
-              <div className="p-10 bg-black/20 rounded-3xl">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
-                    <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
-                    Última noticia
-                </h2>
-                <div
-                  className="relative h-80 w-full rounded-3xl overflow-hidden shadow-md group cursor-pointer "
-                  onDoubleClick={() => openNewsModal(featuredNews)}
-                  onClick={() => openNewsModal(featuredNews)}
-                >
-                  <img
-                    src={featuredNews.image}
-                    alt={featuredNews.title}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+              <div
+                className="relative h-80 w-full rounded-3xl overflow-hidden shadow-md group cursor-pointer mb-4"
+                onDoubleClick={() => openNewsModal(featuredNews)}
+                onClick={() => openNewsModal(featuredNews)}
+              >
+                <img
+                  src={featuredNews.image}
+                  alt={featuredNews.title}
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
-                  <div className="absolute bottom-0 left-0 p-8 w-full">
-                    <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-3xl mb-3" style={{ backgroundColor: getBadgeColor(featuredNews.type) }}>
-                      {featuredNews.type}
-                    </span>
-                    <div className="flex items-center justify-between gap-4 mb-2">
-                      <h2 className="text-3xl font-extrabold text-white drop-shadow-lg leading-tight">{featuredNews.title}</h2>
-                      <button
-                        type="button"
-                        className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-black/30 hover:bg-black/45 border border-white/20 transition-colors"
-                        onClick={(event) => handleToggleLike(event, featuredNews)}
-                        aria-label={isNewsLiked(featuredNews.id) ? "Quitar like" : "Dar like"}
-                        disabled={likeLoadingIds.includes(featuredNews.id)}
-                      >
-                        <Heart size={16} className={isNewsLiked(featuredNews.id) ? "text-red-500 fill-red-500" : "text-white"} />
-                        <span className="text-xs font-bold text-white">{Number(featuredNews.likesCount || 0)}</span>
-                      </button>
-                    </div>
-                    <p className="text-[var(--ins-text-white)] text-sm max-w-xl drop-shadow-md line-clamp-2">{featuredNews.description}</p>
+                <div className="absolute bottom-0 left-0 p-8 w-full">
+                  <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(featuredNews.type) }}>
+                    {featuredNews.type}
+                  </span>
+                  <div className="flex items-center justify-between gap-4 mb-2">
+                    <h2 className="text-3xl font-extrabold text-white drop-shadow-lg leading-tight">{featuredNews.title}</h2>
+                    <button
+                      type="button"
+                      className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-black/30 hover:bg-black/45 border border-white/20 transition-colors"
+                      onClick={(event) => handleToggleLike(event, featuredNews)}
+                      aria-label={isNewsLiked(featuredNews.id) ? "Quitar like" : "Dar like"}
+                    >
+                      <Heart size={16} className={isNewsLiked(featuredNews.id) ? "text-red-500 fill-red-500" : "text-white"} />
+                      <span className="text-xs font-bold text-white">{Number(featuredNews.likesCount || 0)}</span>
+                    </button>
                   </div>
+                  <p className="text-gray-200 text-sm max-w-xl drop-shadow-md line-clamp-2">{featuredNews.description}</p>
                 </div>
               </div>
             )}
 
-            <div className="p-8 rounded-3xl bg-black/20 mt-4 ">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
-                <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
-                Noticias recientes
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4 ">
-                {regularNews.map((article) => (
-                  <div
-                    key={article.id}
-                    className="bg-black/20 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group flex flex-col"
-                    onDoubleClick={() => openNewsModal(article)}
-                  >
-                    <div className="h-40 overflow-hidden relative">
-                      <img
-                        src={article.image}
-                        alt={article.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                    </div>
-                    <div className="p-6 flex flex-col flex-1 relative pb-16">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded-3xl" style={{ backgroundColor: getBadgeColor(article.type) }}>
-                          {article.type}
-                        </span>
-                        <span className="text-xs text-[var(--white-color)] font-medium">{article.dateLabel}</span>
-                      </div>
-                      <h3 className="text-lg font-bold text-[var(--ins-text-white)] mb-2 leading-tight group-hover:text-[var(--secondary-color)] transition-colors">
-                        {article.title}
-                      </h3>
-                      <p className="text-sm text-[var(--ins-text-white)] flex-1 line-clamp-3">{article.description}</p>
-                      <button
-                        type="button"
-                        className="mt-4 flex items-center text-[var(--secondary-color)] text-sm font-bold"
-                        onClick={() => openNewsModal(article)}
-                      >
-                        Leer más <ChevronRight size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 bg-black/25 hover:bg-black/40 border border-white/15 transition-colors"
-                        onClick={(event) => handleToggleLike(event, article)}
-                        aria-label={isNewsLiked(article.id) ? "Quitar like" : "Dar like"}
-                        disabled={likeLoadingIds.includes(article.id)}
-                      >
-                        <Heart size={15} className={isNewsLiked(article.id) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-white)]"} />
-                        <span className="text-xs font-semibold text-[var(--ins-text-white)]">{Number(article.likesCount || 0)}</span>
-                      </button>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+              {regularNews.map((article) => (
+                <div
+                  key={article.id}
+                  className="bg-black/10 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group flex flex-col"
+                  onDoubleClick={() => openNewsModal(article)}
+                >
+                  <div className="h-40 overflow-hidden relative">
+                    <img
+                      src={article.image}
+                      alt={article.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="my-10">
-              <span className="text-[#ffffff00]"> -</span>
+                  <div className="p-6 flex flex-col flex-1 relative pb-16">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded-md" style={{ backgroundColor: getBadgeColor(article.type) }}>
+                        {article.type}
+                      </span>
+                      <span className="text-xs text-[var(--white-color)] font-medium">{article.dateLabel}</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-[var(--ins-text-white)] mb-2 leading-tight group-hover:text-[var(--secondary-color)] transition-colors">
+                      {article.title}
+                    </h3>
+                    <p className="text-sm text-[var(--gray-color)] flex-1 line-clamp-3">{article.description}</p>
+                    <button
+                      type="button"
+                      className="mt-4 flex items-center text-[var(--secondary-color)] text-sm font-bold"
+                      onClick={() => openNewsModal(article)}
+                    >
+                      Leer más <ChevronRight size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 bg-black/25 hover:bg-black/40 border border-white/15 transition-colors"
+                      onClick={(event) => handleToggleLike(event, article)}
+                      aria-label={isNewsLiked(article.id) ? "Quitar like" : "Dar like"}
+                    >
+                      <Heart size={15} className={isNewsLiked(article.id) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-white)]"} />
+                      <span className="text-xs font-semibold text-[var(--ins-text-white)]">{Number(article.likesCount || 0)}</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </>
+          </div>
         )}
       </div>
 
       {selectedNews && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeNewsModal} />
-          <div className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-60px] rounded-3xl shadow-2xl overflow-hidden flex flex-col bg-[var(--ins-background)] ">
+          <div className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] rounded-3xl bg-[var(--ins-background)]/60 backdrop-blur-lg border border-white/10 shadow-2xl overflow-hidden flex flex-col ">
             <div
               className={`relative h-56 md:h-72 w-full ${isEditingSelected ? "cursor-pointer" : ""}`}
               onClick={() => {
@@ -854,7 +843,7 @@ function News() {
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <span className="block text-xs  uppercase tracking-wider font-semibold mb-2">Tipo</span>
+                      <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Tipo</span>
                       <Select
                         value={editFormData.type}
                         onChange={(value) => setEditFormData((prev) => ({ ...prev, type: value }))}
@@ -863,7 +852,7 @@ function News() {
                       />
                     </div>
                     <div>
-                      <span className="block text-xs  uppercase tracking-wider font-semibold mb-2">Fecha</span>
+                      <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Fecha</span>
                       <input
                         type="date"
                         value={editFormData.fecha}
@@ -874,7 +863,7 @@ function News() {
                   </div>
 
                   <div>
-                    <span className="block text-xs  uppercase tracking-wider font-semibold mb-2">Descripción</span>
+                    <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Descripción</span>
                     <textarea
                       rows={6}
                       value={editFormData.description}
@@ -885,12 +874,12 @@ function News() {
                   </div>
 
                   <div>
-                    <span className="block text-[11px]  uppercase tracking-wider font-semibold mb-1">Nota</span>
+                    <span className="block text-[11px] text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-1">Nota</span>
                     <textarea
                       rows={2}
                       value={editFormData.note}
                       onChange={(e) => setEditFormData((prev) => ({ ...prev, note: e.target.value }))}
-                      className="w-full bg-transparent border-b border-white/25 text-base  leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none"
+                      className="w-full bg-transparent border-b border-white/25 text-base text-[var(--ins-text-gray)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none"
                       style={{ fontFamily: '"Times New Roman", Times, serif' }}
                     />
                   </div>
@@ -929,14 +918,14 @@ function News() {
                   Comentarios
                 </h3>
 
-                <div className="space-y-3  pr-1 ">
+                <div className="space-y-3 max-h-72 overflow-y-auto pr-1 tdt-scrollbar">
                   {commentsLoading ? (
-                    <p className="text-sm ">Cargando comentarios...</p>
+                    <p className="text-sm text-[var(--ins-text-gray)]">Cargando comentarios...</p>
                   ) : comments.length === 0 ? (
-                    <p className="text-sm ">Aun no hay comentarios. Se la primera persona en comentar.</p>
+                    <p className="text-sm text-[var(--ins-text-gray)]">Aun no hay comentarios. Se la primera persona en comentar.</p>
                   ) : (
                     comments.map((entry) => (
-                      <div key={entry.id} className="rounded-3xl bg-black/15 p-3 border border-white/5">
+                      <div key={entry.id} className="rounded-2xl bg-black/15 p-3 border border-white/5">
                         <div className="flex items-start gap-3">
                           <Link
                             to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
@@ -946,11 +935,11 @@ function News() {
                             {entry.avatarUrl ? (
                               <img src={entry.avatarUrl} alt={entry.username || "Usuario"} className="w-full h-full object-cover" />
                             ) : (
-                              <UserRound size={16} className="" />
+                              <UserRound size={16} className="text-[var(--ins-text-gray)]" />
                             )}
                           </Link>
 
-                          <div className="flex-1 min-w-0 text-[var(--ins-text-white)]">
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <Link
                                 to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
@@ -959,7 +948,7 @@ function News() {
                               >
                                 {entry.username || "Usuario"}
                               </Link>
-                              <span className="text-[9px]  whitespace-nowrap">
+                              <span className="text-[11px] text-[var(--ins-text-gray)] whitespace-nowrap">
                                 {entry.createdAt
                                   ? new Date(entry.createdAt).toLocaleString("es-MX", {
                                     day: "2-digit",
@@ -1006,7 +995,7 @@ function News() {
             </div>
 
             {isEditingSelected && (
-              <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3 bg-black/10 backdrop-blur-lg">
+              <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3 bg-black/10">
                 <Button type="button" variant="ghost" className="text-white" onClick={cancelEditSelected} disabled={submitting}>Cancelar</Button>
                 <Button type="button" variant="primary" className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white" onClick={handleSaveEditedNews} disabled={submitting}>
                   Guardar cambios
@@ -1022,7 +1011,7 @@ function News() {
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeCreateModal} />
           <form
             onSubmit={handleCreateNews}
-            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[95vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] rounded-3xl bg-[var(--ins-background)]/50 backdrop-blur-lg border border-white/10 shadow-2xl overflow-hidden flex flex-col"
           >
             <div
               className="relative h-56 md:h-72 w-full cursor-pointer"
@@ -1074,7 +1063,7 @@ function News() {
             <div className="p-6 overflow-y-auto tdt-scrollbar space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <span className="block text-xs  uppercase tracking-wider font-semibold mb-2">Tipo</span>
+                  <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Tipo</span>
                   <Select
                     value={formData.type}
                     onChange={(value) => setFormData((prev) => ({ ...prev, type: value }))}
@@ -1084,7 +1073,7 @@ function News() {
                   />
                 </div>
                 <div>
-                  <span className="block text-xs  uppercase tracking-wider font-semibold mb-2">Fecha</span>
+                  <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Fecha</span>
                   <input
                     type="date"
                     value={formData.fecha}
@@ -1095,7 +1084,7 @@ function News() {
               </div>
 
               <div>
-                <span className="block text-xs  uppercase tracking-wider font-semibold mb-2">Descripción</span>
+                <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Descripción</span>
                 <textarea
                   rows={6}
                   value={formData.description}
@@ -1107,19 +1096,19 @@ function News() {
               </div>
 
               <div>
-                <span className="block text-[11px]  uppercase tracking-wider font-semibold mb-1">Nota</span>
+                <span className="block text-[11px] text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-1">Nota</span>
                 <textarea
                   rows={2}
                   value={formData.note}
                   onChange={(e) => setFormData((prev) => ({ ...prev, note: e.target.value }))}
                   placeholder="Dato extra opcional"
-                  className="w-full bg-transparent border-b border-white/25 text-base  leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
+                  className="w-full bg-transparent border-b border-white/25 text-base text-[var(--ins-text-gray)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
                   style={{ fontFamily: '"Times New Roman", Times, serif' }}
                 />
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-white/10 flex justify-end gap-3 bg-black/10 backdrop-blur-lg">
+            <div className="px-6 py-4 flex justify-end gap-3 ">
               <Button type="button" variant="ghost" className="text-white" onClick={closeCreateModal}>
                 Cancelar
               </Button>

@@ -132,7 +132,7 @@ function Reports() {
   }, []);
 
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center pb-24">
+    <section className="min-h-screen py-15 flex items-start justify-center pb-24">
       <LoadingOverlay isVisible={loading || chatLoading} message="Cargando reportes..." />
       <AlertModal
         isOpen={alertConfig.isOpen}
@@ -162,7 +162,7 @@ function Reports() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por asunto, ID, jugador o usuario..."
-                className="w-full pl-11 pr-4 py-3 rounded-xl bg-black/20 text-sm text-white placeholder:text-white/45 outline-none focus:ring-2 focus:ring-[var(--secondary-color)]/45 transition-all"
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-black/10 text-sm text-white placeholder:text-white/45 outline-none focus:ring-2 focus:ring-[var(--secondary-color)]/45 transition-all"
               />
             </div>
           </div>
@@ -181,7 +181,7 @@ function Reports() {
           </div>
         </div>
 
-        <div className="bg-black/20 rounded-3xl p-6">
+        <div className="bg-black/10 rounded-3xl p-6 border border-white/10">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <MessageSquareWarning size={18} className="text-[var(--secondary-color)]" />
             Tickets pendientes
@@ -356,7 +356,7 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] bg-[var(--ins-background)]/50 backdrop-blur-lg border border-white/10 max-h-[80hv] mt-[-60px]">
 
         <div className="flex items-start justify-between gap-4 px-6 py-5 bg-black/10">
           <div className="flex-1 min-w-0">

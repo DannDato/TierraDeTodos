@@ -71,7 +71,7 @@ function Community() {
     }, []);
     return (
         <div>
-        <div className="min-h-screen py-10 flex flex-col items-center  pb-24 text-[var(--white-color)] z-[1] min-h-screen h-screen">
+        <div className="min-h-screen py-15 flex flex-col items-center  pb-24 text-[var(--white-color)] z-[1] min-h-screen h-screen">
 
             <div className="w-full  px-0 mx-0 text-[var(--ins-text-white)]">
                 {/* HEADER */}
@@ -105,7 +105,7 @@ function Community() {
             </div>
             <div className="flex flex-col lg:flex-row gap-8 items-start w-full  px-0 mx-0">
                 <div className="w-full ">
-                    <div className="bg-black/20 rounded-3xl p-6 backdrop-blur-sm p-10">
+                    <div className="bg-black/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10 p-10">
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                             <Video size={24} style={{ color: "var(--secondary-color)" }}/>
                             Todas las comunidades
@@ -157,10 +157,10 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
 
     if (!isOpen || !community) return null;
     return (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center transition-opacity duration-200">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center transition-opacity duration-200 ">
 
             <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full max-w-5xl rounded-3xl  p-8 shadow-2xl ring-1 ring-white/10 animate-fadeInUp" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="relative w-full max-w-5xl rounded-3xl  p-8 shadow-2xl animate-fadeInUp bg-[var(--ins-background)]/50 backdrop-blur-sm border border-white/10" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
                 <button onClick={onClose} className="absolute top-4 right-4 text-[var(--ins-text-white)] hover:text-[var(--secondary-color)] text-2xl font-bold">×</button>
                 <div className="grid grid-cols-1 lg:grid-cols-3">
                     <div className="">
@@ -198,7 +198,7 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
                     </div>
                 </div>
                 <div>
-                    <div className="rounded-3xl bg-[var(--black-color)]/20 overflow-hidden mt-4">
+                    <div className="rounded-3xl bg-[var(--black-color)]/20 overflow-hidden mt-4 border border-white/10">
                         <div className="px-5 py-4 flex items-center justify-between gap-3">
                         <div>
                             <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--ins-text-white)]">Miembros</p>

@@ -245,7 +245,7 @@ function Tickets() {
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center pb-24 min-h-screen h-screen">
+    <section className="min-h-screen py-15 flex items-start justify-center pb-24 min-h-screen h-screen">
       <LoadingOverlay
         isVisible={catalogLoading || ticketsLoading || submitting}
         message={submitting ? "Enviando ticket..." : "Cargando datos..."}
@@ -282,7 +282,7 @@ function Tickets() {
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
 
           {/* ── Formulario ── */}
-          <form onSubmit={handleSubmit} className="xl:col-span-2 bg-black/20 rounded-3xl p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="xl:col-span-2 bg-black/10 rounded-3xl p-6 space-y-4 border border-white/10">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <LifeBuoy size={18} className="text-[var(--secondary-color)]" />
               Nuevo ticket
@@ -332,7 +332,7 @@ function Tickets() {
               )}
             </div>
 
-            <div className="rounded-xl bg-black/15 p-4">
+            <div className="rounded-xl bg-black/10 p-4 border border-white/10">
               <div className="flex items-center gap-2 mb-3 text-[var(--ins-text-gray)] text-sm font-semibold">
                 <MapPinned size={16} className="text-[var(--secondary-color)]" /> Coordenadas del incidente (opcionales)
               </div>
@@ -354,7 +354,7 @@ function Tickets() {
           </form>
 
           {/* ── Lista de tickets ── */}
-          <div className="xl:col-span-3 bg-black/20 rounded-3xl p-6">
+          <div className="xl:col-span-3 bg-black/10 rounded-3xl p-6 border border-white/10">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <MessageSquareWarning size={18} className="text-[var(--secondary-color)]" />
               Mis tickets
@@ -395,7 +395,7 @@ function Tickets() {
 // ─── SummaryCard ─────────────────────────────────────────────────────────────
 function SummaryCard({ label, value, color = "text-[var(--ins-text-white)]" }) {
   return (
-    <div className="bg-black/20 rounded-2xl p-4">
+    <div className="bg-black/10 rounded-2xl p-4 border border-white/10">
       <p className="text-xs uppercase tracking-widest text-[var(--ins-text-gray)] font-bold">{label}</p>
       <p className={`text-2xl font-extrabold mt-2 ${color}`}>{value}</p>
     </div>
@@ -407,7 +407,7 @@ function TicketCard({ ticket, typeMap, priorityMap, onDoubleClick }) {
   const st = statusStyle(ticket.statusKey);
   return (
     <article
-      className="rounded-2xl bg-black/30 p-4 cursor-pointer hover:bg-black/40 transition-colors select-none"
+      className="rounded-2xl bg-black/10 p-4 border border-white/10 cursor-pointer hover:bg-black/20 transition-colors select-none"
       onDoubleClick={() => onDoubleClick(ticket)}
       title="Doble click para abrir historial"
     >
@@ -499,10 +499,10 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] bg-[var(--ins-background)]/50 backdrop-blur-lg border border-white/10 max-h-[80hv] mt-[-60px]">
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 py-5 bg-black/10">
+        <div className="flex items-start justify-between gap-4 px-6 py-5 bg-black/10 ">
           <div className="flex-1 min-w-0">
             {ticket ? (
               <>
@@ -568,7 +568,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
         </div>
 
         {/* Área de respuesta */}
-        <div className="px-6 py-4 bg-black/10">
+        <div className="px-6 py-4 bg-black/10 border-t border-white/10">
           {isOpen ? (
             <div className="flex items-end gap-3">
               <div className="flex-1">
@@ -579,7 +579,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 rounded-xl bg-white/7 px-4 py-3 text-[var(--ins-text-gray)] text-sm">
+            <div className="flex items-center gap-2 rounded-xl bg-white/7 px-4 py-3 text-[var(--ins-text-gray)] text-sm border border-white/10">
               <Lock size={16} className="flex-shrink-0" />
               Este ticket está {ticket?.statusKey?.toLowerCase() || "cerrado"}. No se pueden agregar más mensajes.
             </div>

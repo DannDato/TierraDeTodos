@@ -451,7 +451,7 @@ function Profile() {
   };
 
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center pb-24 min-h-screen h-screen">
+    <section className="min-h-screen py-15 flex items-start justify-center pb-24 min-h-screen h-screen">
 
       <LoadingOverlay
         isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer || isLoadingPassword}
@@ -564,7 +564,7 @@ function Profile() {
           {/* RIGHT: ADDITIONAL INFO - SIN CAMBIOS */}
           <div className="w-full lg:flex-1 min-w-0 space-y-6">
             {/* INFORMACION */}
-            <div className="bg-black/20 rounded-3xl p-6 backdrop-blur-sm">
+            <div className="bg-black/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <User size={24} />
                 Tu información
@@ -682,7 +682,7 @@ function Profile() {
 
 
             {/* STATUS */}
-            <div className="bg-black/20 rounded-3xl p-6 backdrop-blur-sm pb-9">
+            <div className="bg-black/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10 pb-9">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-full"
@@ -787,7 +787,7 @@ function Profile() {
             )}
 
             {/* SECURITY */}
-            <div className="bg-black/20 rounded-3xl p-6 backdrop-blur-sm">
+            <div className="bg-black/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                   <ShieldAlert size={20} className="text-[var(--secondary-color)]" />

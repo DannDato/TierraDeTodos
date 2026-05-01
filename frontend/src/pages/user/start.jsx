@@ -21,6 +21,7 @@ import api from "../../api/axios";
 import tdtNewsImage from "../../img/tdtnews.png";
 import LoadingOverlay from "../../components/LoadingOverlay";
 import { useNavigate } from "react-router-dom";
+import Runas from "../../img/runas.png";
 
 // ==========================================
 // MOCK DATA: Alertas Globales
@@ -153,7 +154,7 @@ function Start() {
   };
 
   return (
-    <div className="min-h-screen h-screen py-10 flex items-start justify-center pb-2 text-[var(--white-color)] z-[1]">
+    <div className="min-h-screen h-screen py-15 flex items-start justify-center pb-2 text-[var(--white-color)] z-[1]">
       <LoadingOverlay isVisible={loadingNews} message="Cargando noticias" />
       <div className="flex-row w-full  px-0 mx-0 min-h-screen h-screen">
 
@@ -194,7 +195,7 @@ function Start() {
         {/* ========================================================= */}
         {/* ESTADISTICAS DEL JUGADOR */}
         {/* ========================================================= */}
-        <div className="bg-black/20 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8 backdrop-blur-lg">
+        <div className="bg-black/10 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8 backdrop-blur-lg border border-white/10">
 
           <div className="flex items-center justify-between mb-4 relative z-10">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
@@ -206,43 +207,103 @@ function Start() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10">
-            <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
-                <p className="text-[10px] font-bold  uppercase">Insignias</p>
-              <div className="p-2 bg-purple-500/10 rounded-xl text-yellow-600">
-                <Trophy size={18} />
-              </div>
-              <div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 ">
+            {/* Card de Insignias */}
+            <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5 ">              
+              {/* Capa de Runas (Fondo interno) */}
+              <div 
+                className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
+                style={{
+                  backgroundImage: `url(${Runas})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
+                  maskImage: 'linear-gradient(to left, black, transparent)',
+                  // -----------------------
+                  zIndex: 0
+                }}
+              ></div>
+
+              {/* Contenido (Encima de las runas) */}
+              <div className="relative z-10 w-full">
+                <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider">Insignias</p>
+                
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="p-2 bg-purple-500/20 rounded-xl text-yellow-500 ">
+                    <Trophy size={18} />
+                  </div>
+                  {/* Aquí podrías poner el número o contador */}
+                  <span className="text-sm font-bold text-white">12</span>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
+            <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5">
+              <div 
+                className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
+                style={{
+                  backgroundImage: `url(${Runas})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
+                  maskImage: 'linear-gradient(to left, black, transparent)',
+                  // -----------------------
+                  zIndex: 0
+                }}
+              ></div>
               <div>
-                <p className="text-[10px] font-bold  uppercase">Tiempo Jugado</p>
-              </div>
-              <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 flex-row items-center gap-4 flex">
-                <Clock size={18} />
-                <p className="text-sm font-extrabold text-[var(--ins-text-white)]">142h 30m</p>
+                <div>
+                  <p className="text-[10px] font-bold  uppercase">Tiempo Jugado</p>
+                </div>
+                <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 flex-row items-center gap-4 flex">
+                  <Clock size={18} />
+                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">142h 30m</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
-              <p className="text-[10px] font-bold  uppercase">Monedas</p>
-              <div className="p-2 bg-emerald-500/10 rounded-3xl text-emerald-600 flex-row items-center gap-4 flex">
-                <Coins size={18} />
-                <p className="text-sm font-extrabold text-[var(--ins-text-white)]">$15,420</p>
-              </div>
+            <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5">
+              <div 
+                className="absolute inset-0 opacity-10 group-hover:opacity-5 transition-opacity duration-500 "
+                style={{
+                  backgroundImage: `url(${Runas})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
+                  maskImage: 'linear-gradient(to left, black, transparent)',
+                  // -----------------------
+                  zIndex: 0
+                }}
+              ></div>
+              
               <div>
+                <p className="text-[10px] font-bold  uppercase">Monedas</p>
+                <div className="p-2 bg-emerald-500/10 rounded-3xl text-emerald-600 flex-row items-center gap-4 flex">
+                  <Coins size={18} />
+                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">$15,420</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-3xl flex flex-col items-start gap-2">
-              <p className="text-[10px] font-bold  uppercase">Kills / Muertes</p>
-              <div className="p-2 bg-red-500/10 rounded-3xl text-red-300 flex-row items-center gap-4 flex">
-                <Swords size={18} />
-                <p className="text-sm font-extrabold text-[var(--ins-text-white)]">34 / 12</p>
-              </div>
+            <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5">
+              <div 
+                className="absolute inset-0 opacity-10 group-hover:opacity-5 transition-opacity duration-500 "
+                style={{
+                  backgroundImage: `url(${Runas})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
+                  maskImage: 'linear-gradient(to left, black, transparent)',
+                  // -----------------------
+                  zIndex: 0
+                }}
+              ></div>
               <div>
+                <p className="text-[10px] font-bold  uppercase">Kills / Muertes</p>
+                <div className="p-2 bg-red-500/10 rounded-3xl text-red-300 flex-row items-center gap-4 flex">
+                  <Swords size={18} />
+                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">34 / 12</p>
+                </div>
               </div>
             </div>
           </div>
@@ -250,7 +311,7 @@ function Start() {
         </div>
         {/* CONTENIDO PRINCIPAL*/}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-          <div className="col-span-2 flex flex-col gap-6 p-8 bg-black/20 rounded-3xl shadow-md max-h-120 backdrop-blur-lg">
+          <div className="col-span-2 flex flex-col gap-6 p-8 bg-black/10 rounded-3xl shadow-md max-h-120 backdrop-blur-lg border border-white/10">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
               <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
               Ultima noticia destacada
@@ -284,9 +345,9 @@ function Start() {
           </div>
 
           <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="bg-black/20 rounded-3xl p-6 shadow-md h-80 flex flex-col items-center relative overflow-hidden gap-5 h-120 backdrop-blur-lg">
+            <div className="bg-black/10 rounded-3xl p-6 shadow-md h-80 flex flex-col items-center relative overflow-hidden gap-5 h-120 backdrop-blur-lg border border-white/10">
               <div className="absolute -top-24 -right-24 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
-
+            
               <div className="w-full relative z-10">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
                   <Play size={24} style={{ color: "var(--secondary-color)" }}/>
@@ -376,8 +437,19 @@ function Start() {
         {/* ========================================================= */}
         {/* ACCESOS DIRECTOS RÁPIDOS */}
         {/* ========================================================= */}
-        <div className="flex gap-4 mt-8 mb-8 w-full justify-center w-full bg-black/20 rounded-3xl p-6 shadow-md backdrop-blur-lg">
-
+        <div className="flex gap-4 mt-8 mb-8 w-full justify-center w-full bg-black/10 rounded-3xl p-6 shadow-md backdrop-blur-lg relative overflow-hidden border border-white/10">
+          <div 
+            className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
+            style={{
+              backgroundImage: `url(${Runas})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
+              maskImage: 'linear-gradient(to left, black, transparent)',
+              // -----------------------
+              zIndex: 0
+            }}
+          ></div>
         </div>
       </div>
     </div>
