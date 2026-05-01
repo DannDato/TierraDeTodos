@@ -88,7 +88,7 @@ function MenuBar() {
                   onClick={() => handleNavigate(item.path, item.target)}
                   className={`flex-1 flex flex-col items-center justify-center text-sm transition-all duration-300
                     ${isActive
-                      ? "text-black scale-110"
+                        ? "text-[var(--secondary-color)] scale-110"
                       : "text-black/70 hover:text-[var(--secondary-color)]"
                     }`}
                 >
