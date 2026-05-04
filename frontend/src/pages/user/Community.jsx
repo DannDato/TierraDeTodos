@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../api/axios";
 import Input from "../../elements/Input";
 import Button from "../../elements/Button";
@@ -13,18 +13,26 @@ import CommunityDefault from "../../img/community_default.png";
 import { Video,  Mail, User, Calendar, Users, Info, File } from "lucide-react";
 
 function Community() {
+    const BATCH_SIZE = 6;
+    const PREFETCH_ROWS = 2;
+    const ESTIMATED_CARD_HEIGHT = 320;
+    const PREFETCH_BAND_PX = PREFETCH_ROWS * ESTIMATED_CARD_HEIGHT;
+
     const [showForm, setShowForm] = useState(false);
     const [manageComunity, setManageComunity] = useState(false);
     const [hasCommunity, setHasCommunity] = useState(false);
+    const [communityRequest, setCommunityRequest] = useState(null);
     const [selected, setSelected] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [showJoinConfirm, setShowJoinConfirm] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+    const [showCancelRequestConfirm, setShowCancelRequestConfirm] = useState(false);
     const [joinFeedback, setJoinFeedback] = useState({
         isOpen: false,
         type: "info",
         title: "Aviso",
         message: "",
+        reload: false,
     });
 
     const handleOpen = (community) => {
@@ -44,6 +52,11 @@ function Community() {
     const handleLeaveRequest = () => {
         setShowLeaveConfirm(true);
     }
+
+    const handleCancelRequest = () => {
+        setShowCancelRequestConfirm(true);
+    };
+
     const handleJoinConfirm = async () => {
         if (!selected?.id) return;
 
@@ -55,6 +68,7 @@ function Community() {
                 type: "success",
                 title: "Solicitud enviada",
                 message: "El líder de la comunidad revisará tu solicitud y decidirá si te acepta o no.",
+                reload: true,
             });
         } catch (_err) {
             setJoinFeedback({
@@ -62,6 +76,7 @@ function Community() {
                 type: "error",
                 title: "Error al solicitar unirse",
                 message: "No se pudo enviar la solicitud de ingreso a la comunidad.",
+                reload: false,
             });
         }
     };
@@ -77,6 +92,7 @@ function Community() {
                 type: "success",
                 title: "Has abandonado la comunidad",
                 message: "Has abandonado la comunidad exitosamente.",
+                reload: true,
             });
         } catch (_err) {
             setJoinFeedback({
@@ -84,10 +100,38 @@ function Community() {
                 type: "error",
                 title: "Error al abandonar la comunidad",
                 message: "No se pudo abandonar la comunidad.",
+                reload: false,
             });
         }
 
     }
+
+    const handleCancelRequestConfirm = async () => {
+        const requestId = communityRequest?.id;
+        if (!requestId) return;
+
+        setShowCancelRequestConfirm(false);
+        try {
+            await api.delete(`/user/community/requests/${requestId}`);
+            await loadCommunityData();
+            setJoinFeedback({
+                isOpen: true,
+                type: "success",
+                title: "Solicitud cancelada",
+                message: "Tu solicitud de ingreso fue cancelada correctamente.",
+                reload: false,
+            });
+        } catch (_err) {
+            setJoinFeedback({
+                isOpen: true,
+                type: "error",
+                title: "Error al cancelar",
+                message: "No se pudo cancelar tu solicitud de ingreso.",
+                reload: false,
+            });
+        }
+    };
+
     const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
     // ...existing code...
     const [formData, setFormData] = useState({
@@ -105,14 +149,17 @@ function Community() {
     const [myCommunity, setMyCommunity] = useState(null);
     const [loadingCommunities, setLoadingCommunities] = useState(false);
     const [errorCommunities, setErrorCommunities] = useState("");
+    const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+    const sentinelRef = useRef(null);
 
     const loadCommunityData = async () => {
         setLoadingCommunities(true);
         setErrorCommunities("");
 
-        const [myCommunityResult, communitiesResult] = await Promise.allSettled([
+        const [myCommunityResult, communitiesResult, requestsResult] = await Promise.allSettled([
             api.get("/user/community"),
             api.get("/user/communities"),
+            api.get("/user/community/requests")
         ]);
 
         if (myCommunityResult.status === "fulfilled" && myCommunityResult.value?.data?.community) {
@@ -121,6 +168,12 @@ function Community() {
         } else {
             setMyCommunity(null);
             setHasCommunity(false);
+        }
+
+        if (requestsResult.status === "fulfilled" && requestsResult.value?.data?.value) {
+            setCommunityRequest(requestsResult.value?.data?.requests || null);
+        } else {
+            setCommunityRequest(null);
         }
 
         if (communitiesResult.status === "fulfilled") {
@@ -132,16 +185,72 @@ function Community() {
             setManageComunity(false);
             setErrorCommunities("No se pudieron cargar las comunidades");
         }
-
+        if(requestsResult.status === "fulfilled") {
+            const value = requestsResult.value?.data?.community || {};
+        }
         setLoadingCommunities(false);
     };
 
     useEffect(() => {
         loadCommunityData();
-
-
-
     }, []);
+
+    const closeJoinFeedback = () => {
+        const shouldReload = Boolean(joinFeedback.reload);
+        setJoinFeedback({
+            isOpen: false,
+            type: "info",
+            title: "Aviso",
+            message: "",
+            reload: false,
+        });
+
+        if (shouldReload) {
+            window.location.reload();
+        }
+    };
+
+    const requestedCommunityId = communityRequest?.communityId || null;
+    const hasPendingRequest = !hasCommunity && Boolean(communityRequest) && String(communityRequest?.status || "PENDING").toUpperCase() === "PENDING";
+    const requestedCommunity = communities.find((community) => String(community?.id) === String(requestedCommunityId)) || null;
+    const visibleCommunities = useMemo(
+        () => communities.filter((community) => String(community?.id) !== String(myCommunity?.id)),
+        [communities, myCommunity]
+    );
+
+    useEffect(() => {
+        setVisibleCount(BATCH_SIZE);
+    }, [visibleCommunities.length]);
+
+    useEffect(() => {
+        if (loadingCommunities || hasPendingRequest) return;
+        if (!sentinelRef.current) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const [entry] = entries;
+                if (!entry?.isIntersecting) return;
+
+                setVisibleCount((prev) => {
+                    if (prev >= visibleCommunities.length) return prev;
+                    return Math.min(prev + BATCH_SIZE, visibleCommunities.length);
+                });
+            },
+            { root: null, rootMargin: `0px 0px ${PREFETCH_BAND_PX}px 0px`, threshold: 0.01 }
+        );
+
+        observer.observe(sentinelRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [loadingCommunities, hasPendingRequest, visibleCommunities.length, PREFETCH_BAND_PX]);
+
+    const progressiveCommunities = useMemo(
+        () => visibleCommunities.slice(0, visibleCount),
+        [visibleCommunities, visibleCount]
+    );
+
     return (
         <div>
         <div className="min-h-screen py-15 flex flex-col items-center  pb-24 text-[var(--white-color)] z-[1] min-h-screen h-screen">
@@ -191,6 +300,23 @@ function Community() {
                                     <div key={myCommunity.id} className="cursor-pointer hover:scale-[1.03] transition-transform" onClick={() => handleOpen(myCommunity)}>
                                         <CommunityCard community={myCommunity} />
                                     </div>
+                                ) : hasPendingRequest ? (
+                                    <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                            <p className="text-left sm:text-center">
+                                                Esperando aprobación para entrar a <span className="font-bold">{requestedCommunity?.name || "la comunidad seleccionada"}</span>.
+                                            </p>
+                                            <Button
+                                                variant="cancel"
+                                                size="sm"
+                                                onClick={handleCancelRequest}
+                                                type="button"
+                                                className="sm:ml-auto"
+                                            >
+                                                Cancelar solicitud
+                                            </Button>
+                                        </div>
+                                    </div>
                                 ) : (
                                     <div className="text-sm text-[var(--ins-text-white)]">
                                         No tienes comunidad registrada.
@@ -212,17 +338,37 @@ function Community() {
                             <div className="text-[var(--ins-text-white)]">Cargando comunidades...</div>
                         ) : errorCommunities ? (
                             <div className="text-red-500">{errorCommunities}</div>
-                        ) : communities.filter((community) => String(community?.id) !== String(myCommunity?.id)).length === 0 ? (
+                        ) : visibleCommunities.length === 0 ? (
                             <div className="text-[var(--ins-text-white)]">No hay comunidades registradas.</div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hover:bounce">
-                                {communities
-                                    .filter((community) => String(community?.id) !== String(myCommunity?.id))
-                                    .map((community) => (
-                                    <div key={community.id} className="cursor-pointer hover:scale-[1.03] transition-transform" onClick={() => handleOpen(community)}>
-                                        <CommunityCard community={community} />
+                            <div className="relative">
+                                {hasPendingRequest && (
+                                    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl backdrop-blur-[10px] border border-white/10">
+                                        <div className="rounded-2xl bg-[var(--ins-background)]/90 px-5 py-4 text-center shadow-xl border border-amber-400/20">
+                                            <p className="text-xs font-bold uppercase tracking-[0.24em] text-amber-300">Solicitud pendiente</p>
+                                            <p className="mt-2 text-sm text-[var(--ins-text-white)]">
+                                                Esperando aprobación para entrar a {requestedCommunity?.name || "la comunidad seleccionada"}.
+                                            </p>
+                                        </div>
                                     </div>
-                                ))}
+                                )}
+                                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hover:bounce transition-all ${hasPendingRequest ? "blur-sm pointer-events-none select-none" : ""}`}>
+                                    {progressiveCommunities.map((community) => (
+                                        <div key={community.id} className="cursor-pointer hover:scale-[1.03] transition-transform" onClick={() => handleOpen(community)}>
+                                            <CommunityCard community={community} />
+                                        </div>
+                                    ))}
+                                </div>
+                                {!hasPendingRequest && (
+                                    <>
+                                        <div ref={sentinelRef} className="w-full h-8" />
+                                        {visibleCount < visibleCommunities.length && (
+                                            <div className="text-center text-xs text-[var(--ins-text-gray)] pb-2">
+                                                Mostrando {progressiveCommunities.length} de {visibleCommunities.length} comunidades...
+                                            </div>
+                                        )}
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>
@@ -250,6 +396,17 @@ function Community() {
                 onConfirm={handleLeaveConfirm}
                 className="z-[260]"
             />
+            <AlertModal
+                isOpen={showCancelRequestConfirm}
+                type="warning"
+                title="Cancelar solicitud"
+                message="¿Estás seguro de que quieres cancelar tu solicitud de ingreso a la comunidad?"
+                confirmText="Sí, cancelar solicitud"
+                cancelText="No, volver"
+                onClose={() => setShowCancelRequestConfirm(false)}
+                onConfirm={handleCancelRequestConfirm}
+                className="z-[260]"
+            />
 
             <AlertModal
                 isOpen={joinFeedback.isOpen}
@@ -258,8 +415,8 @@ function Community() {
                 message={joinFeedback.message}
                 confirmText="Cerrar"
                 cancelText="Cerrar"
-                onClose={() => setJoinFeedback((prev) => ({ ...prev, isOpen: false }))}
-                onConfirm={() => setJoinFeedback((prev) => ({ ...prev, isOpen: false }))}
+                onClose={closeJoinFeedback}
+                onConfirm={closeJoinFeedback}
                 className="z-[260]"
             />
             {/* Modal de gestión de comunidad fuera del mapeo para evitar múltiples instancias */}
@@ -273,6 +430,7 @@ function Community() {
                 onLeave={handleLeaveRequest}
                 hasCommunity={hasCommunity}
                 myCommunity={myCommunity}
+                manageComunity={manageComunity}
             />
             {/* AlertModal debe ir al final para estar sobre cualquier modal */}
         </div>
@@ -283,7 +441,7 @@ function Community() {
 export default Community;
 
 // Modal de detalle de comunidad
-function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, hasCommunity, myCommunity }) {
+function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, hasCommunity, myCommunity, manageComunity }) {
 
 
     if (!isOpen || !community) return null;
@@ -298,9 +456,11 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, has
                         <CommunityCard community={community} className="w-full" />
                         {hasCommunity && myCommunity?.id === community?.id ? (
                             // Es su comunidad
-                            <Button className="mt-6 w-full" variant="cancel" onClick={onLeave}>
-                                Abandonar comunidad
-                            </Button>
+                            !manageComunity ? (
+                                <Button className="mt-6 w-full" variant="cancel" onClick={onLeave}>
+                                    Abandonar comunidad
+                                </Button>
+                            ) : null
                         ) : hasCommunity ? (
                             // Tiene comunidad pero es otra
                             <div className="mt-6 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 w-fit">
@@ -382,6 +542,8 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, has
                                         src={entry.profileImage || community.logo_url || CommunityDefault}
                                         alt={entry.nombre}
                                         className="w-8 h-8 rounded-full border object-cover mt-1"
+                                        loading="lazy"
+                                        decoding="async"
                                         style={{ borderColor: community.color || '#222222' }}
                                         />
                                     </td>

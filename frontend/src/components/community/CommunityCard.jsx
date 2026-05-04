@@ -16,6 +16,8 @@ export default function CommunityCard({ community }) {
                     src={community.logo_url || community.leader?.profileImage || "/img/default_community.png"}
                     alt={community.name}
                     className="w-30 h-50 rounded-full border-4 object-cover"
+                    loading="lazy"
+                    decoding="async"
                     style={{ borderColor: community.color || '#222222' }}
                 />
             </div>
@@ -30,6 +32,8 @@ export default function CommunityCard({ community }) {
                             src={member.profileImage || community.logo_url || CommunityDefault}
                             alt={member.username}
                             className="w-8 h-8 rounded-full border object-cover"
+                            loading="lazy"
+                            decoding="async"
                             style={{ borderColor: community.color || '#222222' }}
                             />
                         ))

@@ -2,6 +2,7 @@ import Runas from "../img/runas.png";
 
 function InfoRow({ icon, label, value, href, target }) {
   const link = href || getLinkFromValue(value);
+  const isPrimitiveValue = typeof value === "string" || typeof value === "number";
 
   const content = (
     /* Añadimos relative, overflow-hidden y group para el efecto hover */
@@ -29,9 +30,15 @@ function InfoRow({ icon, label, value, href, target }) {
         <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--ins-text-gray)] opacity-80">
           {label}
         </p>
-        <p className="text-sm font-bold text-[var(--ins-text-white)] mt-1 truncate" title={typeof value === 'string' ? value : undefined}>
-          {value || "N/A"}
-        </p>
+        {isPrimitiveValue ? (
+          <p className="text-sm font-bold text-[var(--ins-text-white)] mt-1 truncate" title={typeof value === "string" ? value : undefined}>
+            {value || "N/A"}
+          </p>
+        ) : (
+          <div className="mt-1 w-full">
+            {value || "N/A"}
+          </div>
+        )}
       </div>
     </div>
   );
