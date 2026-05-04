@@ -8,6 +8,7 @@ import LoadingOverlay from "../../components/LoadingOverlay";
 import CommunityManager from "../../components/community/CommunityManager";
 import CommunityCard from "../../components/community/CommunityCard";
 import InfoRow from "../../elements/InfoRow";
+import CommunityDefault from "../../img/community_default.png";
 
 import { Video,  Mail, User, Calendar, Users, Info, File } from "lucide-react";
 
