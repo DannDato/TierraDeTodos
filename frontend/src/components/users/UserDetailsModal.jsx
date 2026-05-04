@@ -10,11 +10,11 @@ import {
   Info,
   Smartphone
 } from "lucide-react";
-import Button from "../elements/Button";
-import Select from "../elements/Select";
-import CloseButton from "../elements/closeButton";
-import InfoRow from "../elements/InfoRow";
-import Credencial from "./Credencial";
+import Button from "../../elements/Button";
+import Select from "../../elements/Select";
+import CloseButton from "../../elements/closeButton";
+import InfoRow from "../../elements/InfoRow";
+import Credencial from "../Credencial";
 
 function UserDetailsModal({
   isOpen,

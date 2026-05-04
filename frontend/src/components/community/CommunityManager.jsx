@@ -93,6 +93,7 @@ export default function CommunityManager({ isOpen, onClose }) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasFormChanges, setHasFormChanges] = useState(false);
+  const [canManage, setCanManage] = useState(null);
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
     type: "info",
@@ -102,48 +103,74 @@ export default function CommunityManager({ isOpen, onClose }) {
 
   const [communityData, setCommunityData] = useState(null);
 
-  const hasCommunityManage = () => {
-    return api.get("/user/communities/can-manage").then(res => res.data.canManage).catch(() => false);
-  };
-
   useEffect(() => {
     let isMounted = true;
-    if (!isOpen || !hasCommunityManage()) {
+    if (!isOpen) {
       setLoading(false);
+      setCanManage(null);
       return;
     }
+
     setLoading(true);
-    let pending = 2;
-    const finish = () => {
-      pending--;
-      if (pending === 0 && isMounted) setLoading(false);
-    };
-    api.get("/user/my-community")
-      .then(res => {
+    setCanManage(null);
+
+    api
+      .get("/user/communities/can-manage")
+      .then((permissionRes) => {
         if (!isMounted) return;
-        const c = res.data.community;
-        if (c) {
-          setCommunityData(c); // Guarda el objeto completo
-          setFormData({
-            plataforma: c.leader?.streamer?.platform || "",
-            streamer: c.leader?.streamer?.username || "",
-            streamerLogo: null,
-            canal: c.leader?.streamer?.link || "",
-            nombreComunidad: c.name || "",
-            nombreCorto: c.shortname || "",
-            color: c.color || "#FFFFFF",
-            color2: c.color2 || "#222222",
-            descripcionComunidad: c.description || ""
-          });
-          setHasFormChanges(false);
+
+        const allowed = Boolean(permissionRes?.data?.canManage);
+        setCanManage(allowed);
+
+        if (!allowed) {
+          setLoading(false);
+          return;
         }
+
+        let pending = 2;
+        const finish = () => {
+          pending--;
+          if (pending === 0 && isMounted) setLoading(false);
+        };
+
+        api.get("/user/community")
+          .then((res) => {
+            if (!isMounted) return;
+            const c = res.data.community;
+            if (c) {
+              setCommunityData(c);
+              setFormData({
+                plataforma: c.leader?.streamer?.platform || "",
+                streamer: c.leader?.streamer?.username || "",
+                streamerLogo: null,
+                canal: c.leader?.streamer?.link || "",
+                nombreComunidad: c.name || "",
+                nombreCorto: c.shortname || "",
+                color: c.color || "#FFFFFF",
+                color2: c.color2 || "#222222",
+                descripcionComunidad: c.description || "",
+              });
+              setHasFormChanges(false);
+            }
+          })
+          .catch(() => {})
+          .finally(finish);
+
+        api.get("/user/community/members")
+          .then((res) => {
+            if (isMounted) setMembers(res.data.members || []);
+          })
+          .catch(() => {
+            if (isMounted) setMembers([]);
+          })
+          .finally(finish);
       })
-      .catch(() => {})
-      .finally(finish);
-    api.get("/user/community/members")
-      .then(res => { if (isMounted) setMembers(res.data.members || []); })
-      .catch(() => { if (isMounted) setMembers([]); })
-      .finally(finish);
+      .catch(() => {
+        if (!isMounted) return;
+        setCanManage(false);
+        setLoading(false);
+      });
+
     return () => { isMounted = false; };
   }, [isOpen]);
 
@@ -210,7 +237,7 @@ export default function CommunityManager({ isOpen, onClose }) {
   };
 
   if (!isOpen) return null;
-  if (!hasCommunityManage()) {
+  if (canManage === false) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div className="bg-[var(--ins-background)] rounded-2xl shadow-2xl p-8 w-full max-w-xl text-center">

@@ -15,9 +15,11 @@ import { Video,  Mail, User, Calendar, Users, Info, File } from "lucide-react";
 function Community() {
     const [showForm, setShowForm] = useState(false);
     const [manageComunity, setManageComunity] = useState(false);
+    const [hasCommunity, setHasCommunity] = useState(false);
     const [selected, setSelected] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [showJoinConfirm, setShowJoinConfirm] = useState(false);
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [joinFeedback, setJoinFeedback] = useState({
         isOpen: false,
         type: "info",
@@ -39,6 +41,9 @@ function Community() {
         setShowJoinConfirm(true);
     };
 
+    const handleLeaveRequest = () => {
+        setShowLeaveConfirm(true);
+    }
     const handleJoinConfirm = async () => {
         if (!selected?.id) return;
 
@@ -60,6 +65,29 @@ function Community() {
             });
         }
     };
+    const handleLeaveConfirm = async () => {
+        if (!selected?.id) return;
+        setShowLeaveConfirm(false);
+        try {
+            await api.post(`/user/community/${selected.id}/leave`);
+            handleClose();
+            await loadCommunityData();
+            setJoinFeedback({
+                isOpen: true,
+                type: "success",
+                title: "Has abandonado la comunidad",
+                message: "Has abandonado la comunidad exitosamente.",
+            });
+        } catch (_err) {
+            setJoinFeedback({
+                isOpen: true,
+                type: "error",
+                title: "Error al abandonar la comunidad",
+                message: "No se pudo abandonar la comunidad.",
+            });
+        }
+
+    }
     const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
     // ...existing code...
     const [formData, setFormData] = useState({
@@ -74,22 +102,45 @@ function Community() {
     const handleChange = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
 
     const [communities, setCommunities] = useState([]);
+    const [myCommunity, setMyCommunity] = useState(null);
     const [loadingCommunities, setLoadingCommunities] = useState(false);
     const [errorCommunities, setErrorCommunities] = useState("");
 
-    useEffect(() => {
+    const loadCommunityData = async () => {
         setLoadingCommunities(true);
         setErrorCommunities("");
-        api.get("/user/communities")
-            .then(res => {
-                setCommunities(res.data.communities || []);
-                const isManager = res.data.isManager || false;
-                isManager ? setManageComunity(true) : setManageComunity(false);
-            })
-            .catch(err => {
-                setErrorCommunities("No se pudieron cargar las comunidades");
-            })
-            .finally(() => setLoadingCommunities(false));
+
+        const [myCommunityResult, communitiesResult] = await Promise.allSettled([
+            api.get("/user/community"),
+            api.get("/user/communities"),
+        ]);
+
+        if (myCommunityResult.status === "fulfilled" && myCommunityResult.value?.data?.community) {
+            setMyCommunity(myCommunityResult.value.data.community);
+            setHasCommunity(true);
+        } else {
+            setMyCommunity(null);
+            setHasCommunity(false);
+        }
+
+        if (communitiesResult.status === "fulfilled") {
+            const payload = communitiesResult.value?.data || {};
+            setCommunities(Array.isArray(payload.communities) ? payload.communities : []);
+            setManageComunity(Boolean(payload.isManager));
+        } else {
+            setCommunities([]);
+            setManageComunity(false);
+            setErrorCommunities("No se pudieron cargar las comunidades");
+        }
+
+        setLoadingCommunities(false);
+    };
+
+    useEffect(() => {
+        loadCommunityData();
+
+
+
     }, []);
     return (
         <div>
@@ -125,6 +176,31 @@ function Community() {
             {/* FORMULARIO DE COMUNIDAD VISIBLE PARA USUARIOS CON community.manage */}
 
             </div>
+            <div className="flex flex-col lg:flex-row gap-8 items-start w-full  px-0 mx-0 mb-4">
+                <div className="w-full ">
+                    <div className="bg-black/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10 p-10">
+                        <div className="grid grid-cols-2 md:grid-cols-2 gap-4 items-center mb-6 alig">
+                            <div className="items-center flex gap-2 ">
+                                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                    <Video size={24} style={{ color: "var(--secondary-color)" }}/>
+                                    Tu comunidad
+                                </h2>
+                            </div>
+                            <div>
+                                {myCommunity ? (
+                                    <div key={myCommunity.id} className="cursor-pointer hover:scale-[1.03] transition-transform" onClick={() => handleOpen(myCommunity)}>
+                                        <CommunityCard community={myCommunity} />
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-[var(--ins-text-white)]">
+                                        No tienes comunidad registrada.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div className="flex flex-col lg:flex-row gap-8 items-start w-full  px-0 mx-0">
                 <div className="w-full ">
                     <div className="bg-black/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10 p-10">
@@ -136,11 +212,13 @@ function Community() {
                             <div className="text-[var(--ins-text-white)]">Cargando comunidades...</div>
                         ) : errorCommunities ? (
                             <div className="text-red-500">{errorCommunities}</div>
-                        ) : communities.length === 0 ? (
+                        ) : communities.filter((community) => String(community?.id) !== String(myCommunity?.id)).length === 0 ? (
                             <div className="text-[var(--ins-text-white)]">No hay comunidades registradas.</div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hover:bounce">
-                                {communities.map((community) => (
+                                {communities
+                                    .filter((community) => String(community?.id) !== String(myCommunity?.id))
+                                    .map((community) => (
                                     <div key={community.id} className="cursor-pointer hover:scale-[1.03] transition-transform" onClick={() => handleOpen(community)}>
                                         <CommunityCard community={community} />
                                     </div>
@@ -162,6 +240,18 @@ function Community() {
                 className="z-[260]"
             />
             <AlertModal
+                isOpen={showLeaveConfirm}
+                type="warning"
+                title="Un momento..."
+                message="¿Estás seguro de que quieres abandonar esta comunidad? El líder de la comunidad revisará tu solicitud y decidirá si te acepta o no."
+                confirmText="Sí, abandonar comunidad"
+                cancelText="No, cancelar"
+                onClose={() => setShowLeaveConfirm(false)}
+                onConfirm={handleLeaveConfirm}
+                className="z-[260]"
+            />
+
+            <AlertModal
                 isOpen={joinFeedback.isOpen}
                 type={joinFeedback.type}
                 title={joinFeedback.title}
@@ -175,7 +265,15 @@ function Community() {
             {/* Modal de gestión de comunidad fuera del mapeo para evitar múltiples instancias */}
             <CommunityManager isOpen={showForm} onClose={() => setShowForm(false)} />
             {/* Modal de detalle de comunidad */}
-            <CommunityDetailModal isOpen={showModal} community={selected} onClose={handleClose} onJoin={handleJoinRequest} />
+            <CommunityDetailModal
+                isOpen={showModal}
+                community={selected}
+                onClose={handleClose}
+                onJoin={handleJoinRequest}
+                onLeave={handleLeaveRequest}
+                hasCommunity={hasCommunity}
+                myCommunity={myCommunity}
+            />
             {/* AlertModal debe ir al final para estar sobre cualquier modal */}
         </div>
         </div>
@@ -185,7 +283,7 @@ function Community() {
 export default Community;
 
 // Modal de detalle de comunidad
-function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
+function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, hasCommunity, myCommunity }) {
 
 
     if (!isOpen || !community) return null;
@@ -198,7 +296,23 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
                 <div className="grid grid-cols-1 lg:grid-cols-3">
                     <div className="">
                         <CommunityCard community={community} className="w-full" />
-                        <Button className="mt-6 w-full" variant="primary" onClick={onJoin}>Solicitar unirse</Button>
+                        {hasCommunity && myCommunity?.id === community?.id ? (
+                            // Es su comunidad
+                            <Button className="mt-6 w-full" variant="cancel" onClick={onLeave}>
+                                Abandonar comunidad
+                            </Button>
+                        ) : hasCommunity ? (
+                            // Tiene comunidad pero es otra
+                            <div className="mt-6 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 w-fit">
+                                <div className="w-2 h-2 rounded-full bg-[var(--ins-text-gray)]" />
+                                <span className="text-sm text-[var(--ins-text-gray)]">Ya perteneces a otra comunidad</span>
+                            </div>
+                        ) : (
+                            // No tiene comunidad
+                            <Button className="mt-6 w-full" variant="primary" onClick={onJoin}>
+                                Solicitar unirse
+                            </Button>
+                        )}
                     </div>
                     <div className="span-2 lg:col-span-2 lg:pl-8 mt-6 lg:mt-0 gap-4">
                         <h3 className="text-lg font-bold mb-2 text-[var(--secondary-color)]">Información del canal</h3>

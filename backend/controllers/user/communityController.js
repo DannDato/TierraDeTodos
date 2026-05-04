@@ -54,28 +54,18 @@ class CommunityController {
     async getMyCommunity(req, res) {
       try {
         const userId = req.user.id;
-        const community = await models.community.findOne({
-          where: { lider: userId },
-          include: [
-            {
-              model: models.Users,
-              as: 'leader',
-              attributes: ['id', 'username', 'displayName', 'role'],
-              include: [
-                {
-                  model: models.streamer,
-                  as: 'streamer',
-                  attributes: ['platform', 'username', 'link', 'image']
-                },
-                {
-                  model: models.user_profile_images,
-                  as: 'profileImage',
-                  attributes: ['img']
-                }
-              ]
-            }
-          ]
-        });
+        const community = await db.query(`
+
+          SELECT c.*, u.id as leaderId, u.username as leaderUsername, u.displayName as leaderDisplayName, u.role as leaderRole,
+          s.platform as leaderStreamerPlatform, s.username as leaderStreamerUsername, s.link as leaderStreamerLink, s.image as leaderStreamerImage,
+          upi.img as leaderProfileImage, uc
+          FROM user_community uc
+          INNER JOIN community c ON uc.communityId = c.id
+          LEFT JOIN Users u ON c.lider = u.id
+          LEFT JOIN streamer s ON u.id = s.userId
+          LEFT JOIN user_profile_images upi ON u.id = upi.userId
+          WHERE c.lider = ${userId}
+        `);
         if (!community) return res.status(404).json({ message: 'No tienes comunidad registrada.' });
         // Formatear igual que getAll
         const leader = community.leader || {};
@@ -131,7 +121,8 @@ class CommunityController {
             ]
           }
         ],
-        order: [['name', 'ASC']]
+        order: [['name', 'ASC']],
+        group: ['community.id']
       });
       // Obtener miembros para cada comunidad
       const communitiesWithMembers = await Promise.all(communities.map(async c => {
@@ -289,6 +280,10 @@ class CommunityController {
           color2,
           description,
           logo_url
+        });
+        joinLeaderToCommunity = await models.user_community.create({
+          userId,
+          communityId: community.id
         });
         return res.status(201).json({ message: 'Comunidad creada correctamente', community });
       }

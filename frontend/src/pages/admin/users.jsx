@@ -14,10 +14,11 @@ import Select from "../../elements/Select";
 
 import api from "../../api/axios";
 
-import UserDetailsModal from "../../components/UserDetailsModal";
+import UserDetailsModal from "../../components/users/UserDetailsModal";
 import LoadingOverlay from "../../components/LoadingOverlay";
 import AlertModal from "../../elements/AlertModal";
 
+import UserDefault from "../../img/user_default.png";
 // const roleOptions = [
 //   { value: "TODOS", label: "Role: Todos" },
 //   { value: "MOD", label: "Moderador" },
@@ -562,12 +563,18 @@ function Users() {
                     >
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 bg-[var(--black-color)]/30 border border-[var(--white-color)]/10 rounded-2xl flex items-center justify-center shadow-sm overflow-hidden shrink-0">
+                          <div className="">
                             <button
                               onClick={() => openUserDetails(u.id)}
                             >
 
-                              <User size={20} className="text-[var(--ins-text-gray)]" />
+                            <img
+                              key={u.id}
+                              src={u.profileImage || u.communityLogo || UserDefault}
+                              alt={u.username}
+                              className="w-8 h-8 rounded-full border object-cover mt-1"
+                              style={{ borderColor: u.communityColor || '#222222' }}
+                            />
                             </button>
                           </div>
                           <div>

@@ -23,10 +23,20 @@ class UsersController {
 
   getUsersAdminList = async (req, res) => {
     try {
-      const users = await models.Users.findAll({
-        attributes: ['id', 'username', 'email', 'role', 'account', 'createdAt', 'updatedAt'],
-        order: [['id', 'ASC']]
-      });
+      const users = await db.query(
+        `
+          SELECT u.id, u.username, u.email, u.role, u.account, u.createdAt, u.updatedAt,
+            c.logo_url AS communityLogo,
+            c.color AS communityColor,
+            upi.img AS profileImage
+          FROM Users u
+          LEFT JOIN (SELECT * FROM user_profile_images ORDER BY createdAt DESC LIMIT 1) upi ON upi.userId = u.id
+          LEFT JOIN user_community uc ON uc.userId = u.id
+          LEFT JOIN community c ON c.id = uc.communityId
+          ORDER BY u.id ASC
+        `,
+        { type: QueryTypes.SELECT }
+      );
 
       const permissionRows = await db.query(
         `
@@ -74,6 +84,9 @@ class UsersController {
         status: user.account,
         statusColor: statusColorMap[user.account] || null,
         lastConnection: user.updatedAt,
+        profileImage: user.profileImage,
+        communityLogo: user.communityLogo,
+        communityColor: user.communityColor,
         createdAt: user.createdAt,
         permissions: permissionsByUserId[user.id] || []
       }));
