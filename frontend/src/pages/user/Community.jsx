@@ -16,7 +16,13 @@ function Community() {
     const [manageComunity, setManageComunity] = useState(false);
     const [selected, setSelected] = useState(null);
     const [showModal, setShowModal] = useState(false);
-    const [showJoinAlert, setShowJoinAlert] = useState(false);
+    const [showJoinConfirm, setShowJoinConfirm] = useState(false);
+    const [joinFeedback, setJoinFeedback] = useState({
+        isOpen: false,
+        type: "info",
+        title: "Aviso",
+        message: "",
+    });
 
     const handleOpen = (community) => {
         setSelected(community);
@@ -28,15 +34,30 @@ function Community() {
         setSelected(null);
     };
 
-    const handleJoin = () => {
-        api.post(`/user/community/${selected.id}/join`)
-        .then(res => {
-            alert("Solicitud enviada. El líder de la comunidad revisará tu solicitud y decidirá si te acepta o no.");
-        })
-        .catch(err => {
-            alert("Error al solicitar unirse a la comunidad");
-        });
-        setShowJoinAlert(true);
+    const handleJoinRequest = () => {
+        setShowJoinConfirm(true);
+    };
+
+    const handleJoinConfirm = async () => {
+        if (!selected?.id) return;
+
+        setShowJoinConfirm(false);
+        try {
+            await api.post(`/user/community/${selected.id}/join`);
+            setJoinFeedback({
+                isOpen: true,
+                type: "success",
+                title: "Solicitud enviada",
+                message: "El líder de la comunidad revisará tu solicitud y decidirá si te acepta o no.",
+            });
+        } catch (_err) {
+            setJoinFeedback({
+                isOpen: true,
+                type: "error",
+                title: "Error al solicitar unirse",
+                message: "No se pudo enviar la solicitud de ingreso a la comunidad.",
+            });
+        }
     };
     const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
     // ...existing code...
@@ -129,20 +150,31 @@ function Community() {
                 </div>
             </div>
             <AlertModal
-                isOpen={showJoinAlert}
+                isOpen={showJoinConfirm}
                 type="warning"
                 title="Un momento..."
                 message="¿Estás seguro de que quieres solicitar unirte a esta comunidad? El líder de la comunidad revisará tu solicitud y decidirá si te acepta o no."
                 confirmText="Sí, solicitar unirme"
                 cancelText="No, cancelar"
-                onClose={() => setShowJoinAlert(false)}
-                onConfirm={handleJoin}
-                className="z-[300]"
+                onClose={() => setShowJoinConfirm(false)}
+                onConfirm={handleJoinConfirm}
+                className="z-[260]"
+            />
+            <AlertModal
+                isOpen={joinFeedback.isOpen}
+                type={joinFeedback.type}
+                title={joinFeedback.title}
+                message={joinFeedback.message}
+                confirmText="Cerrar"
+                cancelText="Cerrar"
+                onClose={() => setJoinFeedback((prev) => ({ ...prev, isOpen: false }))}
+                onConfirm={() => setJoinFeedback((prev) => ({ ...prev, isOpen: false }))}
+                className="z-[260]"
             />
             {/* Modal de gestión de comunidad fuera del mapeo para evitar múltiples instancias */}
             <CommunityManager isOpen={showForm} onClose={() => setShowForm(false)} />
             {/* Modal de detalle de comunidad */}
-            <CommunityDetailModal isOpen={showModal} community={selected} onClose={handleClose} onJoin={handleJoin} />
+            <CommunityDetailModal isOpen={showModal} community={selected} onClose={handleClose} onJoin={handleJoinRequest} />
             {/* AlertModal debe ir al final para estar sobre cualquier modal */}
         </div>
         </div>
@@ -160,7 +192,7 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
         <div className="fixed inset-0 z-[120] flex items-center justify-center transition-opacity duration-200 ">
 
             <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full max-w-5xl rounded-3xl  p-8 shadow-2xl animate-fadeInUp bg-[var(--ins-background)]/50 backdrop-blur-sm border border-white/10" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="relative w-full max-w-5xl rounded-3xl  p-8 shadow-2xl animate-fadeInUp bg-[var(--ins-background)]/50 backdrop-blur-sm border border-white/10 mt-[-65px]" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
                 <button onClick={onClose} className="absolute top-4 right-4 text-[var(--ins-text-white)] hover:text-[var(--secondary-color)] text-2xl font-bold">×</button>
                 <div className="grid grid-cols-1 lg:grid-cols-3">
                     <div className="">
@@ -218,6 +250,7 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
                             <thead className="bg-[var(--white-color)]/5 text-[10px] uppercase tracking-[0.22em] text-[var(--ins-text-white)]">
                                 <tr>
                                 <th className="px-5 py-3 font-bold">#</th>
+                                <th className="px-5 py-3 font-bold"></th>
                                 <th className="px-5 py-3 font-bold">Usuario</th>
                                 <th className="px-5 py-3 font-bold">Acciones</th>
                                 </tr>
@@ -228,8 +261,17 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin }) {
                                     <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
                                     {index + 1}
                                     </td>
+                                    <td>
+                                        <img
+                                        key={entry.id}
+                                        src={entry.profileImage || community.logo_url || CommunityDefault}
+                                        alt={entry.nombre}
+                                        className="w-8 h-8 rounded-full border object-cover mt-1"
+                                        style={{ borderColor: community.color || '#222222' }}
+                                        />
+                                    </td>
                                     <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                                    {entry.username || "N/A"}
+                                    {entry.nombre || "N/A"}
                                     </td>
                                     <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
                                     {entry.account === "leader" ? (

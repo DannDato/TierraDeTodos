@@ -15,6 +15,7 @@ function AlertModal({
   onConfirm,
   cancelText = "Cancelar",
   confirmText = "Aceptar",
+  className = "",
 }) {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [isActive, setIsActive] = useState(isOpen);
@@ -89,7 +90,7 @@ function AlertModal({
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center z-[120] transition-opacity duration-200 ${
+      className={`fixed inset-0 flex items-center justify-center z-[120] ${className} transition-opacity duration-200 ${
         isActive ? "opacity-100" : "opacity-0"
       }`}
     >

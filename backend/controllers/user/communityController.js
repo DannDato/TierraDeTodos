@@ -116,12 +116,12 @@ class CommunityController {
           {
             model: models.Users,
             as: 'leader',
-            attributes: ['id', 'username', 'displayName', 'role'],
+            // attributes: ['id', 'username', 'displayName', 'role', 'logo_url'],
             include: [
               {
                 model: models.streamer,
                 as: 'streamer',
-                attributes: ['platform', 'username', 'link', 'image']
+                // attributes: ['platform', 'username', 'link', 'image']
               },
               {
                 model: models.user_profile_images,

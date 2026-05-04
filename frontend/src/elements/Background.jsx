@@ -4,7 +4,7 @@ function Background({
   // backgroundImage = "/img/banner.gif",
   backgroundImage = "/img/banner2.gif",
   // backgroundImage = "/img/bannergif.webp",
-  overlayColor = "rgba(39, 37, 35, 0.85)",
+  overlayColor = "rgba(39, 37, 35, 0.68)",
   blur = "10px",
   children,
   className = "",
@@ -12,7 +12,7 @@ function Background({
 }) {
   return (
     <section id="inicio" className={`relative ${className}`} {...props}>
-      
+
 
       {/* Imagen de fondo */}
       <div

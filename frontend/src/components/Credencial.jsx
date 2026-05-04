@@ -275,18 +275,6 @@ function Credencial({
 
                   <div className="flex-1 h-36 flex flex-col justify-between">
                     <div className="grid grid-cols-3 gap-x-3 gap-y-2 font-mono-dossier text-sm flex-1 mt-2">
-                      <div className="col-span- border-b border-[rgba(139,110,58,0.25)] ">
-                        <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Pais</span>
-                        <span className="credential-data block text-[12px] font-bold">{user.country || "MX"}</span>
-                      </div>
-                      {/* <div className="col-span-2 space-y-0.5 border-b border-[rgba(139,110,58,0.25)] pb-1">
-                        <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">ID Ciudadano</span>
-                        <span className="credential-id block text-[12px] font-bold">{user.folio || `TDT-${user.id?.toString().padStart(8, "0") || "XXXXXXXX"}`}</span>
-                      </div> */}
-                      <div className="text-right border-b border-gray-900 pb-0.5 pr-1 min-w-[120px]">
-                        <span className="credential-label text-[9px] font-bold uppercase tracking-widest block leading-none">Firma Titular</span>
-                        <span className="credential-data font-serif italic text-base">{user.username}</span>
-                      </div>
 
                       <div className="col-span-3 space-y-0.5 border-b border-[rgba(139,110,58,0.25)] pb-1">
                         <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Comunidad</span>
@@ -298,6 +286,14 @@ function Credencial({
                         <span className="credential-data block text-[12px] font-bold font-mono-dossier">
                           {user.createdAt ? new Date(user.createdAt).toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" }) : "N/A"}
                         </span>
+                      </div>
+                      <div className="col-span- border-b border-[rgba(139,110,58,0.25)] ">
+                        <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Pais</span>
+                        <span className="credential-data block text-[12px] font-bold">{user.country || "MX"}</span>
+                      </div>
+                      <div className="text-right border-b border-gray-900 pb-0.5 pr-1 min-w-[120px]">
+                        <span className="credential-label text-[9px] font-bold uppercase tracking-widest block leading-none">Firma Titular</span>
+                        <span className="credential-data font-serif italic text-base">{user.username}</span>
                       </div>
                     </div>
                   </div>
