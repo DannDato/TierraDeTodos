@@ -25,7 +25,18 @@ export default (sequelize, DataTypes) => {
     }
   }, {
     tableName: 'user_community',
-    timestamps: false
+    timestamps: false,
+    indexes: [
+      {
+        name: 'user_community_community_index',
+        fields: ['communityId']
+      },
+      {
+        name: 'user_community_user_community_unique',
+        unique: true,
+        fields: ['userId', 'communityId']
+      }
+    ]
   });
 
   UserCommunity.associate = (models) => {

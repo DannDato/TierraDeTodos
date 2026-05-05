@@ -1,16 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../api/axios";
-import Input from "../../elements/Input";
 import Button from "../../elements/Button";
-import FilePickerButton from "../../elements/FilePickerButton";
 import AlertModal from "../../elements/AlertModal";
-import LoadingOverlay from "../../components/LoadingOverlay";
 import CommunityManager from "../../components/community/CommunityManager";
 import CommunityCard from "../../components/community/CommunityCard";
 import InfoRow from "../../elements/InfoRow";
 import CommunityDefault from "../../img/community_default.png";
+import { Link } from "react-router-dom";
 
-import { Video,  Mail, User, Calendar, Users, Info, File } from "lucide-react";
+import { Video, User, Users, File } from "lucide-react";
 
 function Community() {
     const BATCH_SIZE = 6;
@@ -133,22 +131,11 @@ function Community() {
     };
 
     const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
-    // ...existing code...
-    const [formData, setFormData] = useState({
-        plataforma: "",
-        streamer: "",
-        streamerLogo: "",
-        canal: "",
-        nombreComunidad: "",
-        nombreCorto: "",
-        color: "#FFFFFF"
-    });
-    const handleChange = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
-
     const [communities, setCommunities] = useState([]);
     const [myCommunity, setMyCommunity] = useState(null);
     const [loadingCommunities, setLoadingCommunities] = useState(false);
     const [errorCommunities, setErrorCommunities] = useState("");
+    const [manageRequestsCount, setManageRequestsCount] = useState(0);
     const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
     const sentinelRef = useRef(null);
 
@@ -170,8 +157,8 @@ function Community() {
             setHasCommunity(false);
         }
 
-        if (requestsResult.status === "fulfilled" && requestsResult.value?.data?.value) {
-            setCommunityRequest(requestsResult.value?.data?.requests || null);
+        if (requestsResult.status === "fulfilled" && requestsResult.value?.data?.hasPendingRequest) {
+            setCommunityRequest(requestsResult.value?.data?.request || null);
         } else {
             setCommunityRequest(null);
         }
@@ -179,14 +166,25 @@ function Community() {
         if (communitiesResult.status === "fulfilled") {
             const payload = communitiesResult.value?.data || {};
             setCommunities(Array.isArray(payload.communities) ? payload.communities : []);
-            setManageComunity(Boolean(payload.isManager));
+            const isManager = Boolean(payload.isManager);
+            setManageComunity(isManager);
+
+            if (isManager) {
+                try {
+                    const manageRequestsRes = await api.get("/user/community/manage/requests");
+                    const pendingRequests = Array.isArray(manageRequestsRes?.data?.requests) ? manageRequestsRes.data.requests : [];
+                    setManageRequestsCount(pendingRequests.length);
+                } catch (_err) {
+                    setManageRequestsCount(0);
+                }
+            } else {
+                setManageRequestsCount(0);
+            }
         } else {
             setCommunities([]);
             setManageComunity(false);
+            setManageRequestsCount(0);
             setErrorCommunities("No se pudieron cargar las comunidades");
-        }
-        if(requestsResult.status === "fulfilled") {
-            const value = requestsResult.value?.data?.community || {};
         }
         setLoadingCommunities(false);
     };
@@ -279,7 +277,14 @@ function Community() {
                         onClick={() => setShowForm(true)}
                         type="button"
                     >
-                        Gestiona tu comunidad
+                        <span className="inline-flex items-center gap-2">
+                            Gestiona tu comunidad
+                            {manageRequestsCount > 0 && (
+                                <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                                    {manageRequestsCount}
+                                </span>
+                            )}
+                        </span>
                     </Button>
                 </div>
             {/* FORMULARIO DE COMUNIDAD VISIBLE PARA USUARIOS CON community.manage */}
@@ -540,7 +545,7 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, has
                                         <img
                                         key={entry.id}
                                         src={entry.profileImage || community.logo_url || CommunityDefault}
-                                        alt={entry.nombre}
+                                        alt={entry.username || "Usuario"}
                                         className="w-8 h-8 rounded-full border object-cover mt-1"
                                         loading="lazy"
                                         decoding="async"
@@ -548,10 +553,16 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, has
                                         />
                                     </td>
                                     <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                                    {entry.nombre || "N/A"}
+                                        <Link
+                                           to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
+                                            className="text-sm font-semibold hover:text-[var(--hover-secondary)] transition-colors"
+                                            title={`Ver jugador ${entry.username || "Usuario"}`}
+                                            >
+                                            {entry.username || "Usuario"}
+                                        </Link>
                                     </td>
                                     <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                                    {entry.account === "leader" ? (
+                                    {entry.isLeader ? (
                                         <span className="px-2 py-1 text-xs font-mono rounded-full bg-green-500/20 text-green-400">Líder</span>
                                     ) : (
                                         <span className="px-2 py-1 text-xs font-mono rounded-full bg-blue-500/20 text-blue-400">Miembro</span>

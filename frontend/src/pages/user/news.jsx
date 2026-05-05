@@ -606,8 +606,8 @@ function News() {
         cancelText={alertConfig.cancelText}
       />
 
-      <div className="w-full px-4 md:mx-10 mx-0">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
+      <div className="w-full mx-0">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 ">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
               <span>{currentUser.role}</span>

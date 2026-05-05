@@ -1,5 +1,6 @@
 import CommunityCard from "./CommunityCard";
 import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import api from "../../api/axios";
 import Input from "../../elements/Input";
 import Button from "../../elements/Button";
@@ -62,7 +63,7 @@ function RequestsTable({ requests = [], actionId = null, onApprove, onReject }) 
             </thead>
             <tbody>
               {requests.map((request, index) => {
-                const requestName = request?.displayName || request?.username || "N/A";
+                const requestName = request?.username || "N/A";
                 const isProcessing = actionId === request?.id;
 
                 return (
@@ -70,7 +71,13 @@ function RequestsTable({ requests = [], actionId = null, onApprove, onReject }) 
                     <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">{index + 1}</td>
                     <td className="px-5 py-3 text-[var(--ins-text-white)]">
                       <div className="flex flex-col gap-1">
-                        <span className="font-semibold">{requestName}</span>
+                        <Link
+                          to={`/players?search=${encodeURIComponent(String(request.username || ""))}`}
+                          className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] truncate transition-colors"
+                          title={`Ver jugador ${request.username || "Usuario"}`}
+                        >
+                          {request?.username || "Usuario"}
+                        </Link>
                         <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--ins-text-gray)]">ID {request?.userId || "N/A"}</span>
                       </div>
                     </td>
@@ -114,7 +121,7 @@ function RequestsTable({ requests = [], actionId = null, onApprove, onReject }) 
   );
 }
 
-function MembersTable({ members = [], actionId = null, onRemoveMember, formData }) {
+function MembersTable({ members = [], actionId = null, onRemoveMember, communityLogoUrl }) {
   return (
     <div className="rounded-3xl bg-[var(--black-color)]/20 overflow-hidden mt-8 border border-white/10">
       <div className="px-5 py-4 flex items-center justify-between gap-3">
@@ -144,9 +151,8 @@ function MembersTable({ members = [], actionId = null, onRemoveMember, formData 
             </thead>
             <tbody>
               {members.map((member, index) => {
-                const memberName = member?.displayName || member?.nombre || member?.username || "N/A";
+                const memberName = member?.username || "N/A";
                 const isLeader = Boolean(member?.isLeader);
-                const avatarSrc = member?.profileImage || member?.avatarUrl || null;
                 const isProcessing = actionId === member?.id;
 
                 return (
@@ -155,13 +161,23 @@ function MembersTable({ members = [], actionId = null, onRemoveMember, formData 
                     <td className="px-5 py-3">
                       <img
                       key={member.id}
-                      src={member.profileImage || formData.streamerLogo || CommunityDefault}
+                      src={member.profileImage || communityLogoUrl || CommunityDefault}
                       alt={member.username}
                       className="w-8 h-8 rounded-full border object-cover"
 
                       />
                     </td>
-                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">{memberName}</td>
+                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
+                      {/* {memberName} */}
+                      <Link
+                        to={`/players?search=${encodeURIComponent(String(member.username || ""))}`}
+                        className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] truncate transition-colors"
+                        title={`Ver jugador ${member.username || "Usuario"}`}
+                      >
+                        {memberName}
+                      </Link>
+
+                    </td>
                     <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
                       {isLeader ? (
                         <span className="px-2 py-1 text-xs font-mono rounded-full bg-green-500/20 text-green-400">Lider</span>
@@ -208,6 +224,8 @@ export default function CommunityManager({ isOpen, onClose }) {
     color2: "#222222",
     descripcionComunidad: ""
   });
+  const [communityLogoPreview, setCommunityLogoPreview] = useState(CommunityDefault);
+  const [persistedLogoUrl, setPersistedLogoUrl] = useState("");
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasFormChanges, setHasFormChanges] = useState(false);
@@ -232,17 +250,46 @@ export default function CommunityManager({ isOpen, onClose }) {
   const [requests, setRequests] = useState([]);
   const [expandedRequests, setExpandedRequests] = useState(false);
   const [activeAction, setActiveAction] = useState({ type: null, id: null });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const pendingActionRef = useRef(null);
+  const logoObjectUrlRef = useRef(null);
+
+  const setLogoPreviewFromFile = (file) => {
+    if (logoObjectUrlRef.current) {
+      URL.revokeObjectURL(logoObjectUrlRef.current);
+      logoObjectUrlRef.current = null;
+    }
+
+    if (file instanceof File) {
+      const objectUrl = URL.createObjectURL(file);
+      logoObjectUrlRef.current = objectUrl;
+      setCommunityLogoPreview(objectUrl);
+      return;
+    }
+
+    setCommunityLogoPreview(persistedLogoUrl || CommunityDefault);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (logoObjectUrlRef.current) {
+        URL.revokeObjectURL(logoObjectUrlRef.current);
+      }
+    };
+  }, []);
 
   const loadCommunityInfo = async () => {
     const res = await api.get("/user/community");
     const c = res.data.community;
     if (c) {
       setCommunityData(c);
+      setPersistedLogoUrl(c.logo_url || "");
+      setLogoPreviewFromFile(null);
+      setCommunityLogoPreview(c.logo_url || CommunityDefault);
       setFormData({
         plataforma: c.leader?.streamer?.platform || "",
         streamer: c.leader?.streamer?.username || "",
-        streamerLogo: c.logo_url || CommunityDefault,
+        streamerLogo: null,
         canal: c.leader?.streamer?.link || "",
         nombreComunidad: c.name || "",
         nombreCorto: c.shortname || "",
@@ -276,6 +323,10 @@ export default function CommunityManager({ isOpen, onClose }) {
   useEffect(() => {
     let isMounted = true;
     if (!isOpen) {
+      if (logoObjectUrlRef.current) {
+        URL.revokeObjectURL(logoObjectUrlRef.current);
+        logoObjectUrlRef.current = null;
+      }
       setLoading(false);
       setCanManage(null);
       setRequests([]);
@@ -315,6 +366,13 @@ export default function CommunityManager({ isOpen, onClose }) {
   }, [isOpen]);
 
   const handleChange = (field, value) => {
+    if (field === "streamerLogo") {
+      setFormData((prev) => ({ ...prev, streamerLogo: value instanceof File ? value : null }));
+      setLogoPreviewFromFile(value);
+      setHasFormChanges(true);
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [field]: value }));
     setHasFormChanges(true);
   };
@@ -370,35 +428,43 @@ export default function CommunityManager({ isOpen, onClose }) {
     const isApprove = decision === "approve";
     setActiveAction({ type: "request", id: request.id });
 
-    try {
-      await api.patch(`/user/community/requests/${request.id}/${decision}`);
-      await reloadTables();
-      setAlertConfig({
-        isOpen: true,
-        type: "success",
-        title: isApprove ? "Solicitud aprobada" : "Solicitud rechazada",
-        message: isApprove
-          ? `La solicitud de ${request.displayName || request.username || "este usuario"} fue aprobada correctamente.`
-          : `La solicitud de ${request.displayName || request.username || "este usuario"} fue rechazada correctamente.`,
-        reload: false,
-      });
-    } catch (err) {
-      setAlertConfig({
-        isOpen: true,
-        type: "error",
-        title: isApprove ? "Error al aprobar" : "Error al rechazar",
-        message: err.response?.data?.message || "No se pudo procesar la solicitud.",
-        reload: false,
-      });
-    } finally {
-      setActiveAction({ type: null, id: null });
-    }
+    const executeAction = async () => {
+      try {
+        await api.patch(`/user/community/requests/${request.id}/${decision}`);
+        await reloadTables();
+        setAlertConfig({
+          isOpen: true,
+          type: "success",
+          title: isApprove ? "Solicitud aprobada" : "Solicitud rechazada",
+          message: isApprove
+            ? `La solicitud de ${request.username || "este usuario"} fue aprobada correctamente.`
+            : `La solicitud de ${request.username || "este usuario"} fue rechazada correctamente.`,
+          reload: false,
+        });
+      } catch (err) {
+        // Detectar si es error de red (timeout/no conectividad)
+        const isNetworkError = !err.response || err.code === 'ECONNABORTED';
+
+        setAlertConfig({
+          isOpen: true,
+          type: "error",
+          title: isApprove ? "Error al aprobar" : "Error al rechazar",
+          message: err.response?.data?.message || "No se pudo procesar la solicitud.",
+          reload: false,
+          ...(isNetworkError && { retry: true, retryAction: () => executeAction() })
+        });
+      } finally {
+        setActiveAction({ type: null, id: null });
+      }
+    };
+
+    await executeAction();
   };
 
   const handleApproveRequest = (request) => {
     openConfirm({
       title: "Aprobar solicitud",
-      message: `¿Deseas aprobar la solicitud de ${request.displayName || request.username || "este usuario"}? Será agregado a tu comunidad.`,
+      message: `¿Deseas aprobar la solicitud de ${ request.username || "este usuario"}? Será agregado a tu comunidad.`,
       confirmText: "Sí, aprobar",
       cancelText: "Cancelar",
       onConfirm: () => processRequestAction(request, "approve"),
@@ -408,7 +474,7 @@ export default function CommunityManager({ isOpen, onClose }) {
   const handleRejectRequest = (request) => {
     openConfirm({
       title: "Rechazar solicitud",
-      message: `¿Deseas rechazar la solicitud de ${request.displayName || request.username || "este usuario"}? La solicitud quedará marcada como rechazada.`,
+      message: `¿Deseas rechazar la solicitud de ${request.username || "este usuario"}? La solicitud quedará marcada como rechazada.`,
       confirmText: "Sí, rechazar",
       cancelText: "Cancelar",
       onConfirm: () => processRequestAction(request, "reject"),
@@ -418,7 +484,7 @@ export default function CommunityManager({ isOpen, onClose }) {
   const handleRemoveMember = (member) => {
     openConfirm({
       title: "Sacar miembro",
-      message: `¿Deseas sacar a ${member.displayName || member.username || "este miembro"} de la comunidad?`,
+      message: `¿Deseas sacar a ${member.username || "este miembro"} de la comunidad?`,
       confirmText: "Sí, sacar",
       cancelText: "Cancelar",
       onConfirm: async () => {
@@ -430,7 +496,7 @@ export default function CommunityManager({ isOpen, onClose }) {
             isOpen: true,
             type: "success",
             title: "Miembro removido",
-            message: `${member.displayName || member.username || "El miembro"} fue removido de la comunidad.`,
+            message: `${member.username || "El miembro"} fue removido de la comunidad.`,
             reload: false,
           });
         } catch (err) {
@@ -450,10 +516,15 @@ export default function CommunityManager({ isOpen, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Prevenir double submit
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     setLoading(true);
     try {
       let logoUrl = "";
-      if (formData.streamerLogo) {
+      if (formData.streamerLogo instanceof File) {
         const logoForm = new FormData();
         logoForm.append("logo", formData.streamerLogo);
         const token = localStorage.getItem("token");
@@ -478,7 +549,7 @@ export default function CommunityManager({ isOpen, onClose }) {
           color: formData.color,
           color2: formData.color2,
           description: formData.descripcionComunidad,
-          logo_url: logoUrl
+          logo_url: logoUrl || persistedLogoUrl || ""
         },
         token ? { headers: { Authorization: `Bearer ${token}` } } : {}
       );
@@ -500,6 +571,7 @@ export default function CommunityManager({ isOpen, onClose }) {
       });
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -569,10 +641,10 @@ export default function CommunityManager({ isOpen, onClose }) {
                           description: formData.descripcionComunidad || communityData?.description,
                           color: formData.color || communityData?.color,
                           color2: formData.color2 || communityData?.color2,
-                          logo_url: formData.streamerLogo,
+                          logo_url: communityLogoPreview,
                           leader: {
                             ...((communityData && communityData.leader) || {}),
-                            profileImage: formData.streamerLogo,
+                            profileImage: communityLogoPreview,
                             streamer: { platform: formData.plataforma || communityData?.leader?.streamer?.platform },
                           },
                         }}
@@ -584,7 +656,7 @@ export default function CommunityManager({ isOpen, onClose }) {
                         onFileSelect={(file) => handleChange("streamerLogo", file)}
                         accept="image/*"
                       />
-                      {formData.streamerLogo && (
+                      {formData.streamerLogo instanceof File && (
                         <span className="text-xs text-green-400 mt-2 block">Imagen seleccionada: {formData.streamerLogo.name}</span>
                       )}
                     </div>
@@ -593,7 +665,9 @@ export default function CommunityManager({ isOpen, onClose }) {
                   <div className="w-full pt-4 self-center mt-auto mb-3" style={{ maxWidth: 340 }}>
                     {hasFormChanges && (
                       <div className="flex justify-center mt-3 ">
-                        <Button type="submit" variant="primary">Guardar cambios</Button>
+                        <Button type="submit" variant="primary" disabled={isSubmitting || loading}>
+                          {isSubmitting || loading ? 'Guardando...' : 'Guardar cambios'}
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -730,7 +804,7 @@ export default function CommunityManager({ isOpen, onClose }) {
               members={members}
               actionId={activeAction.type === "member" ? activeAction.id : null}
               onRemoveMember={handleRemoveMember}
-              formData={formData}
+              communityLogoUrl={communityLogoPreview}
             />
           </>
         )}

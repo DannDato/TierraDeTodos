@@ -1,14 +1,17 @@
 import { models, db } from '../../models/index.js';
+import { QueryTypes } from 'sequelize';
 import handleError from '../../handlers/handleError.js';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 const getManagedCommunity = async (userId) => models.community.findOne({
   where: { lider: userId },
 });
 
-class CommunityController {
-  // GET /user/community/members
+const getUserMembership = async (userId, transaction) => models.user_community.findOne({
+  where: { userId },
+  transaction,
+});
 
+class CommunityController {
   async canManage(req, res) {
     try {
       const canManage = req.user.permissions && req.user.permissions.includes('community.manage');
@@ -21,293 +24,136 @@ class CommunityController {
   async getMembers(req, res) {
     try {
       const userId = req.user.id;
-      // Buscar la comunidad donde el usuario es líder
       const community = await getManagedCommunity(userId);
       if (!community) return res.status(404).json({ message: 'No tienes comunidad registrada.' });
 
-      // Buscar miembros de la comunidad
       const userCommunities = await models.user_community.findAll({
         where: { communityId: community.id },
+        limit: 100,
+        offset: 0,
         include: [
           {
             model: models.Users,
             as: 'user',
-            attributes: ['id', 'username', 'displayName', 'role']
+            attributes: ['id', 'username', 'role']
           }
         ]
       });
 
-      // Formatear respuesta
-      const members = userCommunities.map(uc => {
+      const members = userCommunities.map((uc) => {
         const u = uc.user;
         return {
           id: u.id,
           username: u.username,
-          displayName: u.displayName,
           role: u.role,
           isLeader: u.id === community.lider
         };
       });
+
       return res.status(200).json({ members });
     } catch (error) {
       handleError(res, req, error, 'Error al obtener miembros de la comunidad');
     }
   }
 
-  async getManageRequests(req, res) {
+  async getMyCommunity(req, res) {
     try {
       const userId = req.user.id;
-      const community = await getManagedCommunity(userId);
+      const userCommunity = await models.user_community.findOne({
+        where: { userId },
+        order: [['joinedAt', 'DESC'], ['id', 'DESC']],
+        include: [
+          {
+            model: models.community,
+            as: 'community',
+            include: [
+              {
+                model: models.Users,
+                as: 'leader',
+                include: [
+                  {
+                    model: models.streamer,
+                    as: 'streamer',
+                  },
+                  {
+                    model: models.user_profile_images,
+                    as: 'profileImages',
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      });
 
-      if (!community) {
-        return res.status(404).json({ message: 'No tienes comunidad registrada.' });
+      if (!userCommunity || !userCommunity.community) {
+        return res.status(200).json({ message: 'No tienes comunidad registrada.', community: null });
       }
 
-      const requests = await models.user_community_request.findAll({
-        where: {
-          communityId: community.id,
-          status: 'PENDING'
-        },
+      const c = userCommunity.community;
+      const leader = c.leader || {};
+      const streamer = leader.streamer || {};
+      const profileImages = Array.isArray(leader.profileImages) && leader.profileImages.length > 0 ? leader.profileImages[0] : {};
+
+      const communityMemberships = await models.user_community.findAll({
+        where: { communityId: c.id },
+        limit: 100,
+        offset: 0,
         include: [
           {
             model: models.Users,
             as: 'user',
-            attributes: ['id', 'username', 'displayName', 'email']
+            attributes: ['id', 'username'],
+            include: [
+              {
+                model: models.user_profile_images,
+                as: 'profileImages',
+                attributes: ['img']
+              }
+            ]
           }
-        ],
-        order: [['requestedAt', 'ASC']]
+        ]
       });
 
-      const formattedRequests = requests.map((request) => ({
-        id: request.id,
-        userId: request.userId,
-        communityId: request.communityId,
-        status: request.status,
-        requestedAt: request.requestedAt,
-        reviewedAt: request.reviewedAt,
-        username: request.user?.username || null,
-        displayName: request.user?.displayName || null,
-        email: request.user?.email || null,
+      const members = communityMemberships.map((membership) => ({
+        id: membership.user?.id,
+        username: membership.user?.username || 'N/A',
+        isLeader: Number(membership.user?.id) === Number(c.lider),
+        profileImage: Array.isArray(membership.user?.profileImages) && membership.user.profileImages.length > 0
+          ? membership.user.profileImages[0].img
+          : null
       }));
 
-      return res.status(200).json({ requests: formattedRequests });
+      const result = {
+        id: c.id,
+        name: c.name,
+        shortname: c.shortname,
+        color: c.color,
+        color2: c.color2,
+        description: c.description,
+        logo_url: c.logo_url,
+        leader: {
+          id: leader.id,
+          username: leader.username,
+          displayName: leader.displayName,
+          role: leader.role,
+          profileImage: profileImages?.img || null,
+          streamer: {
+            platform: streamer?.platform || null,
+            username: streamer?.username || null,
+            link: streamer?.link || null,
+            image: streamer?.image || null
+          }
+        },
+        members
+      };
+
+      return res.status(200).json({ community: result });
     } catch (error) {
-      handleError(res, req, error, 'Error al obtener las solicitudes pendientes de la comunidad');
+      handleError(res, req, error, 'Error al obtener tu comunidad');
     }
   }
 
-  async approveRequest(req, res) {
-    try {
-      const reviewerId = req.user.id;
-      const { requestId } = req.params;
-      const community = await getManagedCommunity(reviewerId);
-
-      if (!community) {
-        return res.status(404).json({ message: 'No tienes comunidad registrada.' });
-      }
-
-      const request = await models.user_community_request.findOne({
-        where: {
-          id: requestId,
-          communityId: community.id,
-          status: 'PENDING'
-        }
-      });
-
-      if (!request) {
-        return res.status(404).json({ message: 'La solicitud no existe o ya fue procesada.' });
-      }
-
-      await db.transaction(async (transaction) => {
-        const existingMembership = await models.user_community.findOne({
-          where: {
-            userId: request.userId,
-            communityId: community.id
-          },
-          transaction
-        });
-
-        if (!existingMembership) {
-          await models.user_community.create({
-            userId: request.userId,
-            communityId: community.id
-          }, { transaction });
-        }
-
-        await request.update({
-          status: 'APPROVED',
-          reviewedAt: new Date(),
-          reviewedBy: reviewerId
-        }, { transaction });
-      });
-
-      return res.status(200).json({ message: 'Solicitud aprobada correctamente.' });
-    } catch (error) {
-      handleError(res, req, error, 'Error al aprobar la solicitud de comunidad');
-    }
-  }
-
-  async rejectRequest(req, res) {
-    try {
-      const reviewerId = req.user.id;
-      const { requestId } = req.params;
-      const community = await getManagedCommunity(reviewerId);
-
-      if (!community) {
-        return res.status(404).json({ message: 'No tienes comunidad registrada.' });
-      }
-
-      const request = await models.user_community_request.findOne({
-        where: {
-          id: requestId,
-          communityId: community.id,
-          status: 'PENDING'
-        }
-      });
-
-      if (!request) {
-        return res.status(404).json({ message: 'La solicitud no existe o ya fue procesada.' });
-      }
-
-      await request.update({
-        status: 'REJECTED',
-        reviewedAt: new Date(),
-        reviewedBy: reviewerId
-      });
-
-      return res.status(200).json({ message: 'Solicitud rechazada correctamente.' });
-    } catch (error) {
-      handleError(res, req, error, 'Error al rechazar la solicitud de comunidad');
-    }
-  }
-
-  async removeMember(req, res) {
-    try {
-      const leaderId = req.user.id;
-      const memberId = Number(req.params.memberId);
-      const community = await getManagedCommunity(leaderId);
-
-      if (!community) {
-        return res.status(404).json({ message: 'No tienes comunidad registrada.' });
-      }
-
-      if (memberId === community.lider) {
-        return res.status(400).json({ message: 'No puedes sacar al líder de la comunidad.' });
-      }
-
-      const membership = await models.user_community.findOne({
-        where: {
-          userId: memberId,
-          communityId: community.id
-        }
-      });
-
-      if (!membership) {
-        return res.status(404).json({ message: 'El usuario no pertenece a tu comunidad.' });
-      }
-
-      await membership.destroy();
-
-      return res.status(200).json({ message: 'Miembro removido correctamente.' });
-    } catch (error) {
-      handleError(res, req, error, 'Error al sacar miembro de la comunidad');
-    }
-  }
-    // GET /user/my-community
-    async getMyCommunity(req, res) {
-      try {
-        const userId = req.user.id;
-        // Obtener la comunidad donde el usuario es miembro
-        const userCommunity = await models.user_community.findOne({
-          where: { userId },
-          include: [
-            {
-              model: models.community,
-              as: 'community',
-              include: [
-                {
-                  model: models.Users,
-                  as: 'leader',
-                  include: [
-                    {
-                      model: models.streamer,
-                      as: 'streamer',
-                    },
-                    {
-                      model: models.user_profile_images,
-                      as: 'profileImages',
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        });
-
-        if (!userCommunity || !userCommunity.community) {
-          return res.status(204).json({ message: 'No tienes comunidad registrada.' });
-        }
-
-        const c = userCommunity.community;
-        const leader = c.leader || {};
-        const streamer = leader.streamer || {};
-        const profileImages = Array.isArray(leader.profileImages) && leader.profileImages.length > 0 ? leader.profileImages[0] : {};
-
-        const communityMemberships = await models.user_community.findAll({
-          where: { communityId: c.id },
-          include: [
-            {
-              model: models.Users,
-              as: 'user',
-              attributes: ['id', 'username', 'displayName'],
-              include: [
-                {
-                  model: models.user_profile_images,
-                  as: 'profileImages',
-                  attributes: ['img']
-                }
-              ]
-            }
-          ]
-        });
-
-        const members = communityMemberships.map((membership) => ({
-          id: membership.user?.id,
-          nombre: membership.user?.username || membership.user?.displayName || 'N/A',
-          profileImage: Array.isArray(membership.user?.profileImages) && membership.user.profileImages.length > 0
-            ? membership.user.profileImages[0].img
-            : null
-        }));
-
-        const result = {
-          id: c.id,
-          name: c.name,
-          shortname: c.shortname,
-          color: c.color,
-          color2: c.color2,
-          description: c.description,
-          logo_url: c.logo_url,
-          leader: {
-            id: leader.id,
-            username: leader.username,
-            displayName: leader.displayName,
-            role: leader.role,
-            profileImage: profileImages?.img || null,
-            streamer: {
-              platform: streamer?.platform || null,
-              username: streamer?.username || null,
-              link: streamer?.link || null,
-              image: streamer?.image || null
-            }
-          },
-          members
-        };
-        return res.status(200).json({ community: result });
-      } catch (error) {
-        handleError(res, req, error, 'Error al obtener tu comunidad');
-      }
-    }
-  // GET /user/communities
   async getAll(req, res) {
     try {
       const communities = await models.community.findAll({
@@ -315,12 +161,10 @@ class CommunityController {
           {
             model: models.Users,
             as: 'leader',
-            // attributes: ['id', 'username', 'displayName', 'role', 'logo_url'],
             include: [
               {
                 model: models.streamer,
                 as: 'streamer',
-                // attributes: ['platform', 'username', 'link', 'image']
               },
               {
                 model: models.user_profile_images,
@@ -331,31 +175,51 @@ class CommunityController {
           }
         ],
         order: [['name', 'ASC']],
-        group: ['community.id']
+        distinct: true
       });
-      // Obtener miembros para cada comunidad
-      const communitiesWithMembers = await Promise.all(communities.map(async c => {
-        // Busca los miembros de la comunidad
-        // const userCommunities = await models.user_community.findAll({
-        //   where: { communityId: c.id },
-        //   include: [{ model: models.Users, as: 'user', attributes: ['id', 'username'] }]
-        // });
-        const [userCommunities] = await db.query(`
-          SELECT uc.*, u.id as userId, u.username, upi.img as profileImage
-          FROM user_community uc
-          JOIN Users u ON uc.userId = u.id
-          LEFT JOIN user_profile_images upi ON u.id = upi.userId
-          WHERE uc.communityId = ${c.id}
-        `)
 
-        const members = userCommunities.map(uc => ({
-          id: uc.userId,
-          nombre: uc.username,
-          profileImage: uc.profileImage || null
+      const communityIds = communities.map((community) => community.id);
+      const memberRows = communityIds.length
+        ? await db.query(
+            `
+              SELECT uc.communityId, u.id as userId, u.username, upi.img as profileImage
+              FROM user_community uc
+              JOIN Users u ON uc.userId = u.id
+              LEFT JOIN user_profile_images upi ON u.id = upi.userId
+              WHERE uc.communityId IN (:communityIds)
+            `,
+            {
+              replacements: { communityIds },
+              type: QueryTypes.SELECT,
+            }
+          )
+        : [];
+
+      const membersByCommunity = memberRows.reduce((acc, row) => {
+        const communityId = Number(row.communityId);
+        if (!acc[communityId]) {
+          acc[communityId] = [];
+        }
+
+        acc[communityId].push({
+          id: row.userId,
+          username: row.username,
+          profileImage: row.profileImage || null,
+        });
+
+        return acc;
+      }, {});
+
+      const communitiesWithMembers = communities.map((c) => {
+        const members = (membersByCommunity[Number(c.id)] || []).map((member) => ({
+          ...member,
+          isLeader: Number(member.id) === Number(c.lider),
         }));
+
         const leader = c.leader || {};
         const streamer = leader.streamer || {};
         const profileImage = leader.profileImage || {};
+
         return {
           id: c.id,
           name: c.name,
@@ -377,9 +241,10 @@ class CommunityController {
               image: streamer.image
             }
           },
-          members: members
+          members
         };
-      }));
+      });
+
       const isManager = req.user.permissions && req.user.permissions.includes('community.manage');
       return res.status(200).json({ communities: communitiesWithMembers, isManager });
     } catch (error) {
@@ -387,169 +252,69 @@ class CommunityController {
     }
   }
 
-  // GET /user/my-community
-
-
-  // POST /user/communities
-  async create(req, res) {
-    try {
-      const userId = req.user.id;
-      const { platform, streamerUsername, streamerLink, streamerImage, communityName, shortname, color, color2, description, logo_url } = req.body;
-
-      // Buscar si ya existe comunidad
-      let community = await models.community.findOne({ where: { lider: userId } });
-
-      // Crear o actualizar streamer
-      let streamer = await models.streamer.findOne({ where: { userID: userId } });
-      if (!streamer) {
-        streamer = await models.streamer.create({
-          userID: userId,
-          platform,
-          username: streamerUsername,
-          link: streamerLink,
-          image: streamerImage
-        });
-      } else {
-        await streamer.update({ platform, username: streamerUsername, link: streamerLink, image: streamerImage });
-      }
-
-      if (community) {
-        // Actualizar comunidad existente
-        await community.update({
-          name: communityName,
-          shortname,
-          color,
-          color2,
-          description,
-          logo_url
-        });
-        return res.status(200).json({ message: 'Comunidad actualizada correctamente', community });
-      } else {
-        // Crear nueva comunidad
-        community = await models.community.create({
-          name: communityName,
-          shortname,
-          lider: userId,
-          color,
-          color2,
-          description,
-          logo_url
-        });
-        let joinLeaderToCommunity = await models.user_community.create({
-          userId,
-          communityId: community.id
-        });
-        if(!joinLeaderToCommunity) {
-          console.warn(`No se pudo unir al líder ${userId} a su comunidad ${community.id}`);
-        }
-        return res.status(201).json({ message: 'Comunidad creada correctamente', community });
-      }
-    } catch (error) {
-      handleError(res, req, error, 'Error al crear comunidad');
-    }
-  }
-
-  // POST /user/communities/logo
-  async uploadCommunityLogo(req, res) {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: 'No se subió ningún archivo.' });
-      }
-      const userId = req.user?.id || 'unknown';
-      const extByMime = {
-        'image/jpeg': 'jpg',
-        'image/png': 'png',
-        'image/webp': 'webp',
-        'image/gif': 'gif',
-      };
-      const extension = extByMime[req.file.mimetype] || 'webp';
-      const folder = process.env.R2_FOLDER || 'tdt-system';
-      const key = `${folder}/communities/${userId}/logo_${Date.now()}.${extension}`;
-
-      const s3 = new S3Client({
-        region: 'auto',
-        endpoint: process.env.R2_ENDPOINT,
-        credentials: {
-          accessKeyId: process.env.R2_ACCESS_KEY,
-          secretAccessKey: process.env.R2_SECRET_KEY,
-        },
-      });
-
-      await s3.send(new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET,
-        Key: key,
-        Body: req.file.buffer,
-        ContentType: req.file.mimetype,
-      }));
-
-      const url = (process.env.R2_PUBLIC_URL
-        ? process.env.R2_PUBLIC_URL.replace(/\/$/, '')
-        : `${process.env.R2_ENDPOINT}/${process.env.R2_BUCKET}`.replace(/\/$/, '')) + `/${key}`;
-
-      return res.status(201).json({ url });
-    } catch (error) {
-      handleError(res, req, error, 'Error al subir logo de la comunidad');
-    }
-  }
-
   async join(req, res) {
     try {
       const userId = req.user.id;
-      const communityId = req.params.id;
-      // Verificar que la comunidad exista
+      const communityId = Number(req.params.id);
+
+      if (!Number.isInteger(communityId) || communityId <= 0) {
+        return res.status(400).json({ message: 'ID de comunidad inválido.' });
+      }
+
       const community = await models.community.findByPk(communityId);
       if (!community) {
         return res.status(404).json({ message: 'Comunidad no encontrada.' });
       }
-      // Verificar si el usuario ya es miembro
-      const existingMembership = await models.user_community.findOne({
-        where: { userId, communityId }
-      });
+
+      const existingMembership = await getUserMembership(userId);
       if (existingMembership) {
-        return res.status(400).json({ message: 'El usuario ya es miembro de la comunidad.' });
+        return res.status(409).json({ message: 'Ya perteneces a una comunidad.' });
       }
-      // verificar si el usuario es líder de otra comunidad
+
       const liderMembership = await models.community.findOne({
         where: { lider: userId }
       });
       if (liderMembership) {
         return res.status(400).json({ message: 'No puedes unirte a otra comunidad porque eres líder de una comunidad.' });
       }
+
       const existingPendingRequest = await models.user_community_request.findOne({
         where: { userId, status: 'PENDING' }
       });
       if (existingPendingRequest) {
-        return res.status(400).json({ message: 'Ya tienes una solicitud pendiente de revisión.' });
+        return res.status(409).json({ message: 'Ya tienes una solicitud pendiente de revisión.' });
       }
-      // Unirse a la comunidad
-      await models.user_community_request.create({ userId, communityId });
-      return res.status(200).json({ message: 'Tu solicitud fue enviada correctamente.' });
 
+      await models.user_community_request.create({ userId, communityId });
+      return res.status(201).json({ message: 'Tu solicitud fue enviada correctamente.' });
     } catch (error) {
       handleError(res, req, error, 'Error al unirse a la comunidad');
     }
   }
+
   async leave(req, res) {
     try {
       const userId = req.user.id;
-      const communityId = req.params.id;
-      // Verificar que la comunidad exista
+      const communityId = Number(req.params.id);
+
+      if (!Number.isInteger(communityId) || communityId <= 0) {
+        return res.status(400).json({ message: 'ID de comunidad inválido.' });
+      }
+
       const community = await models.community.findByPk(communityId);
       if (!community) {
         return res.status(404).json({ message: 'Comunidad no encontrada.' });
       }
-      // Verificar si el usuario es miembro
-      const membership = await models.user_community.findOne({
-        where: { userId, communityId }
-      });
+
+      const membership = await models.user_community.findOne({ where: { userId, communityId } });
       if (!membership) {
         return res.status(400).json({ message: 'No eres miembro de esta comunidad.' });
       }
-      // Verificar si el usuario es líder
+
       if (community.lider === userId) {
-        return res.status(400).json({ message: 'No puedes salir de la comunidad porque eres el líder' });
+        return res.status(400).json({ message: 'El líder no puede salir de la comunidad. Designa un nuevo líder primero.' });
       }
-      // Salir de la comunidad
+
       await membership.destroy();
       return res.status(200).json({ message: 'Has salido de la comunidad correctamente.' });
     } catch (error) {
@@ -578,7 +343,11 @@ class CommunityController {
         return res.status(404).json({ message: 'No se encontró una solicitud pendiente para cancelar.' });
       }
 
-      await request.destroy();
+      await request.update({
+        status: 'REJECTED',
+        reviewedAt: new Date(),
+        reviewedBy: userId
+      });
 
       return res.status(200).json({ message: 'Solicitud cancelada correctamente.' });
     } catch (error) {
@@ -589,19 +358,18 @@ class CommunityController {
   async getRequests(req, res) {
     try {
       const userId = req.user.id;
-      // verificar si el usuario pertenece a una comunidad
-      const requestedCommunity = await models.user_community_request.findOne({
+      const request = await models.user_community_request.findOne({
         where: { userId, status: 'PENDING' },
       });
-      if (!requestedCommunity) {
-        return res.status(200).json({ message: 'No tienes solicitudes de comunidad.', value:false });
-      }
-      return res.status(200).json({ requests: requestedCommunity, value:true });
+
+      return res.status(200).json({
+        request: request || null,
+        hasPendingRequest: Boolean(request)
+      });
     } catch (error) {
       handleError(res, req, error, 'Error al obtener las solicitudes de comunidad del usuario');
     }
   }
-
 }
 
 export const communityController = new CommunityController();
