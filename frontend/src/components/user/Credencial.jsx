@@ -92,6 +92,17 @@ function Credencial({
         transform: `scale(${resolvedAvatarZoom})`,
       };
 
+  const equippedEmblems = Array.isArray(user?.equippedEmblems)
+    ? [...user.equippedEmblems].sort((left, right) => {
+        const orderDiff = (Number(left?.order) || 0) - (Number(right?.order) || 0);
+        if (orderDiff !== 0) return orderDiff;
+
+        return String(left?.name || "").localeCompare(String(right?.name || ""), "es", {
+          sensitivity: "base",
+        });
+      })
+    : [];
+
   return (
     <div className="w-full max-w-[370px] lg:max-w-[420px] lg:shrink-0">
       <div className="rounded-3xl ">
@@ -301,7 +312,51 @@ function Credencial({
 
                 <div className="border-b border-[rgba(139,110,58,0.25)] pb-2 mb-2 h-auto flex-1 flex flex-col">
                   <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Insignias</span>
-                  <div className="mt-1 flex-1 h-full rounded border border-dashed border-[rgba(139,110,58,0.35)] bg-black/5" />
+                  <div className="mt-1 flex-1 h-full rounded border border-dashed border-[rgba(139,110,58,0.35)] bg-black/5 p-[3px] flex flex-wrap content-start gap-[3px]">
+                    {equippedEmblems.length ? (
+                      equippedEmblems.map((emblem) => {
+                        const emblemColor = emblem?.color || "#9CA3AF";
+                        const emblemLabel = emblem?.name || "Insignia";
+                        const emblemTitle = emblem?.description
+                          ? `${emblemLabel}\n${emblem.description}`
+                          : emblemLabel;
+
+                        return (
+                          <div
+                            key={`${emblem.emblemId || emblem.id}-${emblem.order || 0}`}
+                            className="w-11 h-11 rounded-lg overflow-hidden flex items-center justify-center shadow-sm"
+                            style={{
+                              border: `2px solid ${emblemColor}`,
+                              backgroundColor: toRgba(emblemColor, 0.12),
+                              boxShadow: `0 0 0 1px ${toRgba(emblemColor, 0.18)} inset`,
+                            }}
+                            title={emblemTitle}
+                          >
+                            {emblem?.iconUrl ? (
+                              <img
+                                src={emblem.iconUrl}
+                                alt={emblemLabel}
+                                className="w-full h-full object-cover"
+                                loading={lazyImages ? "lazy" : "eager"}
+                                decoding="async"
+                              />
+                            ) : (
+                              <span
+                                className="text-[13px] font-black uppercase"
+                                style={{ color: emblemColor }}
+                              >
+                                {emblemLabel.slice(0, 1)}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="w-full h-full min-h-[72px] flex items-center justify-center text-center credential-label text-[10px] font-bold uppercase tracking-[0.18em] opacity-70">
+                        Sin insignias equipadas
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="text-center pt-2 border-t border-[rgba(139,110,58,0.4)] text-[8px] mt-auto">
                   <p className="credential-label font-medium tracking-tight">Identidad única verificada | © TierraDeTodos</p>

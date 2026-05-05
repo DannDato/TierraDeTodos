@@ -95,15 +95,95 @@ export default (sequelize, DataTypes) => {
       'menu.start',
       'menu.userscontrol',
       'menu.users',
+      'menu.tickets',
       'menu.profile',
       'menu.configuration',
       'menu.aboutapp',
       'menu.gestion',
+      'menu.reports',
       'gest.roles',
       'gest.permissions',
       'gest.statuses',
+      'gest.editions',
+      'gest.tickets',
+      'gest.news',
+      'Commands.manage',
+      'Communities.admin',
+      'gest.system',
+      'emblems.give',
       'user.view',
-      'user.edit'
+      'user.edit',
+
+      'users.view',
+      'users.edit',
+
+      'commands.view',
+      'commands.gest',
+      'commands.edit',
+
+      'communities.view',
+      'communities.gest',
+      'communities.remove',
+
+      'devices.view',
+      'devices.edit',
+
+      'editions.view',
+      'editions.gest',
+      'editions.edit',
+      'editions.remove',
+
+      'news_types.view',
+      'news_types.gest',
+      'news_types.edit',
+      'news_types.remove',
+
+      'permissions.view',
+      'permissions.gest',
+      'permissions.edit',
+      'permissions.remove',
+
+      'roles.view',
+      'roles.gest',
+      'roles.edit',
+      'roles.remove',
+
+      'sessions.view',
+      'sessions.edit',
+
+      'statuses.view',
+      'statuses.gest',
+      'statuses.edit',
+      'statuses.remove',
+
+      'system.view',
+      'system.gest',
+      'system.edit',
+
+      'ticket_catalogs.view',
+      'ticket_catalogs.gest',
+      'ticket_catalogs.edit',
+      'ticket_catalogs.remove',
+
+      'ticket_statuses.view',
+      'ticket_statuses.gest',
+      'ticket_statuses.edit',
+      'ticket_statuses.remove',
+
+      'tickets.view',
+      'tickets.manage',
+      'tickets.police',
+      'tickets.close',
+
+      'emblems.view',
+      'emblems.gest',
+      'emblems.edit',
+      'emblems.remove',
+
+      'goals.view',
+      'goals.gest',
+      'goals.edit',
+      'goals.remove'
     ];
     const activePermissionKeys = new Set(permissions.map((permission) => permission.key));
 

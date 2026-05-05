@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCcw, Eye, EyeOff, Search, X } from "lucide-react";
 
 import Button from "../../../elements/Button";
-import Input from "../../../elements/Input";
 import AlertModal from "../../../elements/AlertModal";
 import LoadingOverlay from "../../shared/LoadingOverlay";
 import CloseButton from "../../../elements/closeButton";
 import Select from "../../../elements/Select";
+import Table from "../../../elements/Table";
 import api from "../../../api/axios";
 
 function DevicesManagerView() {
@@ -158,6 +158,82 @@ function DevicesManagerView() {
     return haystack.includes(normalizedSearchTerm);
   });
 
+  const devicesColumns = useMemo(() => ([
+    {
+      key: "online",
+      header: "Online",
+      render: (device) => (
+        device.isActive ? (
+          <span className="inline-flex items-center gap-2 text-emerald-300 text-xs font-semibold">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            Online
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-2 text-[var(--ins-text-gray)] text-xs font-semibold">
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--ins-text-gray)]/60" />
+            Offline
+          </span>
+        )
+      ),
+    },
+    {
+      key: "folio",
+      header: "Folio",
+      cellClassName: "text-[var(--ins-text-white)] font-mono text-xs",
+      getTitle: (device) => device.folio || "N/A",
+      render: (device) => compactFolio(device.folio),
+    },
+    {
+      key: "userAgent",
+      header: "User-Agent",
+      cellClassName: "text-[var(--ins-text-gray)] text-xs",
+      getTitle: (device) => device.userAgent,
+      render: (device) => cropText(device.userAgent),
+    },
+    {
+      key: "authorized",
+      header: "Status",
+      render: (device) => (
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border inline-flex items-center ${authorizationToneMap[device.authorized] || authorizationToneMap.UNKNOWN}`}>
+          {device.authorized}
+        </span>
+      ),
+    },
+    {
+      key: "ipAddress",
+      header: "IP",
+      cellClassName: "text-[var(--ins-text-white)] text-xs",
+      render: (device) => {
+        const ipVisible = visibleIpRowIds.has(device.deviceId);
+        return (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleIpVisibility(device.deviceId);
+            }}
+            className="inline-flex items-center gap-2 px-2 py-1 rounded bg-[var(--black-color)]/40 border border-[var(--white-color)]/15"
+          >
+            {ipVisible ? <EyeOff size={12} /> : <Eye size={12} />}
+            <span className="font-mono">{ipVisible ? (device.ipAddress || "N/A") : "***.***.***.***"}</span>
+          </button>
+        );
+      },
+    },
+    {
+      key: "username",
+      header: "Usuario",
+      cellClassName: "text-[var(--ins-text-white)] font-semibold",
+      render: (device) => device.username,
+    },
+    {
+      key: "lastLogin",
+      header: "Último login",
+      cellClassName: "text-[var(--ins-text-white)] text-sm",
+      render: (device) => (device.lastLogin ? new Date(device.lastLogin).toLocaleString() : "N/A"),
+    },
+  ]), [authorizationToneMap, toggleIpVisibility, visibleIpRowIds]);
+
   return (
     <div className="flex flex-col h-full animate-[fadeIn_0.2s_ease-out]">
       <LoadingOverlay isVisible={loading || isSaving} />
@@ -176,8 +252,8 @@ function DevicesManagerView() {
           <p className="text-sm text-[var(--ins-text-gray)] mt-1">Doble clic en una fila para ver detalle e historial.</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-          <div className="relative">
+        <div className="flex flex-col items-start self-start md:self-end sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="relative w-full sm:w-auto">
             <input
               type="text"
               placeholder="Buscar en cualquier campo..."
@@ -194,89 +270,21 @@ function DevicesManagerView() {
             )}
           </div>
 
-          <Button variant="primary" size="md" className="flex items-center gap-2" onClick={loadDevices}>
+          <Button variant="primary" size="md" className="flex items-center gap-2 self-start shrink-0 whitespace-nowrap" onClick={loadDevices}>
             <RefreshCcw size={16} /> Actualizar
           </Button>
         </div>
       </div>
 
-      <div className="bg-black/20 rounded-3xl overflow-hidden shadow-md p-6">
-        <div className="overflow-x-auto tdt-scrollbar">
-          <table className="w-full text-left min-w-[920px]">
-            <thead>
-              <tr className="bg-black/10 text-sm text-[var(--ins-text-gray)]">
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Online</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Folio</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">User-Agent</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Status</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">IP</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Usuario</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Último login</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDevices.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-10 text-center text-[var(--ins-text-gray)]">
-                    {devices.length === 0 ? "No hay dispositivos registrados." : "No hay resultados para la búsqueda."}
-                  </td>
-                </tr>
-              ) : (
-                filteredDevices.map((device) => {
-                  const ipVisible = visibleIpRowIds.has(device.deviceId);
-                  return (
-                    <tr
-                      key={device.deviceId}
-                      onDoubleClick={() => openDeviceDetail(device)}
-                      className="border-b border-black/10 hover:bg-black/5 transition-colors cursor-pointer"
-                    >
-                      <td className="py-4 px-4">
-                        {device.isActive ? (
-                          <span className="inline-flex items-center gap-2 text-emerald-300 text-xs font-semibold">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                            Online
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-2 text-[var(--ins-text-gray)] text-xs font-semibold">
-                            <span className="w-2.5 h-2.5 rounded-full bg-[var(--ins-text-gray)]/60" />
-                            Offline
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-4 px-4 text-[var(--ins-text-white)] font-mono text-xs" title={device.folio || "N/A"}>
-                        {compactFolio(device.folio)}
-                      </td>
-                      <td className="py-4 px-4 text-[var(--ins-text-gray)] text-xs" title={device.userAgent}>{cropText(device.userAgent)}</td>
-                      <td className="py-4 px-4">
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border inline-flex items-center ${authorizationToneMap[device.authorized] || authorizationToneMap.UNKNOWN}`}>
-                          {device.authorized}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-[var(--ins-text-white)] text-xs">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleIpVisibility(device.deviceId);
-                          }}
-                          className="inline-flex items-center gap-2 px-2 py-1 rounded bg-[var(--black-color)]/40 border border-[var(--white-color)]/15"
-                        >
-                          {ipVisible ? <EyeOff size={12} /> : <Eye size={12} />}
-                          <span className="font-mono">{ipVisible ? (device.ipAddress || "N/A") : "***.***.***.***"}</span>
-                        </button>
-                      </td>
-                      <td className="py-4 px-4 text-[var(--ins-text-white)] font-semibold">{device.username}</td>
-                      <td className="py-4 px-4 text-[var(--ins-text-white)] text-sm">
-                        {device.lastLogin ? new Date(device.lastLogin).toLocaleString() : "N/A"}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Table
+        columns={devicesColumns}
+        data={filteredDevices}
+        rowKey="deviceId"
+        onRowDoubleClick={(row) => openDeviceDetail(row)}
+        minWidth="min-w-[920px]"
+        emptyColSpan={7}
+        emptyMessage={devices.length === 0 ? "No hay dispositivos registrados." : "No hay resultados para la búsqueda."}
+      />
 
       {detailDevice && (
         <DeviceHistoryModal
@@ -327,6 +335,90 @@ function DeviceHistoryModal({ device, detailData, loading, onClose, openAlert, o
   };
 
   const currentAuthorization = selectedAuthorization || device?.authorized || "UNKNOWN";
+
+  const linkedUsersColumns = [
+    {
+      key: "username",
+      header: "Usuario",
+      cellClassName: "text-[var(--ins-text-white)] font-semibold",
+      render: (row) => row.username || "unknown-user",
+    },
+    {
+      key: "authorized",
+      header: "Estatus",
+      render: (row) => (
+        <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full border ${authorizationToneMap[row.authorized] || authorizationToneMap.UNKNOWN}`}>
+          {row.authorized || "UNKNOWN"}
+        </span>
+      ),
+    },
+    {
+      key: "registeredIp",
+      header: "IP registrada",
+      cellClassName: "text-[var(--ins-text-white)] text-xs font-mono",
+      render: (row) => {
+        const rowKey = `${row.userId}-${row.deviceId || row.username}`;
+        return (
+          <ProtectedIpValue
+            value={row.registeredIp}
+            isVisible={visibleLinkedUserIps.has(rowKey)}
+            onToggle={() => toggleProtectedIp(rowKey, visibleLinkedUserIps, setVisibleLinkedUserIps)}
+          />
+        );
+      },
+    },
+    {
+      key: "firstLoginAt",
+      header: "Primer login",
+      cellClassName: "text-[var(--ins-text-white)] text-sm",
+      render: (row) => (row.firstLoginAt ? new Date(row.firstLoginAt).toLocaleString() : "N/A"),
+    },
+    {
+      key: "lastLoginAt",
+      header: "Ultimo login",
+      cellClassName: "text-[var(--ins-text-white)] text-sm",
+      render: (row) => (row.lastLoginAt ? new Date(row.lastLoginAt).toLocaleString() : "N/A"),
+    },
+    {
+      key: "sessionsCount",
+      header: "Inicios",
+      cellClassName: "text-[var(--ins-text-white)] text-sm",
+      render: (row) => row.sessionsCount ?? 0,
+    },
+  ];
+
+  const attemptsColumns = [
+    {
+      key: "username",
+      header: "Usuario",
+      cellClassName: "text-[var(--ins-text-white)] font-semibold",
+      render: (attempt) => attempt.username,
+    },
+    {
+      key: "at",
+      header: "Fecha",
+      cellClassName: "text-[var(--ins-text-white)] text-sm",
+      render: (attempt) => (attempt.at ? new Date(attempt.at).toLocaleString() : "N/A"),
+    },
+    {
+      key: "ip",
+      header: "IP",
+      cellClassName: "text-[var(--ins-text-white)] text-xs font-mono",
+      render: (attempt) => (
+        <ProtectedIpValue
+          value={attempt.ip}
+          isVisible={visibleAttemptIps.has(attempt.id)}
+          onToggle={() => toggleProtectedIp(attempt.id, visibleAttemptIps, setVisibleAttemptIps)}
+        />
+      ),
+    },
+    {
+      key: "userAgent",
+      header: "User-Agent",
+      cellClassName: "text-[var(--ins-text-gray)] text-xs",
+      render: (attempt) => attempt.userAgent || "N/A",
+    },
+  ];
 
   const toggleProtectedIp = (key, visibleSet, setter) => {
     const isVisible = visibleSet.has(key);
@@ -389,9 +481,9 @@ function DeviceHistoryModal({ device, detailData, loading, onClose, openAlert, o
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[var(--black-color)]/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl bg-[var(--ins-background)] rounded-3xl border border-[var(--white-color)]/10 overflow-hidden max-h-[90vh] flex flex-col">
-        <div className="px-6 py-4 border-b border-[var(--white-color)]/10 flex items-center justify-between">
+    <div className="fixed inset-x-0 top-0 bottom-16 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden">
+      <div className="w-full max-w-5xl bg-[var(--ins-background)]/50 backdrop-blur-lg rounded-3xl border border-white/10 overflow-hidden max-h-[80dvh] flex flex-col">
+        <div className="px-6 py-4 border-b border-[var(--white-color)]/10 flex items-center justify-between flex-shrink-0">
           <div>
             <h3 className="text-xl font-bold text-[var(--ins-text-white)]">Detalle de dispositivo</h3>
             <p className="text-sm text-[var(--ins-text-gray)]">Folio: {detailData?.folio || device.folio || "N/A"}</p>
@@ -399,7 +491,7 @@ function DeviceHistoryModal({ device, detailData, loading, onClose, openAlert, o
           <CloseButton onClick={onClose} />
         </div>
 
-        <div className="p-6 space-y-6 overflow-y-auto tdt-scrollbar">
+        <div className="flex-1 min-h-0 p-6 space-y-6 overflow-y-auto tdt-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoCell label="Hash" value={detailData?.deviceHash || device.deviceHash} mono />
             <InfoCell label="User-Agent completo" value={device.userAgent} />
@@ -470,42 +562,14 @@ function DeviceHistoryModal({ device, detailData, loading, onClose, openAlert, o
             {usageByUsers.length === 0 ? (
               <div className="py-8 text-center text-[var(--ins-text-gray)]">No hay relaciones de usuario registradas para este dispositivo.</div>
             ) : (
-              <div className="overflow-x-auto tdt-scrollbar">
-                <table className="w-full min-w-[820px] text-left">
-                  <thead>
-                    <tr className="bg-[var(--black-color)]/20 text-xs uppercase tracking-wider text-[var(--ins-text-gray)]">
-                      <th className="px-4 py-3">Usuario</th>
-                      <th className="px-4 py-3">Estatus</th>
-                      <th className="px-4 py-3">IP registrada</th>
-                      <th className="px-4 py-3">Primer login</th>
-                      <th className="px-4 py-3">Ultimo login</th>
-                      <th className="px-4 py-3">Inicios</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {usageByUsers.map((row) => (
-                      <tr key={`${row.userId}-${row.deviceId || row.username}`} className="border-t border-[var(--white-color)]/10">
-                        <td className="px-4 py-3 text-[var(--ins-text-white)] font-semibold">{row.username || "unknown-user"}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full border ${authorizationToneMap[row.authorized] || authorizationToneMap.UNKNOWN}`}>
-                            {row.authorized || "UNKNOWN"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-[var(--ins-text-white)] text-xs font-mono">
-                          <ProtectedIpValue
-                            value={row.registeredIp}
-                            isVisible={visibleLinkedUserIps.has(`${row.userId}-${row.deviceId || row.username}`)}
-                            onToggle={() => toggleProtectedIp(`${row.userId}-${row.deviceId || row.username}`, visibleLinkedUserIps, setVisibleLinkedUserIps)}
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-[var(--ins-text-white)] text-sm">{row.firstLoginAt ? new Date(row.firstLoginAt).toLocaleString() : "N/A"}</td>
-                        <td className="px-4 py-3 text-[var(--ins-text-white)] text-sm">{row.lastLoginAt ? new Date(row.lastLoginAt).toLocaleString() : "N/A"}</td>
-                        <td className="px-4 py-3 text-[var(--ins-text-white)] text-sm">{row.sessionsCount ?? 0}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table
+                columns={linkedUsersColumns}
+                data={usageByUsers}
+                rowKey={(row) => `${row.userId}-${row.deviceId || row.username}`}
+                minWidth="min-w-[820px]"
+                layout="embedded"
+                preset="compactMuted"
+              />
             )}
           </div>
 
@@ -519,34 +583,14 @@ function DeviceHistoryModal({ device, detailData, loading, onClose, openAlert, o
             ) : attempts.length === 0 ? (
               <div className="py-8 text-center text-[var(--ins-text-gray)]">No hay inicios de sesión registrados para este dispositivo.</div>
             ) : (
-              <div className="overflow-x-auto tdt-scrollbar">
-                <table className="w-full min-w-[850px] text-left">
-                  <thead>
-                    <tr className="bg-[var(--black-color)]/20 text-xs uppercase tracking-wider text-[var(--ins-text-gray)]">
-                      <th className="px-4 py-3">Usuario</th>
-                      <th className="px-4 py-3">Fecha</th>
-                      <th className="px-4 py-3">IP</th>
-                      <th className="px-4 py-3">User-Agent</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attempts.map((attempt) => (
-                      <tr key={attempt.id} className="border-t border-[var(--white-color)]/10">
-                        <td className="px-4 py-3 text-[var(--ins-text-white)] font-semibold">{attempt.username}</td>
-                        <td className="px-4 py-3 text-[var(--ins-text-white)] text-sm">{attempt.at ? new Date(attempt.at).toLocaleString() : "N/A"}</td>
-                        <td className="px-4 py-3 text-[var(--ins-text-white)] text-xs font-mono">
-                          <ProtectedIpValue
-                            value={attempt.ip}
-                            isVisible={visibleAttemptIps.has(attempt.id)}
-                            onToggle={() => toggleProtectedIp(attempt.id, visibleAttemptIps, setVisibleAttemptIps)}
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-[var(--ins-text-gray)] text-xs">{attempt.userAgent || "N/A"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table
+                columns={attemptsColumns}
+                data={attempts}
+                rowKey="id"
+                minWidth="min-w-[850px]"
+                layout="embedded"
+                preset="compactMuted"
+              />
             )}
           </div>
         </div>

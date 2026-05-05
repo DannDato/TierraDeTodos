@@ -6,6 +6,7 @@ import Button from "../../../elements/Button";
 import Input from "../../../elements/Input";
 import Select from "../../../elements/Select";
 import Textarea from "../../../elements/Textarea";
+import Tabbar from "../../../elements/Tabbar";
 import CloseButton from "../../../elements/closeButton";
 import AlertModal from "../../../elements/AlertModal";
 import LoadingOverlay from "../../shared/LoadingOverlay";
@@ -24,6 +25,11 @@ const buildInitialForm = () => ({
   active: "YES",
   immutable: false,
 });
+
+const ticketCatalogTabs = [
+  { id: "types", label: "Tipos" },
+  { id: "priorities", label: "Prioridades" },
+];
 
 function TicketCatalogManagerView() {
   const [loading, setLoading] = useState(true);
@@ -199,8 +205,8 @@ function TicketCatalogManagerView() {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-          <div className="relative">
+        <div className="flex flex-col items-start self-start md:self-end sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="relative w-full sm:w-auto">
             <input
               type="text"
               placeholder="Buscar..."
@@ -219,7 +225,7 @@ function TicketCatalogManagerView() {
           <Button
             variant="primary"
             size="md"
-            className="flex items-center gap-2 bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+            className="flex items-center gap-2 self-start shrink-0 whitespace-nowrap bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
             onClick={openCreateModal}
           >
             <Plus size={18} /> Nuevo
@@ -227,35 +233,16 @@ function TicketCatalogManagerView() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 mb-6">
-        <button
-          type="button"
-          className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
-            isTypesTab
-              ? "bg-[var(--secondary-color)] text-white"
-              : "bg-white/5 text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)]"
-          }`}
-          onClick={() => {
-            setActiveTab("types");
+      <div className="mb-6">
+        <Tabbar
+          tabs={ticketCatalogTabs}
+          activeTab={activeTab}
+          onChange={(tabId) => {
+            setActiveTab(tabId);
             setSelectedItem(null);
           }}
-        >
-          Tipos
-        </button>
-        <button
-          type="button"
-          className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
-            !isTypesTab
-              ? "bg-[var(--secondary-color)] text-white"
-              : "bg-white/5 text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)]"
-          }`}
-          onClick={() => {
-            setActiveTab("priorities");
-            setSelectedItem(null);
-          }}
-        >
-          Prioridades
-        </button>
+          variant="glass"
+        />
       </div>
 
       {filteredItems.length === 0 ? (
@@ -397,10 +384,10 @@ function CatalogDetailModal({ item, title, onClose, onSave, onDelete, isSaving }
   const canDelete = Boolean(formData.id) && !formData.immutable;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-x-0 top-0 bottom-16 z-[100] flex items-center justify-center p-4 overflow-hidden">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-2xl rounded-3xl border border-[var(--white-color)]/10 bg-[var(--ins-background)] shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-2xl rounded-3xl border border-white/10 bg-[var(--ins-background)]/50 backdrop-blur-lg shadow-2xl flex flex-col max-h-[80dvh]">
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--white-color)]/10">
           <div>
             <h3 className="text-xl font-bold text-[var(--ins-text-white)]">
@@ -413,7 +400,7 @@ function CatalogDetailModal({ item, title, onClose, onSave, onDelete, isSaving }
           <CloseButton onClick={onClose} />
         </div>
 
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto tdt-scrollbar">
+        <div className="flex-1 min-h-0 p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto tdt-scrollbar">
           <Input
             label="Clave"
             value={formData.key}

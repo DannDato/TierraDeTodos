@@ -173,8 +173,8 @@ function NewsTypesManagerView() {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-          <div className="relative">
+        <div className="flex flex-col items-start self-start md:self-end sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="relative w-full sm:w-auto">
             <input
               type="text"
               placeholder="Buscar..."
@@ -193,7 +193,7 @@ function NewsTypesManagerView() {
           <Button
             variant="primary"
             size="md"
-            className="flex items-center gap-2 bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+            className="flex items-center gap-2 self-start shrink-0 whitespace-nowrap bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
             onClick={openCreateModal}
           >
             <Plus size={18} /> Nuevo
@@ -317,53 +317,55 @@ function NewsTypeDetailModal({ item, onClose, onSave, onDelete, isSaving }) {
   const patchForm = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-x-0 top-0 bottom-16 z-50 flex items-center justify-center p-4 overflow-hidden">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-3xl bg-[var(--ins-background)] shadow-2xl p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="relative w-full max-w-lg rounded-3xl bg-[var(--ins-background)]/50 backdrop-blur-lg shadow-2xl p-6 max-h-[80dvh] overflow-hidden flex flex-col border border-white/10">
+        <div className="flex items-center justify-between mb-6 flex-shrink-0">
           <h3 className="text-xl font-extrabold text-[var(--ins-text-white)]">
             {form.id ? "Editar tipo" : "Nuevo tipo"}
           </h3>
           <CloseButton onClick={onClose} />
         </div>
 
-        <div className="space-y-4">
-          <Input
-            label="Nombre"
-            value={form.name}
-            onChange={(e) => patchForm("name", e.target.value.toUpperCase())}
-            placeholder="NOTICIA"
-          />
+        <div className="flex-1 min-h-0 overflow-y-auto tdt-scrollbar pr-1">
+          <div className="space-y-4">
+            <Input
+              label="Nombre"
+              value={form.name}
+              onChange={(e) => patchForm("name", e.target.value.toUpperCase())}
+              placeholder="NOTICIA"
+            />
 
-          <Textarea
-            label="Descripción"
-            value={form.description}
-            onChange={(e) => patchForm("description", e.target.value)}
-            placeholder="Describe el propósito de este tipo"
-            rows={3}
-          />
+            <Textarea
+              label="Descripción"
+              value={form.description}
+              onChange={(e) => patchForm("description", e.target.value)}
+              placeholder="Describe el propósito de este tipo"
+              rows={3}
+            />
 
-          <div>
-            <span className="block text-sm text-[var(--ins-text-gray)] mb-1 ml-1">Color</span>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={form.color}
-                onChange={(e) => patchForm("color", e.target.value)}
-                className="w-9 h-9 rounded-lg cursor-pointer border border-white/10 bg-transparent p-0.5"
-              />
-              <input
-                type="text"
-                value={form.color}
-                onChange={(e) => patchForm("color", e.target.value)}
-                className="flex-1 text-sm rounded-xl bg-white/5 border border-white/10 text-[var(--ins-text-white)] px-3 py-2 font-mono focus:outline-none focus:border-[var(--secondary-color)] transition-colors"
-                maxLength={7}
-              />
+            <div>
+              <span className="block text-sm text-[var(--ins-text-gray)] mb-1 ml-1">Color</span>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={form.color}
+                  onChange={(e) => patchForm("color", e.target.value)}
+                  className="w-9 h-9 rounded-lg cursor-pointer border border-white/10 bg-transparent p-0.5"
+                />
+                <input
+                  type="text"
+                  value={form.color}
+                  onChange={(e) => patchForm("color", e.target.value)}
+                  className="flex-1 text-sm rounded-xl bg-white/5 border border-white/10 text-[var(--ins-text-white)] px-3 py-2 font-mono focus:outline-none focus:border-[var(--secondary-color)] transition-colors"
+                  maxLength={7}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-between gap-3">
+        <div className="mt-6 flex items-center justify-between gap-3 flex-shrink-0">
           {form.id ? (
             <Button
               type="button"

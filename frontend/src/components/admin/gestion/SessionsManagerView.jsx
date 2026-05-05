@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCcw, LogOut, Search, X } from "lucide-react";
 
 import Button from "../../../elements/Button";
-import Input from "../../../elements/Input";
 import AlertModal from "../../../elements/AlertModal";
+import Table from "../../../elements/Table";
 import LoadingOverlay from "../../shared/LoadingOverlay";
 import api from "../../../api/axios";
 
@@ -107,6 +107,61 @@ function SessionsManagerView() {
     return haystack.includes(normalizedSearchTerm);
   });
 
+  const sessionsColumns = useMemo(() => ([
+    {
+      key: "online",
+      header: "Online",
+      render: () => (
+        <span className="inline-flex items-center gap-2 text-emerald-300 text-xs font-semibold">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+          Online
+        </span>
+      ),
+    },
+    {
+      key: "username",
+      header: "Usuario",
+      cellClassName: "text-[var(--ins-text-white)] font-semibold",
+      render: (session) => session.username,
+    },
+    {
+      key: "deviceFolio",
+      header: "Dispositivo",
+      cellClassName: "text-[var(--ins-text-white)] font-mono text-xs",
+      getTitle: (session) => session.deviceFolio || "N/A",
+      render: (session) => compactFolio(session.deviceFolio),
+    },
+    {
+      key: "device",
+      header: "User-Agent",
+      cellClassName: "text-[var(--ins-text-gray)] text-xs",
+      getTitle: (session) => session.device || "unknown-device",
+      render: (session) => truncateUserAgent(session.device, 40),
+    },
+    {
+      key: "startedAt",
+      header: "Inicio de sesión",
+      cellClassName: "text-[var(--ins-text-white)] text-sm",
+      render: (session) => (session.startedAt ? new Date(session.startedAt).toLocaleString() : "N/A"),
+    },
+    {
+      key: "actions",
+      header: "Acciones",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (session) => (
+        <Button
+          variant="cancel"
+          size="sm"
+          className="inline-flex items-center gap-1 whitespace-nowrap px-3"
+          onClick={() => requestRevokeSession(session)}
+        >
+          <LogOut size={14} /> Cerrar sesión
+        </Button>
+      ),
+    },
+  ]), [requestRevokeSession]);
+
   return (
     <div className="flex flex-col h-full animate-[fadeIn_0.2s_ease-out]">
       <LoadingOverlay isVisible={loading || isSaving} />
@@ -125,8 +180,8 @@ function SessionsManagerView() {
           <p className="text-sm text-[var(--ins-text-gray)] mt-1">Listado de sesiones activas actualmente.</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-          <div className="relative">
+        <div className="flex flex-col items-start self-start md:self-end sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="relative w-full sm:w-auto">
             <input
               type="text"
               placeholder="Buscar en cualquier campo..."
@@ -143,68 +198,20 @@ function SessionsManagerView() {
             )}
           </div>
 
-          <Button variant="primary" size="md" className="flex items-center gap-2" onClick={loadSessions}>
+          <Button variant="primary" size="md" className="flex items-center gap-2 self-start shrink-0 whitespace-nowrap" onClick={loadSessions}>
             <RefreshCcw size={16} /> Actualizar
           </Button>
         </div>
       </div>
 
-      <div className="bg-black/20 rounded-3xl overflow-hidden shadow-md p-6">
-        <div className="overflow-x-auto tdt-scrollbar">
-          <table className="w-full text-left min-w-[860px]">
-            <thead>
-              <tr className="bg-black/10 text-sm text-[var(--ins-text-gray)]">
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Online</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Usuario</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Dispositivo</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">User-Agent</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Inicio de sesión</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSessions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-10 text-center text-[var(--ins-text-gray)]">
-                    {sessions.length === 0 ? "No hay sesiones activas." : "No hay resultados para la búsqueda."}
-                  </td>
-                </tr>
-              ) : (
-                filteredSessions.map((session) => (
-                  <tr key={session.id} className="border-b border-black/10 hover:bg-black/5 transition-colors">
-                    <td className="py-4 px-4">
-                      <span className="inline-flex items-center gap-2 text-emerald-300 text-xs font-semibold">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                        Online
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-[var(--ins-text-white)] font-semibold">{session.username}</td>
-                    <td className="py-4 px-4 text-[var(--ins-text-white)] font-mono text-xs" title={session.deviceFolio || "N/A"}>
-                      {compactFolio(session.deviceFolio)}
-                    </td>
-                    <td className="py-4 px-4 text-[var(--ins-text-gray)] text-xs" title={session.device || "unknown-device"}>
-                      {truncateUserAgent(session.device, 40)}
-                    </td>
-                    <td className="py-4 px-4 text-[var(--ins-text-white)] text-sm">
-                      {session.startedAt ? new Date(session.startedAt).toLocaleString() : "N/A"}
-                    </td>
-                    <td className="py-4 px-4 text-right">
-                      <Button
-                        variant="cancel"
-                        size="sm"
-                        className="inline-flex items-center gap-1 whitespace-nowrap px-3"
-                        onClick={() => requestRevokeSession(session)}
-                      >
-                        <LogOut size={14} /> Cerrar sesión
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Table
+        columns={sessionsColumns}
+        data={filteredSessions}
+        rowKey="id"
+        minWidth="min-w-[860px]"
+        emptyColSpan={6}
+        emptyMessage={sessions.length === 0 ? "No hay sesiones activas." : "No hay resultados para la búsqueda."}
+      />
     </div>
   );
 }

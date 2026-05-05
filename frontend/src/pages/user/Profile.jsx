@@ -133,7 +133,16 @@ function Profile() {
   const [isLoadingStreamer, setIsLoadingStreamer] = useState(false);
   const [isSavingStreamer, setIsSavingStreamer] = useState(false);
   const [streamerNotice, setStreamerNotice] = useState("");
+  const [infoModal, setInfoModal] = useState({ isOpen: false, type: "info", title: "Aviso", message: "" });
   const avatarInputRef = useRef(null);
+
+  const openInfoModal = ({ type = "info", title = "Aviso", message = "" }) => {
+    setInfoModal({ isOpen: true, type, title, message });
+  };
+
+  const closeInfoModal = () => {
+    setInfoModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -237,7 +246,7 @@ function Profile() {
       setIsAvatarEditorOpen(false);
     } catch (err) {
       const message = err.response?.data?.message || err.message || "No se pudo eliminar el avatar";
-      window.alert(message);
+      openInfoModal({ type: "error", title: "Error al eliminar avatar", message });
     }
   };
 
@@ -262,7 +271,7 @@ function Profile() {
       setIsAvatarEditorOpen(false);
     } catch (err) {
       const message = err.response?.data?.message || err.message || "No se pudo guardar el encuadre";
-      window.alert(message);
+      openInfoModal({ type: "error", title: "Error al guardar encuadre", message });
     } finally {
       setIsSavingAvatarPosition(false);
     }
@@ -275,12 +284,12 @@ function Profile() {
     if (!file) return;
 
     if (!file.type?.startsWith("image/")) {
-      window.alert("Solo se permiten imágenes");
+      openInfoModal({ type: "warning", title: "Archivo no válido", message: "Solo se permiten imágenes" });
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      window.alert("La imagen no debe superar 5MB");
+      openInfoModal({ type: "warning", title: "Archivo demasiado grande", message: "La imagen no debe superar 5MB" });
       return;
     }
 
@@ -311,7 +320,7 @@ function Profile() {
       }
     } catch (err) {
       const message = err.response?.data?.message || err.message || "No se pudo subir el avatar";
-      window.alert(message);
+      openInfoModal({ type: "error", title: "Error al subir avatar", message });
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -389,12 +398,12 @@ function Profile() {
     }
 
     if (!file.type?.startsWith("image/")) {
-      window.alert("Solo se permiten imágenes");
+      openInfoModal({ type: "warning", title: "Archivo no válido", message: "Solo se permiten imágenes" });
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      window.alert("La imagen no debe superar 5MB");
+      openInfoModal({ type: "warning", title: "Archivo demasiado grande", message: "La imagen no debe superar 5MB" });
       return;
     }
 
@@ -511,6 +520,16 @@ function Profile() {
         onConfirm={handleDeleteAvatar}
       />
 
+      <AlertModal
+        isOpen={infoModal.isOpen}
+        type={infoModal.type}
+        title={infoModal.title}
+        message={infoModal.message}
+        onClose={closeInfoModal}
+        onConfirm={closeInfoModal}
+        cancelText=""
+      />
+
       {user && (
       <div className="w-full  px-0 mx-0 text-[var(--ins-text-white)]">
 
@@ -521,7 +540,7 @@ function Profile() {
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-2">
               <span>{currentUser.role}</span>
               <span>/</span>
-              <span className="text-[var(--secondary-color)]">Credencial</span>
+              <span className="text-[var(--secondary-color)]">Perfil</span>
             </div>
 
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
@@ -533,33 +552,33 @@ function Profile() {
             </p>
           </div>
 
-
-
         </div>
 
         {/* MAIN CONTENT - CREDENTIAL + INFO */}
         <div className="flex flex-col lg:flex-row gap-8 items-start ">
 
           {/* LEFT: CREDENTIAL */}
-          <Credencial
-            user={user}
-            currentStatus={currentStatus}
-            isInactiveStatus={isInactiveStatus}
-            isCancelledStatus={isCancelledStatus}
-            isFlipped={isFlipped}
-            onToggleFlip={() => setIsFlipped(!isFlipped)}
-            avatarInputRef={avatarInputRef}
-            onAvatarInputChange={handleAvatarInputChange}
-            onAvatarClick={handleAvatarClick}
-            isUploadingAvatar={isUploadingAvatar}
-            isSavingAvatarPosition={isSavingAvatarPosition}
-            avatarPreview={avatarPreview}
-            avatarImageStyle={avatarImageStyle}
-            isAvatarMenuOpen={isAvatarMenuOpen}
-            onOpenAvatarEditor={openAvatarEditor}
-            onTriggerAvatarPicker={triggerAvatarPicker}
-            onRequestDeleteAvatar={requestDeleteAvatar}
-          />
+          <div className="w-full lg:w-auto flex flex-col items-center gap-3">
+            <Credencial
+              user={user}
+              currentStatus={currentStatus}
+              isInactiveStatus={isInactiveStatus}
+              isCancelledStatus={isCancelledStatus}
+              isFlipped={isFlipped}
+              onToggleFlip={() => setIsFlipped(!isFlipped)}
+              avatarInputRef={avatarInputRef}
+              onAvatarInputChange={handleAvatarInputChange}
+              onAvatarClick={handleAvatarClick}
+              isUploadingAvatar={isUploadingAvatar}
+              isSavingAvatarPosition={isSavingAvatarPosition}
+              avatarPreview={avatarPreview}
+              avatarImageStyle={avatarImageStyle}
+              isAvatarMenuOpen={isAvatarMenuOpen}
+              onOpenAvatarEditor={openAvatarEditor}
+              onTriggerAvatarPicker={triggerAvatarPicker}
+              onRequestDeleteAvatar={requestDeleteAvatar}
+            />
+          </div>
 
           {/* RIGHT: ADDITIONAL INFO - SIN CAMBIOS */}
           <div className="w-full lg:flex-1 min-w-0 space-y-6">

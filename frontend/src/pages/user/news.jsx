@@ -46,6 +46,8 @@ function News() {
   const [commentText, setCommentText] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsSubmitting, setCommentsSubmitting] = useState(false);
+  const [commentLikesMap, setCommentLikesMap] = useState({});
+  const pendingCommentLikes = useRef(new Set());
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
     type: "info",
@@ -285,6 +287,8 @@ function News() {
     setIsEditingSelected(false);
     setComments([]);
     setCommentText("");
+    setCommentLikesMap({});
+    pendingCommentLikes.current.clear();
   };
 
   useEffect(() => {
@@ -298,9 +302,19 @@ function News() {
         setCommentsLoading(true);
         const { data } = await api.get(`/user/news/${selectedNews.id}/comments`);
         const payload = Array.isArray(data) ? data : data?.comments;
-        setComments(Array.isArray(payload) ? payload : []);
+        const list = Array.isArray(payload) ? payload : [];
+        setComments(list);
+        const likesInit = {};
+        for (const c of list) {
+          likesInit[c.id] = {
+            likesCount: Number(c.likesCount || 0),
+            likedByCurrentUser: Boolean(c.likedByCurrentUser),
+          };
+        }
+        setCommentLikesMap(likesInit);
       } catch (_error) {
         setComments([]);
+        setCommentLikesMap({});
       } finally {
         setCommentsLoading(false);
       }
@@ -390,6 +404,15 @@ function News() {
     if (!selectedNews) return false;
     return hasEditPermission && String(selectedNews.Reporter || "") === String(currentUser.username || "");
   }, [selectedNews, hasEditPermission, currentUser.username]);
+
+  const sortedComments = useMemo(() => {
+    return [...comments].sort((a, b) => {
+      const timeA = new Date(a?.createdAt || 0).getTime();
+      const timeB = new Date(b?.createdAt || 0).getTime();
+      if (timeA !== timeB) return timeB - timeA;
+      return Number(b?.id || 0) - Number(a?.id || 0);
+    });
+  }, [comments]);
 
   const startEditSelected = () => {
     if (!selectedNews || !canEditSelected) return;
@@ -545,6 +568,10 @@ function News() {
       const createdComment = data?.comment;
       if (createdComment) {
         setComments((prev) => [...prev, createdComment]);
+        setCommentLikesMap((prev) => ({
+          ...prev,
+          [createdComment.id]: { likesCount: 0, likedByCurrentUser: false },
+        }));
       }
       setCommentText("");
     } catch (error) {
@@ -576,6 +603,46 @@ function News() {
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleToggleCommentLike = async (commentId) => {
+    if (!selectedNews?.id || !commentId) return;
+    if (pendingCommentLikes.current.has(commentId)) return;
+
+    const current = commentLikesMap[commentId] || { likesCount: 0, likedByCurrentUser: false };
+    const willLike = !current.likedByCurrentUser;
+
+    // Optimistic update
+    pendingCommentLikes.current.add(commentId);
+    setCommentLikesMap((prev) => ({
+      ...prev,
+      [commentId]: {
+        likesCount: Math.max(0, current.likesCount + (willLike ? 1 : -1)),
+        likedByCurrentUser: willLike,
+      },
+    }));
+
+    try {
+      const { data } = await api.post(
+        `/user/news/${selectedNews.id}/comments/${commentId}/likes`,
+        { liked: willLike }
+      );
+      setCommentLikesMap((prev) => ({
+        ...prev,
+        [commentId]: {
+          likesCount: Number.isFinite(data?.likesCount) ? Math.max(0, data.likesCount) : prev[commentId]?.likesCount ?? 0,
+          likedByCurrentUser: !!data?.liked,
+        },
+      }));
+    } catch (_error) {
+      // Rollback
+      setCommentLikesMap((prev) => ({
+        ...prev,
+        [commentId]: current,
+      }));
+    } finally {
+      pendingCommentLikes.current.delete(commentId);
     }
   };
 
@@ -748,7 +815,7 @@ function News() {
       {selectedNews && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeNewsModal} />
-          <div className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] rounded-3xl bg-[var(--ins-background)]/60 backdrop-blur-lg border border-white/10 shadow-2xl overflow-hidden flex flex-col ">
+          <div className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] rounded-3xl bg-[var(--ins-background)]/60 backdrop-blur-lg border border-white/10 shadow-2xl overflow-y-auto tdt-scrollbar flex flex-col ">
             <div
               className={`relative h-56 md:h-72 w-full ${isEditingSelected ? "cursor-pointer" : ""}`}
               onClick={() => {
@@ -838,7 +905,7 @@ function News() {
               </div>
             </div>
 
-            <div className="p-6 overflow-y-auto tdt-scrollbar space-y-4">
+            <div className="p-6 space-y-4">
               {isEditingSelected ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -918,13 +985,35 @@ function News() {
                   Comentarios
                 </h3>
 
-                <div className="space-y-3 max-h-72 overflow-y-auto pr-1 tdt-scrollbar">
+                <div className="mt-3 mb-4 flex flex-col gap-2">
+                  <textarea
+                    rows={3}
+                    value={commentText}
+                    onChange={(event) => setCommentText(event.target.value)}
+                    placeholder="Escribe tu comentario..."
+                    className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
+                    maxLength={1000}
+                  />
+                  <div className="flex items-center justify-end">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+                      onClick={handleSendComment}
+                      disabled={commentsSubmitting || !String(commentText || "").trim()}
+                    >
+                      Comentar
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
                   {commentsLoading ? (
                     <p className="text-sm text-[var(--ins-text-gray)]">Cargando comentarios...</p>
-                  ) : comments.length === 0 ? (
+                  ) : sortedComments.length === 0 ? (
                     <p className="text-sm text-[var(--ins-text-gray)]">Aun no hay comentarios. Se la primera persona en comentar.</p>
                   ) : (
-                    comments.map((entry) => (
+                    sortedComments.map((entry) => (
                       <div key={entry.id} className="rounded-2xl bg-black/15 p-3 border border-white/5">
                         <div className="flex items-start gap-3">
                           <Link
@@ -948,17 +1037,33 @@ function News() {
                               >
                                 {entry.username || "Usuario"}
                               </Link>
-                              <span className="text-[11px] text-[var(--ins-text-gray)] whitespace-nowrap">
-                                {entry.createdAt
-                                  ? new Date(entry.createdAt).toLocaleString("es-MX", {
-                                    day: "2-digit",
-                                    month: "short",
-                                    year: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })
-                                  : ""}
-                              </span>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className="text-[11px] text-[var(--ins-text-gray)] whitespace-nowrap">
+                                  {entry.createdAt
+                                    ? new Date(entry.createdAt).toLocaleString("es-MX", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })
+                                    : ""}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-black/20 hover:bg-black/35 border border-white/10 transition-colors"
+                                  onClick={() => handleToggleCommentLike(entry.id)}
+                                  aria-label={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "Quitar like" : "Dar like"}
+                                >
+                                  <Heart
+                                    size={12}
+                                    className={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-gray)]"}
+                                  />
+                                  <span className="text-[11px] font-semibold text-[var(--ins-text-gray)]">
+                                    {commentLikesMap[entry.id]?.likesCount ?? 0}
+                                  </span>
+                                </button>
+                              </div>
                             </div>
                             <p className="text-sm text-[var(--ins-text-white)] whitespace-pre-wrap break-words">
                               {entry.comment}
@@ -968,28 +1073,6 @@ function News() {
                       </div>
                     ))
                   )}
-                </div>
-
-                <div className="mt-3 flex flex-col gap-2">
-                  <textarea
-                    rows={3}
-                    value={commentText}
-                    onChange={(event) => setCommentText(event.target.value)}
-                    placeholder="Escribe tu comentario..."
-                    className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
-                    maxLength={1000}
-                  />
-                  <div className="flex items-center justify-end">
-                    <Button
-                      type="button"
-                      variant="primary"
-                      className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
-                      onClick={handleSendComment}
-                      disabled={commentsSubmitting || !String(commentText || "").trim()}
-                    >
-                      Comentar
-                    </Button>
-                  </div>
                 </div>
               </div>
             </div>

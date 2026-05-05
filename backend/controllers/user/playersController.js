@@ -1,4 +1,5 @@
 import { db } from '../../models/index.js';
+import { getEquippedEmblemsByUsers } from '../../helpers/getEquippedEmblems.js';
 
 class PlayersController {
   getRandomOrderClause = () => {
@@ -85,6 +86,12 @@ class PlayersController {
         `,
         { type: db.QueryTypes.SELECT }
       );
+
+      const equippedEmblemsByUserId = await getEquippedEmblemsByUsers(players.map((player) => player.id));
+
+      for (const player of players) {
+        player.equippedEmblems = equippedEmblemsByUserId.get(Number(player.id)) || [];
+      }
 
       return res.json({ players });
     } catch (error) {

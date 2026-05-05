@@ -8,6 +8,7 @@ import Home from "./pages/home/Home"
 import Login from "./pages/auth/Login"
 import Register from "./pages/auth/Register"
 import Profile from "./pages/user/Profile";
+import Progress from "./pages/user/Progress";
 import VerifyAccess from "./pages/auth/VerifyAccess"
 import PasswordRecovery from "./pages/auth/passwordRecovery"
 // Layouts
@@ -18,10 +19,12 @@ import Tickets from "./pages/user/Tickets";
 import Players from "./pages/user/players";
 import News from "./pages/user/news";
 import Community from "./pages/user/Community";
+import Commands from "./pages/user/Commands";
 // Páginas de admin
 import Users from "./pages/admin/users";
 import Gestion from "./pages/admin/gestion";
 import Reports from "./pages/admin/Reports";
+import EmblemsAdmin from "./pages/admin/EmblemsAdmin";
 
 import NotFound from "./pages/home/NotFound";
 import LoadingOverlay from "./components/shared/LoadingOverlay";
@@ -36,12 +39,14 @@ const App = function App() {
       "/register",
       "/verifyAccess",
       "/profile",
+      "/progress",
       "/tickets",
       "/players",
       "/news",
       "/users",
       "/gestion",
       "/reports",
+      "/emblems-admin",
     ]),
     []
   );
@@ -74,12 +79,15 @@ const App = function App() {
         <Route path="/password-recovery" element={<PasswordRecovery />} />
 
         <Route path="/profile" element={<DashboardLayout><Profile /></DashboardLayout>}/>
+        <Route path="/progress" element={<DashboardLayout><Progress /></DashboardLayout>}/>
         <Route path="/start" element={<DashboardLayout><Start /></DashboardLayout>}/>
         <Route path="/tickets" element={<DashboardLayout><Tickets /></DashboardLayout>}/>
         <Route path="/players" element={<DashboardLayout><Players /></DashboardLayout>}/>
         <Route path="/news" element={<DashboardLayout><News /></DashboardLayout>}/>
         <Route path="/gestion" element={<DashboardLayout><Gestion /></DashboardLayout>}/>
         <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>}/>
+        <Route path="/emblems-admin" element={<DashboardLayout><EmblemsAdmin /></DashboardLayout>}/>
+        <Route path="/commands" element={<DashboardLayout><Commands /></DashboardLayout>}/>
 
         <Route path="/community" element={<DashboardLayout><Community /></DashboardLayout>}/>
         <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>}/>

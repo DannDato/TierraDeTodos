@@ -1,6 +1,7 @@
 import { db, models } from '../../../models/index.js';
 import { QueryTypes } from 'sequelize';
 import { applyRolePresetPermissions } from '../../../helpers/applyRolePresetPermissions.js';
+import { getEquippedEmblemsByUser } from '../../../helpers/getEquippedEmblems.js';
 
 class UsersController {
   async getAssignableStatuses(transaction) {
@@ -233,6 +234,8 @@ class UsersController {
         this.getAssignableStatuses()
       ]);
 
+      const equippedEmblems = await getEquippedEmblemsByUser(user.id);
+
       return res.status(200).json({
         user: {
           id: user.id,
@@ -255,6 +258,7 @@ class UsersController {
           avatarPosX: latestAvatar[0]?.avatarPosX ?? 50,
           avatarPosY: latestAvatar[0]?.avatarPosY ?? 50,
           avatarZoom: latestAvatar[0]?.avatarZoom ?? 1,
+          equippedEmblems,
           devices,
           statusHistory,
           permissions: assignedPermissionRows.map((permission) => permission.key)

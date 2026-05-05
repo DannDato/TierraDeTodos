@@ -97,6 +97,30 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'userID',
       as: 'streamerProfile'
     });
+
+    Users.hasMany(models.user_goals, {
+      foreignKey: 'userId',
+      as: 'user_goal_entries'
+    });
+
+    Users.hasMany(models.user_emblems, {
+      foreignKey: 'userId',
+      as: 'user_emblem_entries'
+    });
+
+    Users.belongsToMany(models.goals, {
+      through: models.user_goals,
+      foreignKey: 'userId',
+      otherKey: 'goalId',
+      as: 'goals'
+    });
+
+    Users.belongsToMany(models.emblems, {
+      through: models.user_emblems,
+      foreignKey: 'userId',
+      otherKey: 'emblemId',
+      as: 'emblems'
+    });
   };
 
   Users.seed = async () => {

@@ -282,6 +282,8 @@ class NewsController {
         return res.status(404).json({ message: 'Noticia no encontrada.' });
       }
 
+      const currentUserId = Number(req.user?.id) || 0;
+
       const comments = await db.query(
         `
           SELECT
@@ -297,19 +299,35 @@ class NewsController {
               WHERE upi.userId = u.id
               ORDER BY upi.id DESC
               LIMIT 1
-            ) AS avatarUrl
+            ) AS avatarUrl,
+            (
+              SELECT COUNT(*)
+              FROM news_comments_likes ncl
+              WHERE ncl.comment_id = nc.id
+            ) AS likesCount,
+            (
+              SELECT COUNT(*)
+              FROM news_comments_likes ncl
+              WHERE ncl.comment_id = nc.id AND ncl.user_id = :currentUserId
+            ) AS likedByCurrentUser
           FROM news_comments nc
           INNER JOIN Users u ON u.id = nc.user_id
           WHERE nc.news_id = :newsId
           ORDER BY nc.createdAt ASC, nc.id ASC
         `,
         {
-          replacements: { newsId },
+          replacements: { newsId, currentUserId },
           type: db.QueryTypes.SELECT
         }
       );
 
-      return res.status(200).json({ comments });
+      const parsed = comments.map((c) => ({
+        ...c,
+        likesCount: Number(c.likesCount || 0),
+        likedByCurrentUser: Number(c.likedByCurrentUser) > 0,
+      }));
+
+      return res.status(200).json({ comments: parsed });
     } catch (_error) {
       return res.status(500).json({ message: 'Error interno del servidor' });
     }
@@ -371,6 +389,8 @@ class NewsController {
           userId,
           username: String(req.user?.username || 'Usuario'),
           avatarUrl: avatarRow?.avatarUrl || null,
+          likesCount: 0,
+          likedByCurrentUser: false,
         }
       });
     } catch (_error) {
@@ -436,6 +456,70 @@ class NewsController {
         liked,
         likesCount
       });
+    } catch (_error) {
+      await tx.rollback();
+      return res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  };
+
+  toggleCommentLike = async (req, res) => {
+    const tx = await db.transaction();
+    try {
+      const newsId = Number(req.params.id);
+      const commentId = Number(req.params.commentId);
+      if (!newsId || !commentId) {
+        await tx.rollback();
+        return res.status(400).json({ message: 'ID invalido.' });
+      }
+
+      const liked = req.body?.liked;
+      if (typeof liked !== 'boolean') {
+        await tx.rollback();
+        return res.status(400).json({ message: 'El campo liked debe ser booleano.' });
+      }
+
+      const userId = req.user?.id;
+      if (!userId) {
+        await tx.rollback();
+        return res.status(401).json({ message: 'Usuario no autenticado.' });
+      }
+
+      const commentRow = await models.news_comments.findOne({
+        where: { id: commentId, newsId },
+        attributes: ['id'],
+        transaction: tx,
+        lock: tx.LOCK.UPDATE
+      });
+
+      if (!commentRow) {
+        await tx.rollback();
+        return res.status(404).json({ message: 'Comentario no encontrado.' });
+      }
+
+      const likeRow = await models.news_comments_likes.findOne({
+        where: { commentId, userId },
+        transaction: tx,
+        lock: tx.LOCK.UPDATE
+      });
+
+      if (liked) {
+        if (!likeRow) {
+          await models.news_comments_likes.create({ commentId, userId }, { transaction: tx });
+        }
+      } else {
+        if (likeRow) {
+          await likeRow.destroy({ transaction: tx });
+        }
+      }
+
+      const likesCount = await models.news_comments_likes.count({
+        where: { commentId },
+        transaction: tx
+      });
+
+      await tx.commit();
+
+      return res.status(200).json({ commentId, liked, likesCount });
     } catch (_error) {
       await tx.rollback();
       return res.status(500).json({ message: 'Error interno del servidor' });

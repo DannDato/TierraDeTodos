@@ -5,6 +5,7 @@ import handleError from '../../handlers/handleError.js';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { models } from '../../models/index.js';
+import { getEquippedEmblemsByUser } from '../../helpers/getEquippedEmblems.js';
 
 function generateVerifyCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -200,6 +201,7 @@ class ProfileController {
 
         const result = userData[0];
         result.devices = result.devices ? JSON.parse(result.devices) : [];
+        result.equippedEmblems = await getEquippedEmblemsByUser(user);
         return res.json({ user: result });
 
     } catch (error) {

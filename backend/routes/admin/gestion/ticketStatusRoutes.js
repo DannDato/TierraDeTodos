@@ -6,9 +6,9 @@ import { checkPermissions } from '../../../middlewares/checkPermissions.js';
 
 const router = express.Router();
 
-router.get('/ticket-statuses',       verifyToken, checkPermissions(['gest.tickets']), ctrlTicketStatus.getAll);
-router.post('/ticket-statuses',      verifyToken, checkPermissions(['gest.tickets']), ctrlTicketStatus.create);
-router.put('/ticket-statuses/:id',   verifyToken, checkPermissions(['gest.tickets']), ctrlTicketStatus.update);
-router.delete('/ticket-statuses/:id',verifyToken, checkPermissions(['gest.tickets']), ctrlTicketStatus.remove);
+router.get('/ticket-statuses', verifyToken, checkPermissions(['ticket_statuses.view']), ctrlTicketStatus.getAll);
+router.post('/ticket-statuses', verifyToken, checkPermissions(['ticket_statuses.gest']), ctrlTicketStatus.create);
+router.put('/ticket-statuses/:id', verifyToken, checkPermissions(['ticket_statuses.edit']), ctrlTicketStatus.update);
+router.delete('/ticket-statuses/:id', verifyToken, checkPermissions(['ticket_statuses.remove']), ctrlTicketStatus.remove);
 
 export default router;

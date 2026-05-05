@@ -3,7 +3,7 @@ import MenuBar from "../components/shared/MenuBar"
 import Background from "../elements/Background";
 // import MinecraftBackground from "../components/home/MinecraftBackground";
 
-function DashboardLayout({ children, maxWidthClass = "max-w-[1400px]" }) {
+function DashboardLayout({ children, maxWidthClass = "max-w-[1800px]" }) {
   const location = useLocation();
   const token = localStorage.getItem("token");
 

@@ -14,7 +14,8 @@ import {
   CircleDashed,
   Newspaper,
   Zap,
-  LogOut
+  LogOut,
+  Code
 } from "lucide-react";
 import Button from "../../elements/Button";
 import api from "../../api/axios";
@@ -61,24 +62,48 @@ function Start() {
 
   const [news, setNews] = useState([]);
   const [loadingNews, setLoadingNews] = useState(true);
+  const [progressSummary, setProgressSummary] = useState({
+    totalEmblems: 0,
+    equippedEmblems: 0,
+    totalGoals: 0,
+    completedGoals: 0,
+  });
   const [alerts] = useState(mockAlerts); // Estado para las alertas
 
   useEffect(() => {
-    const loadNews = async () => {
+    const loadStartData = async () => {
       try {
         setLoadingNews(true);
-        const { data } = await api.get("/user/news");
-        const payload = Array.isArray(data) ? data : data?.news;
+        const [newsResponse, progressResponse] = await Promise.allSettled([
+          api.get("/user/news"),
+          api.get("/user/progress/emblems"),
+        ]);
+
+        const newsData = newsResponse.status === "fulfilled" ? newsResponse.value?.data : null;
+        const payload = Array.isArray(newsData) ? newsData : newsData?.news;
         setNews(Array.isArray(payload) ? payload : []);
+
+        if (progressResponse.status === "fulfilled") {
+          const stats = progressResponse.value?.data?.stats || {};
+          setProgressSummary({
+            totalEmblems: Number(stats.totalEmblems) || 0,
+            equippedEmblems: Number(stats.equippedEmblems) || 0,
+            totalGoals: Number(stats.totalGoals) || 0,
+            completedGoals: Number(stats.completedGoals) || 0,
+          });
+        } else {
+          setProgressSummary({ totalEmblems: 0, equippedEmblems: 0, totalGoals: 0, completedGoals: 0 });
+        }
       } catch (error) {
         console.error("Start news load error:", error);
         setNews([]);
+        setProgressSummary({ totalEmblems: 0, equippedEmblems: 0, totalGoals: 0, completedGoals: 0 });
       } finally {
         setLoadingNews(false);
       }
     };
 
-    loadNews();
+    loadStartData();
   }, []);
 
   const normalizedNews = news
@@ -195,7 +220,19 @@ function Start() {
         {/* ========================================================= */}
         {/* ESTADISTICAS DEL JUGADOR */}
         {/* ========================================================= */}
-        <div className="bg-black/10 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8 backdrop-blur-lg border border-white/10">
+        <div
+          className="bg-black/10 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8 backdrop-blur-lg border border-white/10 cursor-pointer transition-transform hover:-translate-y-0.5"
+          onClick={() => navigate('/progress')}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              navigate('/progress');
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          title="Abrir pagina de progreso"
+        >
 
           <div className="flex items-center justify-between mb-4 relative z-10">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
@@ -209,9 +246,9 @@ function Start() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 ">
             {/* Card de Insignias */}
-            <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5 ">              
+            <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5 ">
               {/* Capa de Runas (Fondo interno) */}
-              <div 
+              <div
                 className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
                 style={{
                   backgroundImage: `url(${Runas})`,
@@ -227,19 +264,18 @@ function Start() {
               {/* Contenido (Encima de las runas) */}
               <div className="relative z-10 w-full">
                 <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider">Insignias</p>
-                
+
                 <div className="mt-2 flex items-center gap-3">
                   <div className="p-2 bg-purple-500/20 rounded-xl text-yellow-500 ">
                     <Trophy size={18} />
                   </div>
-                  {/* Aquí podrías poner el número o contador */}
-                  <span className="text-sm font-bold text-white">12</span>
+                  <span className="text-sm font-bold text-white">{progressSummary.totalEmblems}</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5">
-              <div 
+              <div
                 className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
                 style={{
                   backgroundImage: `url(${Runas})`,
@@ -257,13 +293,13 @@ function Start() {
                 </div>
                 <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 flex-row items-center gap-4 flex">
                   <Clock size={18} />
-                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">142h 30m</p>
+                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.equippedEmblems}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5">
-              <div 
+              <div
                 className="absolute inset-0 opacity-10 group-hover:opacity-5 transition-opacity duration-500 "
                 style={{
                   backgroundImage: `url(${Runas})`,
@@ -275,18 +311,18 @@ function Start() {
                   zIndex: 0
                 }}
               ></div>
-              
+
               <div>
-                <p className="text-[10px] font-bold  uppercase">Monedas</p>
+                <p className="text-[10px] font-bold  uppercase">Logros</p>
                 <div className="p-2 bg-emerald-500/10 rounded-3xl text-emerald-600 flex-row items-center gap-4 flex">
                   <Coins size={18} />
-                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">$15,420</p>
+                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.totalGoals}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5">
-              <div 
+              <div
                 className="absolute inset-0 opacity-10 group-hover:opacity-5 transition-opacity duration-500 "
                 style={{
                   backgroundImage: `url(${Runas})`,
@@ -299,10 +335,10 @@ function Start() {
                 }}
               ></div>
               <div>
-                <p className="text-[10px] font-bold  uppercase">Kills / Muertes</p>
+                <p className="text-[10px] font-bold  uppercase">Completados</p>
                 <div className="p-2 bg-red-500/10 rounded-3xl text-red-300 flex-row items-center gap-4 flex">
                   <Swords size={18} />
-                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">34 / 12</p>
+                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.completedGoals}</p>
                 </div>
               </div>
             </div>
@@ -347,7 +383,7 @@ function Start() {
           <div className="lg:col-span-1 flex flex-col gap-6">
             <div className="bg-black/10 rounded-3xl p-6 shadow-md h-80 flex flex-col items-center relative overflow-hidden gap-5 h-120 backdrop-blur-lg border border-white/10">
               <div className="absolute -top-24 -right-24 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
-            
+
               <div className="w-full relative z-10">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
                   <Play size={24} style={{ color: "var(--secondary-color)" }}/>
@@ -404,7 +440,15 @@ function Start() {
                   Acceso rápido
                 </h2>
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-align-center mt-4 relative z-10">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-align-center mt-4 relative z-10">
+                <button
+                  onClick={() => navigate('/commands')}
+                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-blue-500/20 hover:bg-amber-500/30 transition-colors shadow-md"
+                  type="button"
+                >
+                  <Code size={28} className="text-blue-500" />
+                  {/* <span className="text-xs font-bold text-amber-500 uppercase">Tickets</span> */}
+                </button>
                 <button
                   onClick={() => navigate('/community')}
                   className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-[var(--white-color)]/20 hover:bg-[var(--secondary-color)]/30 transition-colors shadow-md"
@@ -438,7 +482,7 @@ function Start() {
         {/* ACCESOS DIRECTOS RÁPIDOS */}
         {/* ========================================================= */}
         <div className="flex gap-4 mt-8 mb-8 w-full justify-center w-full bg-black/10 rounded-3xl p-6 shadow-md backdrop-blur-lg relative overflow-hidden border border-white/10">
-          <div 
+          <div
             className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
             style={{
               backgroundImage: `url(${Runas})`,

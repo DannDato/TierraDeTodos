@@ -5,6 +5,7 @@ import AlertModal from "../../elements/AlertModal";
 import CommunityManager from "../../components/user/community/CommunityManager";
 import CommunityCard from "../../components/user/community/CommunityCard";
 import InfoRow from "../../elements/InfoRow";
+import Table from "../../elements/Table";
 import CommunityDefault from "../../img/community_default.png";
 import { Link } from "react-router-dom";
 
@@ -346,7 +347,7 @@ function Community() {
                         ) : visibleCommunities.length === 0 ? (
                             <div className="text-[var(--ins-text-white)]">No hay comunidades registradas.</div>
                         ) : (
-                            <div className="relative">
+                            <div className="relative flex flex-col items-center justify-center w-full">
                                 {hasPendingRequest && (
                                     <div className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl backdrop-blur-[10px] border border-white/10">
                                         <div className="rounded-2xl bg-[var(--ins-background)]/90 px-5 py-4 text-center shadow-xl border border-amber-400/20">
@@ -357,7 +358,7 @@ function Community() {
                                         </div>
                                     </div>
                                 )}
-                                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hover:bounce transition-all ${hasPendingRequest ? "blur-sm pointer-events-none select-none" : ""}`}>
+                                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xxl:grid-cols-5 gap-6 hover:bounce transition-all ${hasPendingRequest ? "blur-sm pointer-events-none select-none" : ""}`}>
                                     {progressiveCommunities.map((community) => (
                                         <div key={community.id} className="cursor-pointer hover:scale-[1.03] transition-transform" onClick={() => handleOpen(community)}>
                                             <CommunityCard community={community} />
@@ -450,6 +451,57 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, has
 
 
     if (!isOpen || !community) return null;
+
+    const membersColumns = [
+        {
+            key: "index",
+            header: "#",
+            cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+            render: (_entry, index) => index + 1,
+        },
+        {
+            key: "avatar",
+            header: "",
+            render: (entry) => (
+                <img
+                    key={entry.id}
+                    src={entry.profileImage || community.logo_url || CommunityDefault}
+                    alt={entry.username || "Usuario"}
+                    className="w-8 h-8 rounded-full border object-cover mt-1"
+                    loading="lazy"
+                    decoding="async"
+                    style={{ borderColor: community.color || '#222222' }}
+                />
+            ),
+        },
+        {
+            key: "username",
+            header: "Usuario",
+            cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+            render: (entry) => (
+                <Link
+                    to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
+                    className="text-sm font-semibold hover:text-[var(--hover-secondary)] transition-colors"
+                    title={`Ver jugador ${entry.username || "Usuario"}`}
+                >
+                    {entry.username || "Usuario"}
+                </Link>
+            ),
+        },
+        {
+            key: "role",
+            header: "Acciones",
+            cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+            render: (entry) => (
+                entry.isLeader ? (
+                    <span className="px-2 py-1 text-xs font-mono rounded-full bg-green-500/20 text-green-400">Líder</span>
+                ) : (
+                    <span className="px-2 py-1 text-xs font-mono rounded-full bg-blue-500/20 text-blue-400">Miembro</span>
+                )
+            ),
+        },
+    ];
+
     return (
         <div className="fixed inset-0 z-[120] flex items-center justify-center transition-opacity duration-200 ">
 
@@ -525,55 +577,13 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, has
                             No hay movimientos de estatus registrados para este usuario.
                         </div>
                         ) : (
-                        <div className="overflow-x-auto tdt-scrollbar">
-                            <table className="w-full min-w-[680px] text-left text-sm">
-                            <thead className="bg-[var(--white-color)]/5 text-[10px] uppercase tracking-[0.22em] text-[var(--ins-text-white)]">
-                                <tr>
-                                <th className="px-5 py-3 font-bold">#</th>
-                                <th className="px-5 py-3 font-bold"></th>
-                                <th className="px-5 py-3 font-bold">Usuario</th>
-                                <th className="px-5 py-3 font-bold">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {community.members && community.members.map((entry, index) => (
-                                <tr key={entry.id} className="border-t border-[var(--white-color)]/5 align-top">
-                                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                                    {index + 1}
-                                    </td>
-                                    <td>
-                                        <img
-                                        key={entry.id}
-                                        src={entry.profileImage || community.logo_url || CommunityDefault}
-                                        alt={entry.username || "Usuario"}
-                                        className="w-8 h-8 rounded-full border object-cover mt-1"
-                                        loading="lazy"
-                                        decoding="async"
-                                        style={{ borderColor: community.color || '#222222' }}
-                                        />
-                                    </td>
-                                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                                        <Link
-                                           to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
-                                            className="text-sm font-semibold hover:text-[var(--hover-secondary)] transition-colors"
-                                            title={`Ver jugador ${entry.username || "Usuario"}`}
-                                            >
-                                            {entry.username || "Usuario"}
-                                        </Link>
-                                    </td>
-                                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                                    {entry.isLeader ? (
-                                        <span className="px-2 py-1 text-xs font-mono rounded-full bg-green-500/20 text-green-400">Líder</span>
-                                    ) : (
-                                        <span className="px-2 py-1 text-xs font-mono rounded-full bg-blue-500/20 text-blue-400">Miembro</span>
-                                    )}
-                                    </td>
-
-                                </tr>
-                                ))}
-                            </tbody>
-                            </table>
-                        </div>
+                        <Table
+                            columns={membersColumns}
+                            data={community.members || []}
+                            rowKey="id"
+                            minWidth="min-w-[680px]"
+                            layout="embedded"
+                        />
                         )}
                     </div>
                 </div>

@@ -17,6 +17,7 @@ import api from "../../api/axios";
 import UserDetailsModal from "../../components/admin/users/UserDetailsModal";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import AlertModal from "../../elements/AlertModal";
+import Table from "../../elements/Table";
 
 import UserDefault from "../../img/user_default.png";
 // const roleOptions = [
@@ -431,6 +432,104 @@ function Users() {
     [availableStatuses]
   );
 
+  const usersColumns = useMemo(() => ([
+    {
+      key: "player",
+      header: "Jugador",
+      render: (u) => (
+        <div className="flex items-center gap-3">
+          <div>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                openUserDetails(u.id);
+              }}
+            >
+              <img
+                src={u.profileImage || u.communityLogo || UserDefault}
+                alt={u.username}
+                className="w-8 h-8 rounded-full border object-cover mt-1"
+                style={{ borderColor: u.communityColor || "#222222" }}
+              />
+            </button>
+          </div>
+          <div>
+            <span className="font-bold text-[var(--ins-text-white)] block">{u.username}</span>
+            <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-[var(--ins-text-dark)]">ID {u.id}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "email",
+      header: "Email",
+      cellClassName: "text-sm text-[var(--ins-text-gray)] font-medium",
+      render: (u) => (u.email || "").replace(/(.{2})(.*)(?=@)/, "$1***"),
+    },
+    {
+      key: "role",
+      header: "rol",
+      render: (u) => getRoleBadge(u.role, u.roleColor),
+    },
+    {
+      key: "status",
+      header: "Estatus",
+      render: (u) => getStatusBadge(u.status, u.statusColor),
+    },
+    {
+      key: "lastConnection",
+      header: "Última Conexión",
+      cellClassName: "text-xs text-[var(--gray-color)]",
+      render: (u) => (
+        <div>
+          <div>{u.lastConnection ? new Date(u.lastConnection).toLocaleString() : "N/A"}</div>
+          <div className="font-mono text-[10px] mt-1 opacity-70 uppercase tracking-[0.14em]">Permisos: {(u.permissions || []).length}</div>
+        </div>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Acciones",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (u) => (
+        <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            type="button"
+            className="p-2 rounded-xl bg-[var(--black-color)]/20 border border-transparent text-gray-500 hover:text-blue-400 hover:border-blue-400/20 transition-colors"
+            title="Ver detalle"
+            onClick={(event) => {
+              event.stopPropagation();
+              openUserDetails(u.id);
+            }}
+          >
+            <Eye size={18} />
+          </button>
+          <button
+            type="button"
+            className="p-2 rounded-xl bg-[var(--black-color)]/20 border border-transparent text-gray-500 hover:text-red-500 hover:border-red-500/20 transition-colors"
+            title="Banear/Suspender"
+            onClick={(event) => {
+              event.stopPropagation();
+              banUserbyId(u.id, u.role);
+            }}
+          >
+            <Ban size={18} />
+          </button>
+          <button
+            type="button"
+            className="p-2 rounded-xl bg-[var(--black-color)]/20 border border-transparent text-gray-500 hover:text-blue-500 hover:border-blue-500/20 transition-colors"
+            title="Enviar Mensaje"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Mail size={18} />
+          </button>
+        </div>
+      ),
+    },
+  ]), [getRoleBadge, getStatusBadge, openUserDetails, banUserbyId]);
+
   return (
     <section className="min-h-screen py-15 flex items-start justify-center pb-24">
       <LoadingOverlay
@@ -523,111 +622,29 @@ function Users() {
             </div>
           </div>
 
-          <div className="overflow-x-auto tdt-scrollbar">
-            <table className="w-full min-w-[980px] text-left">
-              <thead>
-                <tr className="bg-black/10 text-sm text-[var(--ins-text-gray)]">
-                  <th className="py-4 px-4 font-bold uppercase tracking-wider">Jugador</th>
-                  <th className="py-4 px-4 font-bold uppercase tracking-wider">Email</th>
-                  <th className="py-4 px-4 font-bold uppercase tracking-wider">rol</th>
-                  <th className="py-4 px-4 font-bold uppercase tracking-wider">Estatus</th>
-                  <th className="py-4 px-4 font-bold uppercase tracking-wider">Última Conexión</th>
-                  <th className="py-4 px-4 font-bold uppercase tracking-wider text-right">Acciones</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan="6" className="py-10 text-center text-gray-500">
-                      Cargando usuarios...
-                    </td>
-                  </tr>
-                ) : loadError ? (
-                  <tr>
-                    <td colSpan="6" className="py-10 text-center text-[var(--danger-color)]">
-                      <div className="flex flex-col items-center gap-3">
-                        <span>{loadError}</span>
-                        <Button variant="secondary" size="sm" onClick={loadUsers}>
-                          Reintentar
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredUsers.length > 0 ? (
-                  filteredUsers.map((u) => (
-                    <tr
-                      key={u.id}
-                      onDoubleClick={() => openUserDetails(u.id)}
-                      className="border-b border-black/10 hover:bg-black/5 transition-colors group cursor-pointer"
-                    >
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="">
-                            <button
-                              onClick={() => openUserDetails(u.id)}
-                            >
-
-                            <img
-                              key={u.id}
-                              src={u.profileImage || u.communityLogo || UserDefault}
-                              alt={u.username}
-                              className="w-8 h-8 rounded-full border object-cover mt-1"
-                              style={{ borderColor: u.communityColor || '#222222' }}
-                            />
-                            </button>
-                          </div>
-                          <div>
-                            <span className="font-bold text-[var(--ins-text-white)] block">{u.username}</span>
-                            <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-[var(--ins-text-dark)]">ID {u.id}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="py-4 px-4 text-sm text-[var(--ins-text-gray)] font-medium">
-                        {(u.email || "").replace(/(.{2})(.*)(?=@)/, "$1***")}
-                      </td>
-
-                      <td className="py-4 px-4">{getRoleBadge(u.role, u.roleColor)}</td>
-
-                      <td className="py-4 px-4">{getStatusBadge(u.status, u.statusColor)}</td>
-
-                      <td className="py-4 px-4 text-xs text-[var(--gray-color)]">
-                        <div>
-                          {u.lastConnection ? new Date(u.lastConnection).toLocaleString() : "N/A"}
-                        </div>
-                        <div className="font-mono text-[10px] mt-1 opacity-70 uppercase tracking-[0.14em]">Permisos: {(u.permissions || []).length}</div>
-                      </td>
-
-                      <td className="py-4 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            className="p-2 rounded-xl bg-[var(--black-color)]/20 border border-transparent text-gray-500 hover:text-blue-400 hover:border-blue-400/20 transition-colors"
-                            title="Ver detalle"
-                            onClick={() => openUserDetails(u.id)}
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button className="p-2 rounded-xl bg-[var(--black-color)]/20 border border-transparent text-gray-500 hover:text-red-500 hover:border-red-500/20 transition-colors" title="Banear/Suspender">
-                            <Ban size={18} onClick={()=> banUserbyId(u.id,u.role)}/>
-                          </button>
-                          <button className="p-2 rounded-xl bg-[var(--black-color)]/20 border border-transparent text-gray-500 hover:text-blue-500 hover:border-blue-500/20 transition-colors" title="Enviar Mensaje">
-                            <Mail size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="py-10 text-center text-gray-500">
-                      No se encontraron jugadores con esos filtros.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          {isLoading ? (
+            <div className="py-10 text-center text-gray-500">Cargando usuarios...</div>
+          ) : loadError ? (
+            <div className="py-10 text-center text-[var(--danger-color)]">
+              <div className="flex flex-col items-center gap-3">
+                <span>{loadError}</span>
+                <Button variant="secondary" size="sm" onClick={loadUsers}>
+                  Reintentar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Table
+              columns={usersColumns}
+              data={filteredUsers}
+              rowKey="id"
+              onRowDoubleClick={(row) => openUserDetails(row.id)}
+              minWidth="min-w-[980px]"
+              emptyColSpan={6}
+              emptyMessage="No se encontraron jugadores con esos filtros."
+              layout="embedded"
+            />
+          )}
 
           <div className="mt-6 flex items-center justify-between text-sm font-medium text-[var(--gray-color)] px-1">
             <span>Mostrando {filteredUsers.length} de {users.length} jugadores</span>

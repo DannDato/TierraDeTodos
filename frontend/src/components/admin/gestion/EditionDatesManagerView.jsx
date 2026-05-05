@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CalendarRange, Download, Plus, Save } from "lucide-react";
 
 import Button from "../../../elements/Button";
 import Input from "../../../elements/Input";
+import Table from "../../../elements/Table";
 import api from "../../../api/axios";
 
 const createEmptyForm = () => ({
@@ -181,6 +182,55 @@ export default function EditionDatesManagerView({ editionId, openAlert }) {
     });
   };
 
+  const datesColumns = useMemo(() => ([
+    {
+      key: "date",
+      header: "Fecha",
+      cellClassName: "text-[var(--ins-text-white)]",
+      render: (row) => toDisplayDate(row.date),
+    },
+    {
+      key: "name",
+      header: "Nombre",
+      cellClassName: "text-[var(--ins-text-white)] font-semibold",
+      render: (row) => row.name,
+    },
+    {
+      key: "description",
+      header: "Descripción",
+      cellClassName: "text-[var(--ins-text-gray)]",
+      render: (row) => row.description || "Sin descripción",
+    },
+    {
+      key: "emoji",
+      header: "Emoji",
+      cellClassName: "text-2xl",
+      render: (row) => row.emoji || "-",
+    },
+    {
+      key: "color",
+      header: "Color",
+      render: (row) => (
+        <span className="inline-flex items-center gap-2 text-sm text-[var(--ins-text-white)]">
+          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: row.color }}></span>
+          {row.color}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Acciones",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (row) => (
+        <div className="flex justify-end gap-2">
+          <Button variant="primary" className="bg-white/10 hover:bg-white/15 text-white" onClick={() => handleEdit(row)} disabled={processing}>Editar</Button>
+          <Button variant="cancel" className="text-[var(--danger-color)] border border-[var(--danger-color)]/30 hover:bg-[var(--danger-color)]/10" onClick={() => handleDelete(row)} disabled={processing}>Eliminar</Button>
+        </div>
+      ),
+    },
+  ]), [processing]);
+
   return (
     <div className="space-y-5 animate-[fadeIn_0.2s_ease-out]">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -241,44 +291,15 @@ export default function EditionDatesManagerView({ editionId, openAlert }) {
         {loading ? (
           <div className="py-10 text-center text-[var(--ins-text-gray)]">Cargando fechas...</div>
         ) : (
-          <table className="w-full min-w-[980px] text-left">
-            <thead>
-              <tr className="bg-black/20 text-sm text-[var(--ins-text-gray)]">
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Fecha</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Nombre</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Descripción</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Emoji</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Color</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dates.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-10 text-center text-[var(--ins-text-gray)]">No hay fechas registradas.</td>
-                </tr>
-              ) : dates.map((row) => (
-                <tr key={row.id} className="border-t border-black/10 hover:bg-black/5 transition-colors">
-                  <td className="py-4 px-4 text-[var(--ins-text-white)]">{toDisplayDate(row.date)}</td>
-                  <td className="py-4 px-4 text-[var(--ins-text-white)] font-semibold">{row.name}</td>
-                  <td className="py-4 px-4 text-[var(--ins-text-gray)]">{row.description || "Sin descripción"}</td>
-                  <td className="py-4 px-4 text-2xl">{row.emoji || "-"}</td>
-                  <td className="py-4 px-4">
-                    <span className="inline-flex items-center gap-2 text-sm text-[var(--ins-text-white)]">
-                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: row.color }}></span>
-                      {row.color}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="primary" className="bg-white/10 hover:bg-white/15 text-white" onClick={() => handleEdit(row)} disabled={processing}>Editar</Button>
-                      <Button variant="cancel" className="text-[var(--danger-color)] border border-[var(--danger-color)]/30 hover:bg-[var(--danger-color)]/10" onClick={() => handleDelete(row)} disabled={processing}>Eliminar</Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <Table
+            columns={datesColumns}
+            data={dates}
+            rowKey="id"
+            minWidth="min-w-[980px]"
+            emptyColSpan={6}
+            emptyMessage="No hay fechas registradas."
+            layout="embedded"
+          />
         )}
       </div>
     </div>

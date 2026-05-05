@@ -252,8 +252,8 @@ function PermissionsManagerView() {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-          <div className="relative">
+        <div className="flex flex-col items-start self-start md:self-end sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="relative w-full sm:w-auto">
             <input
               type="text"
               placeholder="Buscar..."
@@ -272,7 +272,7 @@ function PermissionsManagerView() {
           <Button
             variant="primary"
             size="md"
-            className="flex items-center gap-2 bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+            className="flex items-center gap-2 self-start shrink-0 whitespace-nowrap bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
             onClick={openNewPermissionModal}
           >
             <Plus size={18} /> Nuevo Permiso
@@ -401,10 +401,10 @@ function PermissionDetailModal({ permissionData, onClose, onSave, onDelete, isSa
   const isNewPermission = !formData.id;
 
   return (
-    <div className="fixed inset-0 bg-[var(--black-color)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out]">
+    <div className="fixed inset-x-0 top-0 bottom-16 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-hidden animate-[fadeIn_0.2s_ease-out]">
 
       {/* Contenedor del Modal */}
-      <div className="bg-[var(--ins-background)] rounded-[2rem] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-[var(--ins-background)]/50 backdrop-blur-lg rounded-[2rem] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80dvh] border border-white/10">
 
         {/* Header del modal */}
         <div className="px-8 py-6  flex items-center justify-between bg-[var(--black-color)]/10">
@@ -422,6 +422,7 @@ function PermissionDetailModal({ permissionData, onClose, onSave, onDelete, isSa
 
           <CloseButton onClick={onClose} />
         </div>
+        <div className="flex-1 min-h-0 overflow-y-auto tdt-scrollbar">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8">
           <Input
             label="Clave del permiso"
@@ -474,6 +475,7 @@ function PermissionDetailModal({ permissionData, onClose, onSave, onDelete, isSa
           >
             <Save size={18} /> Guardar
           </Button>
+        </div>
         </div>
 
         {/* Cuerpo del formulario */}

@@ -1,4 +1,5 @@
 import { db } from '../../models/index.js';
+import { getEquippedEmblemsByUser } from '../../helpers/getEquippedEmblems.js';
 
 class CredentialController {
   credential = async (req, res) => {
@@ -67,7 +68,13 @@ class CredentialController {
         }
       );
 
-      return res.json({ user: userData[0] || null });
+      const result = userData[0] || null;
+
+      if (result?.id) {
+        result.equippedEmblems = await getEquippedEmblemsByUser(result.id);
+      }
+
+      return res.json({ user: result });
     } catch (error) {
       console.error('CREDENTIAL ERROR:', error);
       await req.logAction({

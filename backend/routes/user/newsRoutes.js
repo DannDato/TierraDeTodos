@@ -16,5 +16,6 @@ router.put('/news/:id', verifyToken, checkPermissions(['news.edit']), ctrlNews.u
 router.delete('/news/:id', verifyToken, checkPermissions(['news.delete']), ctrlNews.deleteNews);
 router.post('/news/:id/image', verifyToken, checkPermissions(['news.create', 'news.edit']), uploadsCheck({ type: 'image', field: 'newsImage', maxSizeMb: 5 }), ctrlNews.uploadNewsImage);
 router.post('/news/:id/comments', verifyToken, ctrlNews.createNewsComment);
+router.post('/news/:id/comments/:commentId/likes', verifyToken, ctrlNews.toggleCommentLike);
 
 export default router;

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import api from "../../../api/axios";
 import Input from "../../../elements/Input";
 import Button from "../../../elements/Button";
+import Table from "../../../elements/Table";
 import FilePickerButton from "../../../elements/FilePickerButton";
 import LoadingOverlay from "../../shared/LoadingOverlay";
 import InfoRow from "../../../elements/InfoRow";
@@ -33,6 +34,83 @@ function TableActionButton({ title, icon, label, onClick, disabled = false, tone
 }
 
 function RequestsTable({ requests = [], actionId = null, onApprove, onReject }) {
+  const requestColumns = [
+    {
+      key: "index",
+      header: "#",
+      cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+      render: (_request, index) => index + 1,
+    },
+    {
+      key: "username",
+      header: "Usuario",
+      cellClassName: "text-[var(--ins-text-white)]",
+      render: (request) => (
+        <div className="flex flex-col gap-1">
+          <Link
+            to={`/players?search=${encodeURIComponent(String(request.username || ""))}`}
+            className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] truncate transition-colors"
+            title={`Ver jugador ${request.username || "Usuario"}`}
+          >
+            {request?.username || "Usuario"}
+          </Link>
+          <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--ins-text-gray)]">ID {request?.userId || "N/A"}</span>
+        </div>
+      ),
+    },
+    {
+      key: "email",
+      header: "Email",
+      cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+      render: (request) => request?.email || "Sin correo",
+    },
+    {
+      key: "requestedAt",
+      header: "Solicitud",
+      cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+      render: (request) => (request?.requestedAt ? new Date(request.requestedAt).toLocaleString() : "Sin fecha"),
+    },
+    {
+      key: "status",
+      header: "Estado",
+      cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+      render: () => (
+        <span className="px-2 py-1 text-xs font-mono rounded-full bg-amber-500/20 text-amber-300 inline-flex items-center gap-1.5">
+          <Clock3 size={12} /> Pendiente
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Acciones",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (request) => {
+        const isProcessing = actionId === request?.id;
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <TableActionButton
+              title="Aprobar solicitud"
+              icon={<Check size={16} />}
+              label="Aprobar"
+              tone="success"
+              disabled={isProcessing}
+              onClick={() => onApprove?.(request)}
+            />
+            <TableActionButton
+              title="Rechazar solicitud"
+              icon={<X size={16} />}
+              label="Rechazar"
+              tone="danger"
+              disabled={isProcessing}
+              onClick={() => onReject?.(request)}
+            />
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="rounded-3xl bg-[var(--black-color)]/20 overflow-hidden mt-8 border border-white/10">
       <div className="px-5 py-4 flex items-center justify-between gap-3">
@@ -49,79 +127,96 @@ function RequestsTable({ requests = [], actionId = null, onApprove, onReject }) 
           No hay solicitudes pendientes.
         </div>
       ) : (
-        <div className="overflow-x-auto tdt-scrollbar">
-          <table className="w-full min-w-[860px] text-left text-sm">
-            <thead className="bg-[var(--white-color)]/5 text-[10px] uppercase tracking-[0.22em] text-[var(--ins-text-white)]">
-              <tr>
-                <th className="px-5 py-3 font-bold">#</th>
-                <th className="px-5 py-3 font-bold">Usuario</th>
-                <th className="px-5 py-3 font-bold">Email</th>
-                <th className="px-5 py-3 font-bold">Solicitud</th>
-                <th className="px-5 py-3 font-bold">Estado</th>
-                <th className="px-5 py-3 font-bold text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((request, index) => {
-                const requestName = request?.username || "N/A";
-                const isProcessing = actionId === request?.id;
-
-                return (
-                  <tr key={request?.id || `${requestName}-${index}`} className="border-t border-[var(--white-color)]/5 align-top">
-                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">{index + 1}</td>
-                    <td className="px-5 py-3 text-[var(--ins-text-white)]">
-                      <div className="flex flex-col gap-1">
-                        <Link
-                          to={`/players?search=${encodeURIComponent(String(request.username || ""))}`}
-                          className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] truncate transition-colors"
-                          title={`Ver jugador ${request.username || "Usuario"}`}
-                        >
-                          {request?.username || "Usuario"}
-                        </Link>
-                        <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--ins-text-gray)]">ID {request?.userId || "N/A"}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">{request?.email || "Sin correo"}</td>
-                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                      {request?.requestedAt ? new Date(request.requestedAt).toLocaleString() : "Sin fecha"}
-                    </td>
-                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-mono rounded-full bg-amber-500/20 text-amber-300 inline-flex items-center gap-1.5">
-                        <Clock3 size={12} /> Pendiente
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <TableActionButton
-                          title="Aprobar solicitud"
-                          icon={<Check size={16} />}
-                          label="Aprobar"
-                          tone="success"
-                          disabled={isProcessing}
-                          onClick={() => onApprove?.(request)}
-                        />
-                        <TableActionButton
-                          title="Rechazar solicitud"
-                          icon={<X size={16} />}
-                          label="Rechazar"
-                          tone="danger"
-                          disabled={isProcessing}
-                          onClick={() => onReject?.(request)}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Table
+          columns={requestColumns}
+          data={requests}
+          rowKey={(request, index) => request?.id || `${request?.username || "N/A"}-${index}`}
+          minWidth="min-w-[860px]"
+          layout="embedded"
+        />
       )}
     </div>
   );
 }
 
 function MembersTable({ members = [], actionId = null, onRemoveMember, communityLogoUrl }) {
+  const membersColumns = [
+    {
+      key: "index",
+      header: "#",
+      cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+      render: (_member, index) => index + 1,
+    },
+    {
+      key: "avatar",
+      header: "",
+      render: (member) => (
+        <img
+          key={member.id}
+          src={member.profileImage || communityLogoUrl || CommunityDefault}
+          alt={member.username}
+          className="w-8 h-8 rounded-full border object-cover"
+        />
+      ),
+    },
+    {
+      key: "username",
+      header: "Usuario",
+      cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+      render: (member) => {
+        const memberName = member?.username || "N/A";
+        return (
+          <Link
+            to={`/players?search=${encodeURIComponent(String(member.username || ""))}`}
+            className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] transition-colors"
+            title={`Ver jugador ${member.username || "Usuario"}`}
+          >
+            {memberName}
+          </Link>
+        );
+      },
+    },
+    {
+      key: "role",
+      header: "Rol",
+      cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+      render: (member) => {
+        const isLeader = Boolean(member?.isLeader);
+        return isLeader ? (
+          <span className="px-2 py-1 text-xs font-mono rounded-full bg-green-500/20 text-green-400">Lider</span>
+        ) : (
+          <span className="px-2 py-1 text-xs font-mono rounded-full bg-blue-500/20 text-blue-400">Miembro</span>
+        );
+      },
+    },
+    {
+      key: "actions",
+      header: "Acciones",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (member) => {
+        const isLeader = Boolean(member?.isLeader);
+        const isProcessing = actionId === member?.id;
+        if (isLeader) {
+          return <span className="text-xs text-[var(--ins-text-gray)]">Sin acciones</span>;
+        }
+
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <TableActionButton
+              title="Expulsar miembro"
+              icon={<UserMinus size={16} />}
+              label="Expulsar"
+              tone="danger"
+              disabled={isProcessing}
+              onClick={() => onRemoveMember?.(member)}
+            />
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="rounded-3xl bg-[var(--black-color)]/20 overflow-hidden mt-8 border border-white/10">
       <div className="px-5 py-4 flex items-center justify-between gap-3">
@@ -138,75 +233,13 @@ function MembersTable({ members = [], actionId = null, onRemoveMember, community
           No hay miembros en esta comunidad.
         </div>
       ) : (
-        <div className="overflow-x-auto tdt-scrollbar">
-          <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="bg-[var(--white-color)]/5 text-[10px] uppercase tracking-[0.22em] text-[var(--ins-text-white)]">
-              <tr>
-                <th className="px-5 py-3 font-bold">#</th>
-                <th className="px-5 py-3 font-bold"></th>
-                <th className="px-5 py-3 font-bold">Usuario</th>
-                <th className="px-5 py-3 font-bold">Rol</th>
-                <th className="px-5 py-3 font-bold text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((member, index) => {
-                const memberName = member?.username || "N/A";
-                const isLeader = Boolean(member?.isLeader);
-                const isProcessing = actionId === member?.id;
-
-                return (
-                  <tr key={member?.id || `${memberName}-${index}`} className="border-t border-[var(--white-color)]/5 align-top">
-                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">{index + 1}</td>
-                    <td className="px-5 py-3">
-                      <img
-                      key={member.id}
-                      src={member.profileImage || communityLogoUrl || CommunityDefault}
-                      alt={member.username}
-                      className="w-8 h-8 rounded-full border object-cover"
-
-                      />
-                    </td>
-                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                      {/* {memberName} */}
-                      <Link
-                        to={`/players?search=${encodeURIComponent(String(member.username || ""))}`}
-                        className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] truncate transition-colors"
-                        title={`Ver jugador ${member.username || "Usuario"}`}
-                      >
-                        {memberName}
-                      </Link>
-
-                    </td>
-                    <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                      {isLeader ? (
-                        <span className="px-2 py-1 text-xs font-mono rounded-full bg-green-500/20 text-green-400">Lider</span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs font-mono rounded-full bg-blue-500/20 text-blue-400">Miembro</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      {isLeader ? (
-                        <span className="text-xs text-[var(--ins-text-gray)]">Sin acciones</span>
-                      ) : (
-                        <div className="flex items-center justify-end gap-2">
-                          <TableActionButton
-                            title="Expulsar miembro"
-                            icon={<UserMinus size={16} />}
-                            label="Expulsar"
-                            tone="danger"
-                            disabled={isProcessing}
-                            onClick={() => onRemoveMember?.(member)}
-                          />
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Table
+          columns={membersColumns}
+          data={members}
+          rowKey={(member, index) => member?.id || `${member?.username || "N/A"}-${index}`}
+          minWidth="min-w-[760px]"
+          layout="embedded"
+        />
       )}
     </div>
   );

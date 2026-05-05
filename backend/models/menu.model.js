@@ -172,7 +172,7 @@ export default (sequelize, DataTypes) => {
         icon: 'Users',
         path: '/community',
         target: '_self',
-        shortAccess: true,
+        shortAccess: false,
         orderIndex: 6,
         required_permissions: ['menu.community'],
         menuGroup: 'user',
@@ -214,6 +214,19 @@ export default (sequelize, DataTypes) => {
         shortAccess: false,
         orderIndex: 10,
         required_permissions: ['menu.gestion'],
+        menuGroup: 'admin',
+        active: true
+      },
+      {
+        id: 12,
+        key: 'menu.emblems',
+        name: 'Emblemas',
+        icon: 'Award',
+        path: '/emblems-admin',
+        target: '_self',
+        shortAccess: false,
+        orderIndex: 11,
+        required_permissions: ['emblems.give'],
         menuGroup: 'admin',
         active: true
       }

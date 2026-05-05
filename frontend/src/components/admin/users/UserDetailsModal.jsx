@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import Button from "../../../elements/Button";
 import Select from "../../../elements/Select";
+import Table from "../../../elements/Table";
+import Tabbar from "../../../elements/Tabbar";
 import CloseButton from "../../../elements/closeButton";
 import InfoRow from "../../../elements/InfoRow";
 import Credencial from "../../user/Credencial";
@@ -129,6 +131,92 @@ function UserDetailsModal({
     };
   };
 
+  const statusHistoryColumns = [
+    {
+      key: "createdAt",
+      header: "Fecha",
+      cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+      render: (entry) => (entry.createdAt ? new Date(entry.createdAt).toLocaleString() : "N/A"),
+    },
+    {
+      key: "oldStatus",
+      header: "Anterior",
+      cellClassName: "font-mono whitespace-nowrap",
+      render: (entry) => (
+        <span style={{ color: getStatusTone(entry.oldStatus).color }}>
+          {entry.oldStatus || "N/A"}
+        </span>
+      ),
+    },
+    {
+      key: "newStatus",
+      header: "Nuevo",
+      cellClassName: "font-mono whitespace-nowrap",
+      render: (entry) => (
+        <span style={{ color: getStatusTone(entry.newStatus).color }}>
+          {entry.newStatus || "N/A"}
+        </span>
+      ),
+    },
+    {
+      key: "changedBy",
+      header: "Por",
+      cellClassName: "text-[var(--ins-text-white)] whitespace-nowrap",
+      render: (entry) => entry.changedByUsername || `ID ${entry.changedBy || "N/A"}`,
+    },
+    {
+      key: "reason",
+      header: "Motivo",
+      cellClassName: "text-[var(--ins-text-gray)] min-w-[220px]",
+      render: (entry) => entry.reason || "Sin motivo registrado",
+    },
+  ];
+
+  const devicesColumns = [
+    {
+      key: "folio",
+      header: "Folio",
+      cellClassName: "text-[var(--ins-text-white)] font-mono text-xs",
+      render: (device) => device.folio || "N/A",
+    },
+    {
+      key: "deviceHash",
+      header: "Hash",
+      cellClassName: "text-[var(--ins-text-gray)] font-mono text-xs break-all",
+      render: (device) => device.deviceHash,
+    },
+    {
+      key: "authorized",
+      header: "Estado",
+      cellClassName: "text-[var(--ins-text-white)]",
+      render: (device) => device.authorized,
+    },
+    {
+      key: "firstLogin",
+      header: "Primer uso",
+      cellClassName: "text-[var(--ins-text-white)]",
+      render: (device) => (device.firstLogin ? new Date(device.firstLogin).toLocaleString() : "N/A"),
+    },
+    {
+      key: "lastLogin",
+      header: "Último uso",
+      cellClassName: "text-[var(--ins-text-white)]",
+      render: (device) => (device.lastLogin ? new Date(device.lastLogin).toLocaleString() : "N/A"),
+    },
+  ];
+
+  const desktopTabs = [
+    { id: "data", label: "Datos Generales", icon: <User size={16} />, activeIconClassName: "text-[var(--secondary-color)]", labelClassName: "hidden lg:inline" },
+    { id: "permissions", label: "Permisos", icon: <ShieldCheck size={16} />, activeIconClassName: "text-[var(--streammer-color)]", labelClassName: "hidden lg:inline" },
+    { id: "devices", label: "Dispositivos", icon: <Smartphone size={16} />, activeIconClassName: "text-[var(--secondary-color)]", labelClassName: "hidden lg:inline" },
+  ];
+
+  const mobileTabs = [
+    { id: "data", label: "Datos Generales", icon: <User size={16} />, activeIconClassName: "text-[var(--secondary-color)]" },
+    { id: "permissions", label: "Permisos", icon: <ShieldCheck size={16} />, activeIconClassName: "text-[var(--streammer-color)]" },
+    { id: "devices", label: "Dispositivos", icon: <Smartphone size={16} />, activeIconClassName: "text-[var(--secondary-color)]" },
+  ];
+
   return (
     // Contenedor principal fijo al viewport util, respetando el alto del menubar
     <div className="fixed inset-x-0 top-0 bottom-16 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden">
@@ -168,43 +256,7 @@ function UserDetailsModal({
             </div>
 
             <div className="hidden md:flex justify-center pt-1">
-              <div className="inline-flex p-1 space-x-1 bg-[var(--black-color)]/40 rounded-xl">
-                <button
-                  onClick={() => setActiveTab("data")}
-                  className={`px-3 lg:px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
-                    activeTab === "data" ? "bg-[var(--white-color)]/10 text-[var(--ins-text-white)] shadow-sm" : "text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-[var(--white-color)]/5"
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <User size={16} className={activeTab === "data" ? "text-[var(--secondary-color)]" : ""} />
-                    <span className="hidden lg:inline">Datos Generales</span>
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("permissions")}
-                  className={`px-3 lg:px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
-                    activeTab === "permissions" ? "bg-[var(--white-color)]/10 text-[var(--ins-text-white)] shadow-sm" : "text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-[var(--white-color)]/5"
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <ShieldCheck size={16} className={activeTab === "permissions" ? "text-[var(--streammer-color)]" : ""} />
-                    <span className="hidden lg:inline">Permisos</span>
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("devices")}
-                  className={`px-3 lg:px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
-                    activeTab === "devices" ? "bg-[var(--white-color)]/10 text-[var(--ins-text-white)] shadow-sm" : "text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-[var(--white-color)]/5"
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Smartphone size={16} className={activeTab === "devices" ? "text-[var(--secondary-color)]" : ""} />
-                    <span className="hidden lg:inline">Dispositivos</span>
-                  </span>
-                </button>
-              </div>
+              <Tabbar tabs={desktopTabs} activeTab={activeTab} onChange={setActiveTab} variant="glass" size="lg" />
             </div>
 
             <div className="flex justify-end">
@@ -215,44 +267,11 @@ function UserDetailsModal({
 
         {/* TABS móvil */}
         <div className="lg:hidden md:hidden flex-shrink-0 px-8 pt-6 pb-2">
-          <div className="inline-flex p-1 space-x-1 bg-[var(--black-color)]/40 rounded-xl">
-            <button
-              onClick={() => setActiveTab("data")}
-              className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
-                activeTab === "data" ? "bg-[var(--white-color)]/10 text-[var(--ins-text-white)] shadow-sm" : "text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-[var(--white-color)]/5"
-              }`}
-            >
-              <span className="inline-flex items-center gap-2">
-                <User size={16} className={activeTab === "data" ? "text-[var(--secondary-color)]" : ""} /> Datos Generales
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("permissions")}
-              className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
-                activeTab === "permissions" ? "bg-[var(--white-color)]/10 text-[var(--ins-text-white)] shadow-sm" : "text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-[var(--white-color)]/5"
-              }`}
-            >
-              <span className="inline-flex items-center gap-2">
-                <ShieldCheck size={16} className={activeTab === "permissions" ? "text-[var(--streammer-color)]" : ""} /> Permisos
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("devices")}
-              className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
-                activeTab === "devices" ? "bg-[var(--white-color)]/10 text-[var(--ins-text-white)] shadow-sm" : "text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-[var(--white-color)]/5"
-              }`}
-            >
-              <span className="inline-flex items-center gap-2">
-                <Smartphone size={16} className={activeTab === "devices" ? "text-[var(--secondary-color)]" : ""} /> Dispositivos
-              </span>
-            </button>
-          </div>
+          <Tabbar tabs={mobileTabs} activeTab={activeTab} onChange={setActiveTab} variant="glass" />
         </div>
 
         {/* Contenedor pestaña */}
-        <div className="flex-1 min-h-0 p-8 pt-4 ">
+        <div className="flex-1 min-h-0 p-8 pt-4 overflow-y-auto tdt-scrollbar">
           {activeTab === "data" ? (
             <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
               <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
@@ -359,40 +378,14 @@ function UserDetailsModal({
                         No hay movimientos de estatus registrados para este usuario.
                       </div>
                     ) : (
-                      <div className="overflow-x-auto ">
-                        <table className="w-full min-w-[680px] text-left text-sm">
-                          <thead className="bg-[var(--white-color)]/5 text-[10px] uppercase tracking-[0.22em] text-[var(--ins-text-gray)]">
-                            <tr>
-                              <th className="px-5 py-3 font-bold">Fecha</th>
-                              <th className="px-5 py-3 font-bold">Anterior</th>
-                              <th className="px-5 py-3 font-bold">Nuevo</th>
-                              <th className="px-5 py-3 font-bold">Por</th>
-                              <th className="px-5 py-3 font-bold">Motivo</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {statusHistory.map((entry) => (
-                              <tr key={entry.id} className="border-t border-[var(--white-color)]/5 align-top">
-                                <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                                  {entry.createdAt ? new Date(entry.createdAt).toLocaleString() : "N/A"}
-                                </td>
-                                <td className="px-5 py-3 font-mono whitespace-nowrap" style={{ color: getStatusTone(entry.oldStatus).color }}>
-                                  {entry.oldStatus || "N/A"}
-                                </td>
-                                <td className="px-5 py-3 font-mono whitespace-nowrap" style={{ color: getStatusTone(entry.newStatus).color }}>
-                                  {entry.newStatus || "N/A"}
-                                </td>
-                                <td className="px-5 py-3 text-[var(--ins-text-white)] whitespace-nowrap">
-                                  {entry.changedByUsername || `ID ${entry.changedBy || "N/A"}`}
-                                </td>
-                                <td className="px-5 py-3 text-[var(--ins-text-gray)] min-w-[220px]">
-                                  {entry.reason || "Sin motivo registrado"}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      <Table
+                        columns={statusHistoryColumns}
+                        data={statusHistory}
+                        rowKey="id"
+                        minWidth="min-w-[680px]"
+                        layout="embedded"
+                        preset="compact"
+                      />
                     )}
                   </div>
                 </div>
@@ -477,38 +470,16 @@ function UserDetailsModal({
           ) : (
             <div className="space-y-4 animate-[fadeIn_0.3s_ease-out]">
               <div className="rounded-2xl bg-[var(--black-color)]/20 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[760px] text-left text-sm">
-                    <thead className="bg-[var(--white-color)]/5 text-[10px] uppercase tracking-[0.22em] text-[var(--ins-text-gray)]">
-                      <tr>
-                        <th className="px-5 py-3 font-bold">Folio</th>
-                        <th className="px-5 py-3 font-bold">Hash</th>
-                        <th className="px-5 py-3 font-bold">Estado</th>
-                        <th className="px-5 py-3 font-bold">Primer uso</th>
-                        <th className="px-5 py-3 font-bold">Último uso</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {devicesHistory.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="px-5 py-8 text-center text-[var(--ins-text-gray)]">
-                            No hay dispositivos registrados para esta cuenta.
-                          </td>
-                        </tr>
-                      ) : (
-                        devicesHistory.map((device) => (
-                          <tr key={`${device.deviceId}-${device.deviceHash}`} className="border-t border-[var(--white-color)]/5 align-top">
-                            <td className="px-5 py-3 text-[var(--ins-text-white)] font-mono text-xs">{device.folio || "N/A"}</td>
-                            <td className="px-5 py-3 text-[var(--ins-text-gray)] font-mono text-xs break-all">{device.deviceHash}</td>
-                            <td className="px-5 py-3 text-[var(--ins-text-white)]">{device.authorized}</td>
-                            <td className="px-5 py-3 text-[var(--ins-text-white)]">{device.firstLogin ? new Date(device.firstLogin).toLocaleString() : "N/A"}</td>
-                            <td className="px-5 py-3 text-[var(--ins-text-white)]">{device.lastLogin ? new Date(device.lastLogin).toLocaleString() : "N/A"}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                <Table
+                  columns={devicesColumns}
+                  data={devicesHistory}
+                  rowKey={(device) => `${device.deviceId}-${device.deviceHash}`}
+                  minWidth="min-w-[760px]"
+                  emptyColSpan={5}
+                  emptyMessage="No hay dispositivos registrados para esta cuenta."
+                  layout="embedded"
+                  preset="compact"
+                />
               </div>
             </div>
           )}

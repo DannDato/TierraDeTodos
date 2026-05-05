@@ -12,6 +12,7 @@ import {
 import Button from "../../../elements/Button";
 import Input from "../../../elements/Input";
 import Select from "../../../elements/Select";
+import Tabbar from "../../../elements/Tabbar";
 import CloseButton from "../../../elements/closeButton";
 import AlertModal from "../../../elements/AlertModal";
 
@@ -295,8 +296,8 @@ function RolesManagerView() {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-          <div className="relative">
+        <div className="flex flex-col items-start self-start md:self-end sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="relative w-full sm:w-auto">
             <input
               type="text"
               placeholder="Buscar..."
@@ -315,7 +316,7 @@ function RolesManagerView() {
           <Button
             variant="primary"
             size="md"
-            className="flex items-center gap-2 bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+            className="flex items-center gap-2 self-start shrink-0 whitespace-nowrap bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
             onClick={openNewRoleModal}
           >
             <Plus size={18} /> Nuevo Rol
@@ -361,6 +362,11 @@ function RolesManagerView() {
     </div>
   );
 }
+
+const roleTabs = [
+  { id: "data", label: "Datos del Rol", icon: <Activity size={16} />, activeIconClassName: "text-[var(--secondary-color)]" },
+  { id: "permissions", label: "Permisos", icon: <ShieldCheck size={16} />, activeIconClassName: "text-[var(--streammer-color)]" },
+];
 
 function RoleCard({ role, onOpenDetails, onDeleteRole }) {
   const { id, role: name, color, users, permissions, detail } = role;
@@ -499,10 +505,10 @@ function RoleDetailModal({
   );
 
   return (
-    <div className="fixed inset-0 bg-[var(--black-color)]/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out]">
+    <div className="fixed inset-x-0 top-0 bottom-16 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-hidden animate-[fadeIn_0.2s_ease-out]">
 
       {/* Contenedor del Modal */}
-      <div className="bg-[var(--ins-background)] rounded-[2rem] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-[var(--ins-background)]/50 backdrop-blur-lg rounded-[2rem] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80dvh] border border-white/10">
 
         {/* Header del modal */}
         <div className="px-8 py-6  flex items-center justify-between bg-[var(--black-color)]/10">
@@ -523,40 +529,12 @@ function RoleDetailModal({
 
         {!isNewRole && (
           <div className="flex-shrink-0 px-8 pt-5 pb-2">
-            <div className="inline-flex p-1 space-x-1 bg-[var(--black-color)]/40 rounded-xl">
-              <button
-                onClick={() => setActiveTab("data")}
-                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
-                  activeTab === "data"
-                    ? "bg-[var(--white-color)]/10 text-[var(--ins-text-white)] shadow-sm"
-                    : "text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-[var(--white-color)]/5"
-                }`}
-              >
-                <span className="inline-flex items-center gap-2">
-                  <Activity size={16} className={activeTab === "data" ? "text-[var(--secondary-color)]" : ""} />
-                  Datos del Rol
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab("permissions")}
-                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
-                  activeTab === "permissions"
-                    ? "bg-[var(--white-color)]/10 text-[var(--ins-text-white)] shadow-sm"
-                    : "text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-[var(--white-color)]/5"
-                }`}
-              >
-                <span className="inline-flex items-center gap-2">
-                  <ShieldCheck size={16} className={activeTab === "permissions" ? "text-[var(--streammer-color)]" : ""} />
-                  Permisos
-                </span>
-              </button>
-            </div>
+            <Tabbar tabs={roleTabs} activeTab={activeTab} onChange={setActiveTab} variant="glass" />
           </div>
         )}
 
         {/* Cuerpo del formulario */}
-        <div className="p-8 overflow-y-auto tdt-scrollbar flex flex-col gap-10">
+        <div className="flex-1 min-h-0 p-8 overflow-y-auto tdt-scrollbar flex flex-col gap-10">
 
           {(isNewRole || activeTab === "data") && (
             <>

@@ -6,11 +6,11 @@ import { checkPermissions } from "../../../middlewares/checkPermissions.js";
 
 const router = express.Router();
 
-router.get("/roles", verifyToken, checkPermissions(["gest.roles"]), ctrlRoles.getRoles);
-router.post("/roles", verifyToken, checkPermissions(["gest.roles"]), ctrlRoles.createRole);
-router.put("/roles/:id", verifyToken, checkPermissions(["gest.roles"]), ctrlRoles.updateRole);
-router.delete("/roles/:id", verifyToken, checkPermissions(["gest.roles"]), ctrlRoles.deleteRole);
-router.get("/roles/:id/permissions", verifyToken, checkPermissions(["gest.roles"]), ctrlRoles.getRolePermissions);
-router.patch("/roles/:id/permissions", verifyToken, checkPermissions(["gest.roles"]), ctrlRoles.updateRolePermissions);
+router.get('/roles', verifyToken, checkPermissions(['roles.view']), ctrlRoles.getRoles);
+router.post('/roles', verifyToken, checkPermissions(['roles.gest']), ctrlRoles.createRole);
+router.put('/roles/:id', verifyToken, checkPermissions(['roles.edit']), ctrlRoles.updateRole);
+router.delete('/roles/:id', verifyToken, checkPermissions(['roles.remove']), ctrlRoles.deleteRole);
+router.get('/roles/:id/permissions', verifyToken, checkPermissions(['roles.view']), ctrlRoles.getRolePermissions);
+router.patch('/roles/:id/permissions', verifyToken, checkPermissions(['roles.edit']), ctrlRoles.updateRolePermissions);
 
 export default router;

@@ -69,6 +69,26 @@ export default (sequelize, DataTypes) => {
         otherKey: 'userID',
         as: 'users'
     });
+
+    Edition.hasMany(models.emblems, {
+        foreignKey: 'editionId',
+        as: 'emblems'
+    });
+
+    Edition.hasMany(models.goals, {
+        foreignKey: 'editionId',
+        as: 'goals'
+    });
+
+    Edition.hasMany(models.user_goals, {
+        foreignKey: 'editionId',
+        as: 'user_goals'
+    });
+
+    Edition.hasMany(models.user_emblems, {
+        foreignKey: 'editionId',
+        as: 'user_emblems'
+    });
     };
 
     Edition.seed = async () => {
