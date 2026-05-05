@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Button from "../elements/Button";
+import Button from "../../elements/Button";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);

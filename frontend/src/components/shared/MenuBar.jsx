@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import api from "../api/axios";
+import api from "../../api/axios";
 import * as Icons from "lucide-react";
-import AlertModal from "../elements/AlertModal";
+import AlertModal from "../../elements/AlertModal";
 
 
 const fallbackMenuItems = [

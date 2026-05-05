@@ -14,8 +14,8 @@ import Select from "../../elements/Select";
 
 import api from "../../api/axios";
 
-import UserDetailsModal from "../../components/users/UserDetailsModal";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import UserDetailsModal from "../../components/admin/users/UserDetailsModal";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import AlertModal from "../../elements/AlertModal";
 
 import UserDefault from "../../img/user_default.png";

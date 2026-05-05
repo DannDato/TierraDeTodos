@@ -1,38 +1,29 @@
 import { useEffect, useState } from "react";
-import { CalendarRange, Download, Plus, Save } from "lucide-react";
+import { BookOpen, Download, Plus, Save } from "lucide-react";
 
-import Button from "../../elements/Button";
-import Input from "../../elements/Input";
-import api from "../../api/axios";
+import Button from "../../../elements/Button";
+import Input from "../../../elements/Input";
+import Select from "../../../elements/Select";
+import api from "../../../api/axios";
+
+const RULE_CATEGORY_OPTIONS = [
+  { value: "PRINCIPAL", label: "Principal" },
+  { value: "OBLIGACION", label: "Obligación" },
+  { value: "TECNICO", label: "Técnico" },
+  { value: "STAFF", label: "Staff" },
+];
 
 const createEmptyForm = () => ({
   id: null,
-  date: "",
-  name: "",
-  description: "",
-  emoji: "",
-  color: "#9ca3af",
+  category: "PRINCIPAL",
+  item: "",
+  icon: "",
+  color: "#f87171",
+  sortOrder: 10,
 });
 
-const toInputDate = (value) => {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const toDisplayDate = (value) => {
-  if (!value) return "Sin fecha";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Sin fecha";
-  return date.toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" });
-};
-
-export default function EditionDatesManagerView({ editionId, openAlert }) {
-  const [dates, setDates] = useState([]);
+export default function EditionRulesManagerView({ editionId, openAlert }) {
+  const [rules, setRules] = useState([]);
   const [previousEdition, setPreviousEdition] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -48,11 +39,11 @@ export default function EditionDatesManagerView({ editionId, openAlert }) {
     try {
       setLoading(true);
       const { data } = await api.get(`/admin/editions/${editionId}/resources`);
-      setDates(data?.dates || []);
+      setRules(data?.rules || []);
       setPreviousEdition(data?.previousEdition || null);
     } catch (error) {
-      console.error("Error cargando fechas de edición:", error);
-      setDates([]);
+      console.error("Error cargando reglas de edición:", error);
+      setRules([]);
       setPreviousEdition(null);
     } finally {
       setLoading(false);
@@ -71,11 +62,11 @@ export default function EditionDatesManagerView({ editionId, openAlert }) {
   const handleEdit = (row) => {
     setFormData({
       id: row.id,
-      date: toInputDate(row.date),
-      name: row.name || "",
-      description: row.description || "",
-      emoji: row.emoji || "",
-      color: row.color || "#9ca3af",
+      category: row.category || "PRINCIPAL",
+      item: row.item || "",
+      icon: row.icon || "",
+      color: row.color || "#f87171",
+      sortOrder: row.sortOrder ?? 10,
     });
     setShowForm(true);
   };
@@ -86,11 +77,11 @@ export default function EditionDatesManagerView({ editionId, openAlert }) {
   };
 
   const handleSave = async () => {
-    if (!formData.date || !String(formData.name || "").trim()) {
+    if (!formData.category || !String(formData.item || "").trim()) {
       openAlert({
         type: "warning",
         title: "Campos incompletos",
-        message: "Fecha y nombre son obligatorios.",
+        message: "Categoría y regla son obligatorios.",
       });
       return;
     }
@@ -98,17 +89,17 @@ export default function EditionDatesManagerView({ editionId, openAlert }) {
     try {
       setProcessing(true);
       const payload = {
-        date: formData.date,
-        name: String(formData.name || "").trim(),
-        description: String(formData.description || "").trim(),
-        emoji: String(formData.emoji || "").trim(),
-        color: formData.color || "#9ca3af",
+        category: formData.category,
+        item: String(formData.item || "").trim(),
+        icon: String(formData.icon || "").trim(),
+        color: formData.color || "#f87171",
+        sortOrder: Number(formData.sortOrder || 0),
       };
 
       if (formData.id) {
-        await api.put(`/admin/editions/${editionId}/dates/${formData.id}`, payload);
+        await api.put(`/admin/editions/${editionId}/rules/${formData.id}`, payload);
       } else {
-        await api.post(`/admin/editions/${editionId}/dates`, payload);
+        await api.post(`/admin/editions/${editionId}/rules`, payload);
       }
 
       await loadResources();
@@ -117,7 +108,7 @@ export default function EditionDatesManagerView({ editionId, openAlert }) {
       openAlert({
         type: "error",
         title: "No se pudo guardar",
-        message: error.response?.data?.message || "No se pudo guardar la fecha.",
+        message: error.response?.data?.message || "No se pudo guardar la regla.",
       });
     } finally {
       setProcessing(false);
@@ -127,20 +118,20 @@ export default function EditionDatesManagerView({ editionId, openAlert }) {
   const handleDelete = (row) => {
     openAlert({
       type: "warning",
-      title: "Eliminar fecha",
-      message: `Se eliminará la fecha ${row.name}.`,
+      title: "Eliminar regla",
+      message: "Se eliminará la regla seleccionada.",
       confirmText: "Eliminar",
       cancelText: "Cancelar",
       onConfirm: async () => {
         try {
           setProcessing(true);
-          await api.delete(`/admin/editions/${editionId}/dates/${row.id}`);
+          await api.delete(`/admin/editions/${editionId}/rules/${row.id}`);
           await loadResources();
         } catch (error) {
           openAlert({
             type: "error",
             title: "No se pudo eliminar",
-            message: error.response?.data?.message || "No se pudo eliminar la fecha.",
+            message: error.response?.data?.message || "No se pudo eliminar la regla.",
           });
         } finally {
           setProcessing(false);
@@ -152,27 +143,27 @@ export default function EditionDatesManagerView({ editionId, openAlert }) {
   const handleImport = () => {
     openAlert({
       type: "warning",
-      title: "Importar fechas",
+      title: "Importar reglas",
       message: previousEdition
-        ? `Se copiarán las fechas desde la edición anterior: ${previousEdition.name}.`
+        ? `Se copiarán las reglas desde la edición anterior: ${previousEdition.name}.`
         : "No hay una edición anterior disponible para importar.",
       confirmText: "Importar",
       cancelText: "Cancelar",
       onConfirm: async () => {
         try {
           setProcessing(true);
-          const { data } = await api.post(`/admin/editions/${editionId}/dates/import-previous`);
+          const { data } = await api.post(`/admin/editions/${editionId}/rules/import-previous`);
           await loadResources();
           openAlert({
             type: "success",
-            title: "Fechas importadas",
-            message: `Se importaron ${data?.importedCount || 0} fechas.`,
+            title: "Reglas importadas",
+            message: `Se importaron ${data?.importedCount || 0} reglas.`,
           });
         } catch (error) {
           openAlert({
             type: "error",
             title: "No se pudo importar",
-            message: error.response?.data?.message || "No se pudieron importar las fechas.",
+            message: error.response?.data?.message || "No se pudieron importar las reglas.",
           });
         } finally {
           setProcessing(false);
@@ -185,8 +176,8 @@ export default function EditionDatesManagerView({ editionId, openAlert }) {
     <div className="space-y-5 animate-[fadeIn_0.2s_ease-out]">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div>
-          <h4 className="text-xl font-extrabold text-[var(--ins-text-white)]">Fechas de la Edición</h4>
-          <p className="text-sm text-[var(--ins-text-gray)] mt-1">Crea hitos del timeline y ordénalos por fecha.</p>
+          <h4 className="text-xl font-extrabold text-[var(--ins-text-white)]">Reglas de la Edición</h4>
+          <p className="text-sm text-[var(--ins-text-gray)] mt-1">Administra reglas en formato tabla y por categoría.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button
@@ -203,72 +194,73 @@ export default function EditionDatesManagerView({ editionId, openAlert }) {
             onClick={handleCreate}
             disabled={processing}
           >
-            <Plus size={16} /> Nueva fecha
+            <Plus size={16} /> Nueva regla
           </Button>
         </div>
       </div>
 
       {showForm && (
         <div className="rounded-2xl border border-[var(--white-color)]/10 bg-black/20 p-5 grid grid-cols-1 xl:grid-cols-12 gap-4">
-          <div className="xl:col-span-2">
-            <Input label="Fecha" type="date" value={formData.date} onChange={(e) => handleChange("date", e.target.value)} />
+          <div className="xl:col-span-2 flex flex-col gap-2">
+            <label className="text-sm font-bold text-[var(--ins-text-gray)] ml-1">Categoría</label>
+            <Select value={formData.category} onChange={(value) => handleChange("category", value)} options={RULE_CATEGORY_OPTIONS} />
           </div>
-          <div className="xl:col-span-3">
-            <Input label="Nombre" value={formData.name} onChange={(e) => handleChange("name", e.target.value)} placeholder="Ej. Apertura del Nether" />
-          </div>
-          <div className="xl:col-span-4">
-            <Input label="Descripción" value={formData.description} onChange={(e) => handleChange("description", e.target.value)} placeholder="Describe el evento..." />
+          <div className="xl:col-span-5">
+            <Input label="Regla" value={formData.item} onChange={(e) => handleChange("item", e.target.value)} placeholder="Describe la regla..." />
           </div>
           <div className="xl:col-span-1">
-            <Input label="Emoji" value={formData.emoji} onChange={(e) => handleChange("emoji", e.target.value)} placeholder="🔥" />
+            <Input label="Icono" value={formData.icon} onChange={(e) => handleChange("icon", e.target.value)} placeholder="❌" />
           </div>
           <div className="xl:col-span-2 flex gap-3 items-end">
             <div className="flex-1">
-              <Input label="Color" value={formData.color} onChange={(e) => handleChange("color", e.target.value)} placeholder="#9ca3af" />
+              <Input label="Color" value={formData.color} onChange={(e) => handleChange("color", e.target.value)} placeholder="#f87171" />
             </div>
             <label className="relative w-10 h-10 rounded-xl border-2 border-[var(--black-color)]/40 cursor-pointer block overflow-hidden transition-transform hover:scale-105 mb-0.5" style={{ backgroundColor: formData.color }}>
               <input type="color" value={formData.color} onChange={(e) => handleChange("color", e.target.value)} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
             </label>
           </div>
+          <div className="xl:col-span-2">
+            <Input label="Orden" type="number" value={formData.sortOrder} onChange={(e) => handleChange("sortOrder", e.target.value)} placeholder="10" />
+          </div>
           <div className="xl:col-span-12 flex justify-end gap-3 pt-2">
             <Button variant="primary" className="bg-white/10 hover:bg-white/15 text-white" onClick={handleCancel} disabled={processing}>Cancelar</Button>
-            <Button variant="primary" className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white flex items-center gap-2" onClick={handleSave} disabled={processing}><Save size={16} /> Guardar fecha</Button>
+            <Button variant="primary" className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white flex items-center gap-2" onClick={handleSave} disabled={processing}><Save size={16} /> Guardar regla</Button>
           </div>
         </div>
       )}
 
       <div className="overflow-x-auto tdt-scrollbar rounded-2xl border border-[var(--white-color)]/8 bg-black/10">
         {loading ? (
-          <div className="py-10 text-center text-[var(--ins-text-gray)]">Cargando fechas...</div>
+          <div className="py-10 text-center text-[var(--ins-text-gray)]">Cargando reglas...</div>
         ) : (
-          <table className="w-full min-w-[980px] text-left">
+          <table className="w-full min-w-[1080px] text-left">
             <thead>
               <tr className="bg-black/20 text-sm text-[var(--ins-text-gray)]">
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Fecha</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Nombre</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Descripción</th>
-                <th className="py-4 px-4 font-bold uppercase tracking-wider">Emoji</th>
+                <th className="py-4 px-4 font-bold uppercase tracking-wider">Categoría</th>
+                <th className="py-4 px-4 font-bold uppercase tracking-wider">Regla</th>
+                <th className="py-4 px-4 font-bold uppercase tracking-wider">Icono</th>
                 <th className="py-4 px-4 font-bold uppercase tracking-wider">Color</th>
+                <th className="py-4 px-4 font-bold uppercase tracking-wider">Orden</th>
                 <th className="py-4 px-4 font-bold uppercase tracking-wider text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {dates.length === 0 ? (
+              {rules.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-[var(--ins-text-gray)]">No hay fechas registradas.</td>
+                  <td colSpan={6} className="py-10 text-center text-[var(--ins-text-gray)]">No hay reglas registradas.</td>
                 </tr>
-              ) : dates.map((row) => (
+              ) : rules.map((row) => (
                 <tr key={row.id} className="border-t border-black/10 hover:bg-black/5 transition-colors">
-                  <td className="py-4 px-4 text-[var(--ins-text-white)]">{toDisplayDate(row.date)}</td>
-                  <td className="py-4 px-4 text-[var(--ins-text-white)] font-semibold">{row.name}</td>
-                  <td className="py-4 px-4 text-[var(--ins-text-gray)]">{row.description || "Sin descripción"}</td>
-                  <td className="py-4 px-4 text-2xl">{row.emoji || "-"}</td>
+                  <td className="py-4 px-4 text-[var(--ins-text-white)]">{RULE_CATEGORY_OPTIONS.find((option) => option.value === row.category)?.label || row.category}</td>
+                  <td className="py-4 px-4 text-[var(--ins-text-white)] font-semibold">{row.item}</td>
+                  <td className="py-4 px-4 text-2xl">{row.icon || "-"}</td>
                   <td className="py-4 px-4">
                     <span className="inline-flex items-center gap-2 text-sm text-[var(--ins-text-white)]">
                       <span className="w-3 h-3 rounded-full" style={{ backgroundColor: row.color }}></span>
                       {row.color}
                     </span>
                   </td>
+                  <td className="py-4 px-4 text-[var(--ins-text-white)]">{row.sortOrder}</td>
                   <td className="py-4 px-4">
                     <div className="flex justify-end gap-2">
                       <Button variant="primary" className="bg-white/10 hover:bg-white/15 text-white" onClick={() => handleEdit(row)} disabled={processing}>Editar</Button>

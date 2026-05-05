@@ -1,5 +1,5 @@
 import React from "react";
-import CommunityDefault from "../../img/community_default.png";
+import CommunityDefault from "../../../img/community_default.png";
 
 export default function CommunityCard({ community }) {
   if (!community) return null;

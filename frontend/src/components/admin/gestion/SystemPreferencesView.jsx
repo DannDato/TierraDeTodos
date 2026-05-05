@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Save, Settings2 } from 'lucide-react';
 
-import api from '../../api/axios';
-import Input from '../../elements/Input';
-import Button from '../../elements/Button';
-import LoadingOverlay from '../LoadingOverlay';
-import AlertModal from '../../elements/AlertModal';
+import api from '../../../api/axios';
+import Input from '../../../elements/Input';
+import Button from '../../../elements/Button';
+import LoadingOverlay from '../../shared/LoadingOverlay';
+import AlertModal from '../../../elements/AlertModal';
 
 const createInitialLinks = () => ({
   website: '',

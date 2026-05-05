@@ -6,10 +6,10 @@ import Input from "../../elements/Input";
 import FilePickerButton from "../../elements/FilePickerButton";
 import AlertModal from "../../elements/AlertModal";
 import api from "../../api/axios";
-import Credencial from "../../components/Credencial";
+import Credencial from "../../components/user/Credencial";
 import InfoRow from "../../elements/InfoRow";
 
-import LoadingOverlay from "../../components/LoadingOverlay";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 
 function Profile() {
     // User state must be declared first

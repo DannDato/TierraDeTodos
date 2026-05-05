@@ -1,14 +1,14 @@
 import CommunityCard from "./CommunityCard";
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import api from "../../api/axios";
-import Input from "../../elements/Input";
-import Button from "../../elements/Button";
-import FilePickerButton from "../../elements/FilePickerButton";
-import LoadingOverlay from "../LoadingOverlay";
-import InfoRow from "../../elements/InfoRow";
-import CommunityDefault from "../../img/community_default.png";
-import AlertModal from "../../elements/AlertModal";
+import api from "../../../api/axios";
+import Input from "../../../elements/Input";
+import Button from "../../../elements/Button";
+import FilePickerButton from "../../../elements/FilePickerButton";
+import LoadingOverlay from "../../shared/LoadingOverlay";
+import InfoRow from "../../../elements/InfoRow";
+import CommunityDefault from "../../../img/community_default.png";
+import AlertModal from "../../../elements/AlertModal";
 import { Video, User, Link as LinkIcon, Hash, Palette, FileText, Users, Check, X, UserMinus, Clock3 } from "lucide-react";
 
 function TableActionButton({ title, icon, label, onClick, disabled = false, tone = "default" }) {

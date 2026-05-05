@@ -9,16 +9,16 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import RolesManagerView from "../../components/gestion/RolesManagerView";
-import PermissionsManagerView from "../../components/gestion/PermissionsManagerView";
-import StatusManagerView from "../../components/gestion/StatusManagerView";
-import SessionsManagerView from "../../components/gestion/SessionsManagerView";
-import DevicesManagerView from "../../components/gestion/DevicesManagerView";
-import EditionsManagerView from "../../components/gestion/EditionsManagerView";
-import TicketCatalogManagerView from "../../components/gestion/TicketCatalogManagerView";
-import NewsTypesManagerView from "../../components/gestion/NewsTypesManagerView";
-import SystemPreferencesView from "../../components/gestion/SystemPreferencesView";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import RolesManagerView from "../../components/admin/gestion/RolesManagerView";
+import PermissionsManagerView from "../../components/admin/gestion/PermissionsManagerView";
+import StatusManagerView from "../../components/admin/gestion/StatusManagerView";
+import SessionsManagerView from "../../components/admin/gestion/SessionsManagerView";
+import DevicesManagerView from "../../components/admin/gestion/DevicesManagerView";
+import EditionsManagerView from "../../components/admin/gestion/EditionsManagerView";
+import TicketCatalogManagerView from "../../components/admin/gestion/TicketCatalogManagerView";
+import NewsTypesManagerView from "../../components/admin/gestion/NewsTypesManagerView";
+import SystemPreferencesView from "../../components/admin/gestion/SystemPreferencesView";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 
 
 function Gestion() {

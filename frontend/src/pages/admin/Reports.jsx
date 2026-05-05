@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, Lock, MessageCircle, MessageSquareWarning, Search, Send, ShieldAlert, User, X } from "lucide-react";
 
 import api from "../../api/axios";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import AlertModal from "../../elements/AlertModal";
 import Button from "../../elements/Button";
 import Switch from "../../elements/Switch";

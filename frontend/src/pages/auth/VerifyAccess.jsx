@@ -3,8 +3,8 @@ import api from "../../api/axios"
 import { useEffect, useRef, useState } from "react"
 
 import Banner from "../../elements/Banner"
-import Footer from "../../components/Footer"
-import LoadingOverlay from "../../components/LoadingOverlay";
+import Footer from "../../components/home/Footer"
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import {
   clearPendingVerifyAccessUser,
   getPendingVerifyAccessUser,

@@ -19,7 +19,7 @@ import {
 import Button from "../../elements/Button";
 import api from "../../api/axios";
 import tdtNewsImage from "../../img/tdtnews.png";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import { useNavigate } from "react-router-dom";
 import Runas from "../../img/runas.png";
 

@@ -1,7 +1,7 @@
 
 import Button from "../../elements/Button";
 import Banner from "../../elements/Banner";
-import Footer from "../../components/Footer";
+import Footer from "../../components/home/Footer";
 
 import { ArrowLeft } from "lucide-react";
 

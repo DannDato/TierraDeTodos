@@ -4,8 +4,8 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import Input from "../../elements/Input";
 import Button from "../../elements/Button";
 import Banner from "../../elements/Banner";
-import Footer from "../../components/Footer";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import Footer from "../../components/home/Footer";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import api from "../../api/axios";
 
 export default function PasswordRecovery() {

@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom"
-import MenuBar from "../components/MenuBar"
+import MenuBar from "../components/shared/MenuBar"
 import Background from "../elements/Background";
-// import MinecraftBackground from "../components/MinecraftBackground";
+// import MinecraftBackground from "../components/home/MinecraftBackground";
 
 function DashboardLayout({ children, maxWidthClass = "max-w-[1400px]" }) {
   const location = useLocation();

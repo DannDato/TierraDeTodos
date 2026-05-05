@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import NewsCard from "../components/NewsCard";
-import api from "../api/axios";
-import tdtNewsImage from "../img/tdtnews.png";
+import NewsCard from "./NewsCard";
+import api from "../../api/axios";
+import tdtNewsImage from "../../img/tdtnews.png";
 
 export default function News() {
   const carouselRef = useRef(null);

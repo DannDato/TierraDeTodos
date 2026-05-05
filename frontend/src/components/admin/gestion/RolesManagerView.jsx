@@ -9,15 +9,15 @@ import {
   Info,
   X,
 } from "lucide-react";
-import Button from "../../elements/Button";
-import Input from "../../elements/Input";
-import Select from "../../elements/Select";
-import CloseButton from "../../elements/closeButton";
-import AlertModal from "../../elements/AlertModal";
+import Button from "../../../elements/Button";
+import Input from "../../../elements/Input";
+import Select from "../../../elements/Select";
+import CloseButton from "../../../elements/closeButton";
+import AlertModal from "../../../elements/AlertModal";
 
 import { useState, useEffect, useRef } from "react";
-import LoadingOverlay from "../LoadingOverlay";
-import api from "../../api/axios";
+import LoadingOverlay from "../../shared/LoadingOverlay";
+import api from "../../../api/axios";
 
 function RolesManagerView() {
   const [roles, setRoles] = useState([]);

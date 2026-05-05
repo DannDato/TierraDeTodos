@@ -1,4 +1,4 @@
-import Button from "../elements/Button";
+import Button from "../../elements/Button";
 
 function Footer({ socialLinks }) {
   const discordUrl = String(socialLinks?.discord || "https://discord.gg/tdt3").trim() || "https://discord.gg/tdt3";

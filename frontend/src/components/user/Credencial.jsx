@@ -1,5 +1,5 @@
 import { User, Upload } from "lucide-react";
-import cancelledStamp from "../img/cancelled.png";
+import cancelledStamp from "../../img/cancelled.png";
 
 function Credencial({
   user,

@@ -13,13 +13,13 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
-import Button from "../../elements/Button";
-import Input from "../../elements/Input";
-import Select from "../../elements/Select";
-import CloseButton from "../../elements/closeButton";
-import AlertModal from "../../elements/AlertModal";
-import LoadingOverlay from "../LoadingOverlay";
-import api from "../../api/axios";
+import Button from "../../../elements/Button";
+import Input from "../../../elements/Input";
+import Select from "../../../elements/Select";
+import CloseButton from "../../../elements/closeButton";
+import AlertModal from "../../../elements/AlertModal";
+import LoadingOverlay from "../../shared/LoadingOverlay";
+import api from "../../../api/axios";
 import EditionDatesManagerView from "./EditionDatesManagerView";
 import EditionRulesManagerView from "./EditionRulesManagerView";
 

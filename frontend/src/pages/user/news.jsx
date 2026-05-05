@@ -7,7 +7,7 @@ import Button from "../../elements/Button";
 import Input from "../../elements/Input";
 import Select from "../../elements/Select";
 import AlertModal from "../../elements/AlertModal";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import tdtNewsImage from "../../img/tdtnews.png";
 
 const LIKE_STORAGE_KEY = "tdt_news_liked_map_v1";

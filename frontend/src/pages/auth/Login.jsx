@@ -5,9 +5,9 @@ import { useState } from "react";
 import Input from "../../elements/Input";
 import Button from "../../elements/Button";
 import Banner from "../../elements/Banner";
-import Footer from "../../components/Footer";
-import LoadingOverlay from "../../components/LoadingOverlay";
-import SocialsAuth from "../../components/SocialsAuth";
+import Footer from "../../components/home/Footer";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
+import SocialsAuth from "../../components/auth/SocialsAuth";
 import { setPendingVerifyAccessUser, setVerifyAccessResendAvailableAt } from "../../utils/verifyAccessStorage";
 
 import { ArrowLeft, Pencil } from "lucide-react";

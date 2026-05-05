@@ -24,7 +24,7 @@ import Gestion from "./pages/admin/gestion";
 import Reports from "./pages/admin/Reports";
 
 import NotFound from "./pages/home/NotFound";
-import LoadingOverlay from "./components/LoadingOverlay";
+import LoadingOverlay from "./components/shared/LoadingOverlay";
 
 
 const App = function App() {

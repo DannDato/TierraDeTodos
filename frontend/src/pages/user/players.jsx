@@ -3,8 +3,8 @@ import { ArrowUp, Search } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
-import Credencial from "../../components/Credencial";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import Credencial from "../../components/user/Credencial";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import Runas from "../../img/runas.png";
 
 // Oculta el scroll global del body cuando este componente está montado

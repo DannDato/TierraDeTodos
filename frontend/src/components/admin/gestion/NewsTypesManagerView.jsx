@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MoreVertical, Plus, Save, Search, Trash2, X } from "lucide-react";
 
-import api from "../../api/axios";
-import Button from "../../elements/Button";
-import Input from "../../elements/Input";
-import Textarea from "../../elements/Textarea";
-import CloseButton from "../../elements/closeButton";
-import AlertModal from "../../elements/AlertModal";
-import LoadingOverlay from "../LoadingOverlay";
+import api from "../../../api/axios";
+import Button from "../../../elements/Button";
+import Input from "../../../elements/Input";
+import Textarea from "../../../elements/Textarea";
+import CloseButton from "../../../elements/closeButton";
+import AlertModal from "../../../elements/AlertModal";
+import LoadingOverlay from "../../shared/LoadingOverlay";
 
 const buildInitialForm = () => ({
   id: null,

@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { RefreshCcw, Eye, EyeOff, Search, X } from "lucide-react";
 
-import Button from "../../elements/Button";
-import Input from "../../elements/Input";
-import AlertModal from "../../elements/AlertModal";
-import LoadingOverlay from "../LoadingOverlay";
-import CloseButton from "../../elements/closeButton";
-import Select from "../../elements/Select";
-import api from "../../api/axios";
+import Button from "../../../elements/Button";
+import Input from "../../../elements/Input";
+import AlertModal from "../../../elements/AlertModal";
+import LoadingOverlay from "../../shared/LoadingOverlay";
+import CloseButton from "../../../elements/closeButton";
+import Select from "../../../elements/Select";
+import api from "../../../api/axios";
 
 function DevicesManagerView() {
   const [devices, setDevices] = useState([]);
