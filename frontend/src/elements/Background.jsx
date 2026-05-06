@@ -18,7 +18,7 @@ function Background({
       <div
         className="fixed top-0 left-0 w-full h-full bg-cover bg-center scale-110"
         style={{
-          backgroundImage: `url(${backgroundImage})`,
+          // backgroundImage: `url(${backgroundImage})`,
           filter: `blur(${blur})`,
           zIndex: 0,
         }}
