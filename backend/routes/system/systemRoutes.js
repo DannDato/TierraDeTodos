@@ -12,3 +12,4 @@ router.patch('/settings', verifyToken, checkPermissions(['system.edit']), ctrlSy
 router.get('/health', verifyToken, checkPermissions(['system.view']), ctrlSystem.getHealth);
 
 export default router;
+

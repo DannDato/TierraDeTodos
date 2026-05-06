@@ -15,3 +15,4 @@ const handleError =  async function handleError(res, req, error, accion, transac
 }
 
 export default handleError;
+

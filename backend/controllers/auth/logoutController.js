@@ -72,3 +72,4 @@ class LogoutController {
 
 const ctrlLogout = new LogoutController();
 export { ctrlLogout };
+

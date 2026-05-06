@@ -10,3 +10,4 @@ router.get('/sessions', verifyToken, checkPermissions(['sessions.view']), ctrlSe
 router.patch('/sessions/:id/revoke', verifyToken, checkPermissions(['sessions.edit']), ctrlSessions.revokeSession);
 
 export default router;
+

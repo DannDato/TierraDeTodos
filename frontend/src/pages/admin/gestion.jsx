@@ -79,7 +79,7 @@ function Gestion() {
       title: "Base",
       items: [
         { id: "editions", label: "Control de ediciones", icon: <ShieldCheck size={18} /> },
-        { id: "achievements", label: "Emblemas y Logros", icon: <Award size={18} /> },
+        { id: "achievements", label: "Insignias y Logros", icon: <Award size={18} /> },
         { id: "ticketCatalogs", label: "Catálogos de Tickets", icon: <Database size={18} /> },
         { id: "newsTypes", label: "Tipos de Noticias",   icon: <Activity size={18} /> },
         ...(canManageCommands ? [{ id: "commands", label: "Comandos del Juego", icon: <Database size={18} /> }] : []),

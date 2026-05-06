@@ -62,9 +62,20 @@ export default (sequelize, DataTypes) => {
     ]
   });
 
-  Roles.associate = () => {
-    // Relacion por texto: Users.role <-> Roles.role.
-    // No definimos FK Sequelize para evitar acoplar a roleId.
+  Roles.associate = (models) => {
+    Roles.hasMany(models.Users, {
+      foreignKey: 'role',
+      sourceKey: 'role',
+      as: 'users',
+      constraints: false
+    });
+
+    Roles.hasMany(models.PresetPermissions, {
+      foreignKey: 'role',
+      sourceKey: 'role',
+      as: 'presetPermissions',
+      constraints: false
+    });
   };
 
   Roles.seed = async () => {
@@ -84,3 +95,4 @@ export default (sequelize, DataTypes) => {
 
   return Roles;
 };
+

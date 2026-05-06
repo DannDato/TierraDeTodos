@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import { readdirSync, statSync } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { join, dirname, relative, sep } from 'path';
@@ -22,7 +22,7 @@ function collectRouteFiles(dir, files = []) {
 }
 
 // La primera carpeta dentro de routes/ determina el prefijo URL.
-// Archivos en la raíz de routes/ se montan en '/'.
+// Archivos en la ra�z de routes/ se montan en '/'.
 for (const file of collectRouteFiles(__dirname)) {
   const rel         = relative(__dirname, file); // ej: "auth/authenticateRoutes.js"
   const firstSegment = rel.split(sep)[0];        // ej: "auth"
@@ -33,3 +33,4 @@ for (const file of collectRouteFiles(__dirname)) {
 }
 
 export default router;
+

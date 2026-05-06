@@ -114,3 +114,4 @@ export default (sequelize, DataTypes) => {
 
   return System;
 };
+

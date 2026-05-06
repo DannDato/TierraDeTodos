@@ -13,3 +13,4 @@ router.patch('/user/:id/role', verifyToken, checkPermissions(['users.edit']), ct
 router.patch('/user/:id/permissions', verifyToken, checkPermissions(['users.edit']), ctrlUsers.updateAdminUserPermissions);
 
 export default router;
+

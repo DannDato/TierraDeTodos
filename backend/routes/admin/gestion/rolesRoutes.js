@@ -14,3 +14,4 @@ router.get('/roles/:id/permissions', verifyToken, checkPermissions(['roles.view'
 router.patch('/roles/:id/permissions', verifyToken, checkPermissions(['roles.edit']), ctrlRoles.updateRolePermissions);
 
 export default router;
+

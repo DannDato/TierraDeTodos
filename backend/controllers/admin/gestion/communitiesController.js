@@ -53,6 +53,15 @@ class CommunitiesAdminController {
           createdAt: c.createdAt,
         })),
       });
+
+      await req.logAction({
+        accion: 'Comunidades de gestion consultadas',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `communities=${communities.length}`,
+        type: 'info'
+      });
     } catch (error) {
       return handleError(res, req, error, 'Error al cargar comunidades');
     }
@@ -63,7 +72,7 @@ class CommunitiesAdminController {
       const { id } = req.params;
       const communityId = Number(id);
       if (!Number.isInteger(communityId) || communityId <= 0) {
-        return res.status(400).json({ message: 'ID de comunidad inválido.' });
+        return res.status(400).json({ message: 'ID de comunidad invÃ¡lido.' });
       }
 
       const community = await models.community.findByPk(communityId);
@@ -89,6 +98,15 @@ class CommunitiesAdminController {
 
       await community.update({ name, description, logo_url });
 
+      await req.logAction({
+        accion: 'Comunidad actualizada desde gestion',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `communityId=${community.id}; name=${name}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ message: 'Comunidad actualizada correctamente.' });
     } catch (error) {
       return handleError(res, req, error, 'Error al actualizar comunidad');
@@ -99,7 +117,7 @@ class CommunitiesAdminController {
     try {
       const communityId = Number(req.params.id);
       if (!Number.isInteger(communityId) || communityId <= 0) {
-        return res.status(400).json({ message: 'ID de comunidad inválido.' });
+        return res.status(400).json({ message: 'ID de comunidad invÃ¡lido.' });
       }
 
       const community = await models.community.findByPk(communityId);
@@ -109,6 +127,15 @@ class CommunitiesAdminController {
         await deleteS3Object(community.logo_url);
         await community.update({ logo_url: null });
       }
+
+      await req.logAction({
+        accion: 'Logo de comunidad eliminado desde gestion',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `communityId=${community.id}`,
+        type: 'info'
+      });
 
       return res.status(200).json({ message: 'Logo eliminado correctamente.' });
     } catch (error) {
@@ -120,12 +147,20 @@ class CommunitiesAdminController {
     try {
       const [roles, statuses] = await Promise.all([
         models.Roles.findAll({ attributes: ['id', 'role', 'detail', 'color'], order: [['role', 'ASC']] }),
-        models.user_statuses.findAll({
+        models.system_statuses.findAll({
           attributes: ['id', 'status', 'detail', 'color'],
           where: { active: true, asignable: 'YES' },
           order: [['status', 'ASC']],
         }),
       ]);
+      await req.logAction({
+        accion: 'Opciones de miembros de comunidad consultadas',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `roles=${roles.length}; statuses=${statuses.length}`,
+        type: 'info'
+      });
       return res.status(200).json({ roles, statuses });
     } catch (error) {
       return handleError(res, req, error, 'Error al cargar opciones de miembros');
@@ -136,7 +171,7 @@ class CommunitiesAdminController {
     try {
       const communityId = Number(req.params.id);
       if (!Number.isInteger(communityId) || communityId <= 0) {
-        return res.status(400).json({ message: 'ID de comunidad inválido.' });
+        return res.status(400).json({ message: 'ID de comunidad invÃ¡lido.' });
       }
 
       const community = await models.community.findByPk(communityId);
@@ -166,12 +201,21 @@ class CommunitiesAdminController {
         where: { id: { [Op.in]: userIds } },
       });
 
+      await req.logAction({
+        accion: 'Accion masiva aplicada a comunidad',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `communityId=${communityId}; affected=${affected}; role=${updates.role || ''}; status=${updates.account || ''}`,
+        type: 'info'
+      });
+
       return res.status(200).json({
-        message: `Acción aplicada a ${affected} miembro(s) correctamente.`,
+        message: `AcciÃ³n aplicada a ${affected} miembro(s) correctamente.`,
         affected,
       });
     } catch (error) {
-      return handleError(res, req, error, 'Error al aplicar acción masiva');
+      return handleError(res, req, error, 'Error al aplicar acciÃ³n masiva');
     }
   };
 
@@ -180,7 +224,7 @@ class CommunitiesAdminController {
       const { id } = req.params;
       const communityId = Number(id);
       if (!Number.isInteger(communityId) || communityId <= 0) {
-        return res.status(400).json({ message: 'ID de comunidad inválido.' });
+        return res.status(400).json({ message: 'ID de comunidad invÃ¡lido.' });
       }
 
       const community = await models.community.findByPk(communityId);
@@ -207,6 +251,15 @@ class CommunitiesAdminController {
         await community.destroy({ transaction });
       });
 
+      await req.logAction({
+        accion: 'Comunidad eliminada desde gestion',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `communityId=${communityId}; name=${community.name}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ message: 'Comunidad eliminada correctamente.' });
     } catch (error) {
       return handleError(res, req, error, 'Error al eliminar comunidad');
@@ -215,3 +268,4 @@ class CommunitiesAdminController {
 }
 
 export default new CommunitiesAdminController();
+

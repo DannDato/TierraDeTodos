@@ -1,7 +1,12 @@
 import axios from 'axios';
 
-// Armamos la ruta desde el .env
-const API_URL = `${import.meta.env.VITE_API_BASE}:${import.meta.env.VITE_API_PORT}`;
+const isDev = import.meta.env.DEV;
+
+// En desarrollo usamos proxy local (/api) para evitar preflight CORS (OPTIONS + request real).
+// En producción conservamos la URL explícita configurada por entorno.
+const API_URL = isDev
+  ? '/api'
+  : `${import.meta.env.VITE_API_BASE}:${import.meta.env.VITE_API_PORT}`;
 
 // Creamos una instancia de axios con la ruta base y el timeout global
 const api = axios.create({

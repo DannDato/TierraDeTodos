@@ -92,7 +92,7 @@ class AvatarController {
             }
 
             if (!file) {
-                return res.status(400).json({ message: 'No se recibió ninguna imagen' });
+                return res.status(400).json({ message: 'No se recibiÃ³ ninguna imagen' });
             }
 
             const previousRows = await this.getAvatarRows(userId);
@@ -154,6 +154,15 @@ class AvatarController {
                 });
             }
 
+            await req.logAction({
+                accion: 'Avatar subido correctamente',
+                apartado: 'Avatar',
+                userId,
+                username: req.user?.username,
+                valor: `avatarId=${row.id}; replaced=${previousRows.length}`,
+                type: 'info'
+            });
+
             return res.status(201).json({
                 message: 'Avatar subido correctamente',
                 avatar: row
@@ -182,6 +191,15 @@ class AvatarController {
             const zoom = this.clamp(this.parseNumber(req.body?.zoom, row.zoom), 1, 3);
 
             await row.update({ pos_x: posX, pos_y: posY, zoom });
+
+            await req.logAction({
+                accion: 'Posicion de avatar actualizada',
+                apartado: 'Avatar',
+                userId,
+                username: req.user?.username,
+                valor: `avatarId=${row.id}; posX=${posX}; posY=${posY}; zoom=${zoom}`,
+                type: 'info'
+            });
 
             return res.status(200).json({
                 message: 'Posicion de avatar actualizada',
@@ -216,6 +234,15 @@ class AvatarController {
             }
 
             await models.user_profile_images.destroy({ where: { userId } });
+
+            await req.logAction({
+                accion: 'Avatar eliminado correctamente',
+                apartado: 'Avatar',
+                userId,
+                username: req.user?.username,
+                valor: `deletedRows=${rows.length}`,
+                type: 'info'
+            });
 
             return res.status(200).json({
                 message: 'Avatar eliminado correctamente'

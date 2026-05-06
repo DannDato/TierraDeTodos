@@ -12,3 +12,4 @@ router.put('/permissions/:id', verifyToken, checkPermissions(['permissions.edit'
 router.delete('/permissions/:id', verifyToken, checkPermissions(['permissions.remove']), ctrlPermissions.deletePermission);
 
 export default router;
+

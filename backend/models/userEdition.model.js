@@ -1,4 +1,4 @@
-import { User } from "cloudflare/resources/index.mjs";
+﻿import { User } from "cloudflare/resources/index.mjs";
 
 export default (sequelize, DataTypes) => {
 
@@ -51,12 +51,14 @@ export default (sequelize, DataTypes) => {
   UserEdition.associate = (models) => {
     UserEdition.belongsTo(models.Edition, {
       foreignKey: 'editionId',
-      as: 'edition'
+      as: 'edition',
+      constraints: false
     });
 
     UserEdition.belongsTo(models.Users, {
       foreignKey: 'userID',
-      as: 'user'
+      as: 'user',
+      constraints: false
     });
   };
 

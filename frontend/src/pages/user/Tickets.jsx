@@ -8,7 +8,6 @@ import {
   MessageSquareWarning,
   Send,
   ShieldAlert,
-  UserSearch,
   X,
 } from "lucide-react";
 
@@ -25,7 +24,6 @@ const createInitialForm = (types = [], priorities = []) => ({
   type: String(types[0]?.key || ""),
   priority: String(priorities[0]?.key || ""),
   subject: "",
-  involvedPlayer: "",
   coordX: "",
   coordY: "",
   coordZ: "",
@@ -60,8 +58,6 @@ function Tickets() {
   // formulario
   const [formData,          setFormData]          = useState(createInitialForm());
   const [submitting,        setSubmitting]         = useState(false);
-  const [playersCatalog,    setPlayersCatalog]    = useState([]);
-  const [showPlayerOptions, setShowPlayerOptions] = useState(false);
 
   // modal de chat
   const [chatTicket,  setChatTicket]  = useState(null);
@@ -102,16 +98,6 @@ function Tickets() {
       }
     };
 
-    const loadPlayers = async () => {
-      try {
-        const { data } = await api.get("/user/players");
-        const users = Array.isArray(data?.players) ? data.players : [];
-        setPlayersCatalog([...new Set(users.map((u) => String(u?.username || "").trim()).filter(Boolean))]);
-      } catch {
-        setPlayersCatalog([]);
-      }
-    };
-
     const loadMyTickets = async () => {
       try {
         setTicketsLoading(true);
@@ -125,7 +111,6 @@ function Tickets() {
     };
 
     loadCatalogs();
-    loadPlayers();
     loadMyTickets();
   }, []);
 
@@ -161,10 +146,6 @@ function Tickets() {
 
   const maxReached = summary.abiertos >= 2;
 
-  const filteredPlayers = useMemo(() => {
-    const q = String(formData.involvedPlayer || "").trim().toLowerCase();
-    return playersCatalog.filter((u) => !q || u.toLowerCase().includes(q)).slice(0, 8);
-  }, [playersCatalog, formData.involvedPlayer]);
 
   // ── handlers formulario ────────────────────────────────────────────────────
   const handleChange = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
@@ -181,7 +162,6 @@ function Tickets() {
     }
 
     const subject        = formData.subject.trim();
-    const involvedPlayer = formData.involvedPlayer.trim();
     const description    = formData.description.trim();
     const coordX = formData.coordX === "" ? null : Number(formData.coordX);
     const coordY = formData.coordY === "" ? null : Number(formData.coordY);
@@ -203,7 +183,6 @@ function Tickets() {
       const { data } = await api.post("/user/tickets", {
         typeKey: formData.type, priorityKey: formData.priority,
         subject,
-        involvedPlayer: involvedPlayer || null,
         coordX,
         coordY,
         coordZ,
@@ -312,26 +291,6 @@ function Tickets() {
 
             <Input label="Asunto" value={formData.subject} onChange={(e) => handleChange("subject", e.target.value)} placeholder="Ej. Me robaron cofres en X Y Z" disabled={maxReached} />
 
-            <div className="relative">
-              <Input
-                label="Jugador involucrado"
-                value={formData.involvedPlayer}
-                onChange={(e) => { handleChange("involvedPlayer", e.target.value); setShowPlayerOptions(true); }}
-                onFocus={() => setShowPlayerOptions(true)}
-                onBlur={() => setTimeout(() => setShowPlayerOptions(false), 120)}
-                placeholder="Escribe para filtrar jugadores..."
-                disabled={maxReached}
-              />
-              <UserSearch size={16} className="absolute right-2 top-[40px] text-[var(--ins-text-gray)] pointer-events-none" />
-              {showPlayerOptions && filteredPlayers.length > 0 && (
-                <div className="absolute z-40 mt-2 w-full max-h-48 overflow-y-auto tdt-scrollbar rounded-xl shadow-lg">
-                  {filteredPlayers.map((u) => (
-                    <button key={u} type="button" onMouseDown={() => { handleChange("involvedPlayer", u); setShowPlayerOptions(false); }} className="w-full text-left px-3 py-2 text-sm text-[var(--ins-text-white)] hover:bg-white/10 transition-colors">{u}</button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             <div className="rounded-xl bg-black/10 p-4 border border-white/10">
               <div className="flex items-center gap-2 mb-3 text-[var(--ins-text-gray)] text-sm font-semibold">
                 <MapPinned size={16} className="text-[var(--secondary-color)]" /> Coordenadas del incidente (opcionales)
@@ -428,7 +387,6 @@ function TicketCard({ ticket, typeMap, priorityMap, onDoubleClick }) {
         <div className="flex flex-wrap gap-2">
           <Badge>{typeMap.get(ticket.typeKey)?.name || ticket.typeKey}</Badge>
           <BadgeAmber>{priorityMap.get(ticket.priorityKey)?.name || ticket.priorityKey}</BadgeAmber>
-          {ticket.involvedPlayer ? <BadgeSky>Jugador: {ticket.involvedPlayer}</BadgeSky> : null}
           {ticket.coordX !== null && ticket.coordY !== null && ticket.coordZ !== null ? (
             <BadgeSecondary>XYZ: {ticket.coordX}, {ticket.coordY}, {ticket.coordZ}</BadgeSecondary>
           ) : null}
@@ -514,7 +472,6 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
                 <div className="flex flex-wrap gap-2 mt-2">
                   <Badge>{typeMap.get(ticket.typeKey)?.name || ticket.typeKey}</Badge>
                   <BadgeAmber>{priorityMap.get(ticket.priorityKey)?.name || ticket.priorityKey}</BadgeAmber>
-                  {ticket.involvedPlayer ? <BadgeSky>Jugador: {ticket.involvedPlayer}</BadgeSky> : null}
                   {ticket.coordX !== null && ticket.coordY !== null && ticket.coordZ !== null ? (
                     <BadgeSecondary>XYZ: {ticket.coordX}, {ticket.coordY}, {ticket.coordZ}</BadgeSecondary>
                   ) : null}
@@ -593,7 +550,6 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
 // ─── Badges utilitarios ──────────────────────────────────────────────────────
 const Badge          = ({ children }) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white/10 text-[var(--ins-text-gray)] uppercase tracking-wider">{children}</span>;
 const BadgeAmber     = ({ children }) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 uppercase tracking-wider">{children}</span>;
-const BadgeSky       = ({ children }) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-sky-500/15 text-sky-300 tracking-wider">{children}</span>;
 const BadgeSecondary = ({ children }) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[var(--secondary-color)]/15 text-[var(--secondary-color)] tracking-wider">{children}</span>;
 
 export default Tickets;

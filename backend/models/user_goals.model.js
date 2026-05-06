@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
   const user_goals = sequelize.define('user_goals', {
     id: {
       type: DataTypes.INTEGER,
@@ -7,18 +7,15 @@ export default (sequelize, DataTypes) => {
     },
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'Users', key: 'id' }
+      allowNull: false
     },
     goalId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'goals', key: 'id' }
+      allowNull: false
     },
     editionId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'edition', key: 'id' }
+      allowNull: false
     },
     progress: {
       type: DataTypes.INTEGER,
@@ -62,19 +59,22 @@ export default (sequelize, DataTypes) => {
     user_goals.belongsTo(models.Users, {
       foreignKey: 'userId',
       as: 'user',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
     });
 
     user_goals.belongsTo(models.goals, {
       foreignKey: 'goalId',
       as: 'goal',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
     });
 
     user_goals.belongsTo(models.Edition, {
       foreignKey: 'editionId',
       as: 'edition',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
     });
   };
 

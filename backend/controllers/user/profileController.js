@@ -12,18 +12,21 @@ function generateVerifyCode() {
 }
 
 async function sendVerifyMail(to, code, type = 'email') {
-    // Usa tu configuración real de nodemailer aquí
     const transporter = nodemailer.createTransport({
-        // ...
-        // Ejemplo: host, port, auth, etc.
+        service: 'gmail',
+        auth: {
+            type: 'login',
+            user: process.env.DANNBOT_MAIL_USER,
+            pass: process.env.DANNBOT_MAIL_PASS,
+        },
     });
     const subject = type === 'username' ? 'Verifica tu nuevo usuario' : 'Verifica tu nuevo correo';
     const html = `<p>Tu código de verificación es: <b>${code}</b></p>`;
     await transporter.sendMail({
-        from: process.env.EMAIL_FROM || 'no-reply@tierradetodos.com',
+        from: `Tierra de Todos <${process.env.DANNBOT_MAIL_USER}>`,
         to,
         subject,
-        html
+        html,
     });
 }
 
@@ -34,19 +37,27 @@ class ProfileController {
             const userId = req.user.id;
             const { newEmail } = req.body;
             if (!newEmail || typeof newEmail !== 'string') {
-                return res.status(400).json({ message: 'Correo inválido' });
+                return res.status(400).json({ message: 'Correo invÃ¡lido' });
             }
             // Verifica que no exista ya ese correo
             const exists = await models.Users.findOne({ where: { email: newEmail } });
             if (exists) {
-                return res.status(409).json({ message: 'Ese correo ya está en uso' });
+                return res.status(409).json({ message: 'Ese correo ya estÃ¡ en uso' });
             }
-            // Genera código y guarda en user_mails
+            // Genera cÃ³digo y guarda en user_mails
             const verifyCode = generateVerifyCode();
             const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutos
             await models.UserMails.create({ userId, newEmail, verifyCode, expiresAt });
             await sendVerifyMail(newEmail, verifyCode, 'email');
-            return res.json({ message: 'Se envió un código de verificación al nuevo correo' });
+            await req.logAction({
+                accion: 'Solicitud de cambio de correo iniciada',
+                apartado: 'Perfil',
+                userId,
+                username: req.user?.username,
+                valor: `newEmail=${newEmail}`,
+                type: 'info'
+            });
+            return res.json({ message: 'Se enviÃ³ un cÃ³digo de verificaciÃ³n al nuevo correo' });
         } catch (err) {
             return handleError(res, req, err, 'Error al iniciar cambio de correo');
         }
@@ -58,12 +69,12 @@ class ProfileController {
             const userId = req.user.id;
             const { newUsername } = req.body;
             if (!newUsername || typeof newUsername !== 'string') {
-                return res.status(400).json({ message: 'Usuario inválido' });
+                return res.status(400).json({ message: 'Usuario invÃ¡lido' });
             }
             // Verifica que no exista ya ese username
             const exists = await models.Users.findOne({ where: { username: newUsername } });
             if (exists) {
-                return res.status(409).json({ message: 'Ese usuario ya está en uso' });
+                return res.status(409).json({ message: 'Ese usuario ya estÃ¡ en uso' });
             }
             // Validar que solo se pueda cambiar cada 3 meses
             const lastChange = await models.UserUsernames.findOne({
@@ -78,9 +89,17 @@ class ProfileController {
                     return res.status(429).json({ message: 'Solo puedes cambiar tu usuario una vez cada 3 meses.' });
                 }
             }
-            // Aplica el cambio directamente (sin código)
+            // Aplica el cambio directamente (sin cÃ³digo)
             await models.Users.update({ username: newUsername }, { where: { id: userId } });
             await models.UserUsernames.create({ userId, newUsername, verifyCode: null, expiresAt: null, verified: true });
+            await req.logAction({
+                accion: 'Username actualizado correctamente',
+                apartado: 'Perfil',
+                userId,
+                username: req.user?.username,
+                valor: `newUsername=${newUsername}`,
+                type: 'info'
+            });
             return res.json({ message: 'Usuario actualizado correctamente' });
         } catch (err) {
             return handleError(res, req, err, 'Error al cambiar el usuario');
@@ -95,14 +114,22 @@ class ProfileController {
             if (!code || !type) return res.status(400).json({ message: 'Faltan datos' });
             if (type === 'email') {
                 const pending = await models.UserMails.findOne({ where: { userId, verifyCode: code, verified: false, expiresAt: { [models.Sequelize.Op.gt]: new Date() } } });
-                if (!pending) return res.status(400).json({ message: 'Código inválido o expirado' });
+                if (!pending) return res.status(400).json({ message: 'CÃ³digo invÃ¡lido o expirado' });
                 // Actualiza el correo real
                 await models.Users.update({ email: pending.newEmail }, { where: { id: userId } });
                 pending.verified = true;
                 await pending.save();
+                await req.logAction({
+                    accion: 'Correo actualizado correctamente',
+                    apartado: 'Perfil',
+                    userId,
+                    username: req.user?.username,
+                    valor: `newEmail=${pending.newEmail}`,
+                    type: 'info'
+                });
                 return res.json({ message: 'Correo actualizado correctamente' });
             } else {
-                return res.status(400).json({ message: 'Tipo inválido' });
+                return res.status(400).json({ message: 'Tipo invÃ¡lido' });
             }
         } catch (err) {
             return handleError(res, req, err, 'Error al verificar el cambio');
@@ -161,7 +188,7 @@ class ProfileController {
                     LIMIT 1
                 ) AS avatarZoom,
                 u.account as status,
-                (SELECT us.color FROM user_statuses us WHERE us.status = u.account AND us.active = 'YES' LIMIT 1) AS statusColor,
+                (SELECT us.color FROM system_statuses us WHERE us.status = u.account AND us.active = 'YES' LIMIT 1) AS statusColor,
                 (SELECT reason FROM user_status_history WHERE user = u.id ORDER BY created_at DESC LIMIT 1) AS status_reason,
                 (SELECT u2.username FROM user_status_history sh
                     INNER JOIN Users u2 on u2.id = sh.changed_by
@@ -202,6 +229,14 @@ class ProfileController {
         const result = userData[0];
         result.devices = result.devices ? JSON.parse(result.devices) : [];
         result.equippedEmblems = await getEquippedEmblemsByUser(user);
+        await req.logAction({
+            accion: 'Perfil consultado',
+            apartado: 'Perfil',
+            userId: req.user?.id,
+            username: req.user?.username,
+            valor: `devices=${result.devices.length}; hasEmblems=${result.equippedEmblems.length}`,
+            type: 'info'
+        });
         return res.json({ user: result });
 
     } catch (error) {

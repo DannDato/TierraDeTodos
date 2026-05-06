@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
 
   const UserPermissions = sequelize.define('UserPermissions', {
     id: {
@@ -40,14 +40,16 @@ export default (sequelize, DataTypes) => {
     UserPermissions.belongsTo(models.Users, {
       foreignKey: 'userId',
       as: 'user',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
     });
 
     UserPermissions.belongsTo(models.Permissions, {
       foreignKey: 'permission',
       targetKey: 'key',
       as: 'permissionRef',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
     });
   };
 
@@ -133,10 +135,10 @@ export default (sequelize, DataTypes) => {
       'editions.edit',
       'editions.remove',
 
-      'news_types.view',
-      'news_types.gest',
-      'news_types.edit',
-      'news_types.remove',
+      'catalog.news_type.view',
+      'catalog.news_type.gest',
+      'catalog.news_type.edit',
+      'catalog.news_type.remove',
 
       'permissions.view',
       'permissions.gest',
@@ -165,10 +167,10 @@ export default (sequelize, DataTypes) => {
       'ticket_catalogs.edit',
       'ticket_catalogs.remove',
 
-      'ticket_statuses.view',
-      'ticket_statuses.gest',
-      'ticket_statuses.edit',
-      'ticket_statuses.remove',
+      'catalog.ticket_status.view',
+      'catalog.ticket_status.gest',
+      'catalog.ticket_status.edit',
+      'catalog.ticket_status.remove',
 
       'tickets.view',
       'tickets.manage',
@@ -199,3 +201,4 @@ export default (sequelize, DataTypes) => {
 
   return UserPermissions;
 };
+

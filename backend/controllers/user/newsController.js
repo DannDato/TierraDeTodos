@@ -1,4 +1,5 @@
 import { db, models } from '../../models/index.js';
+import { LikesValidationError } from '../../models/likes.model.js';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { Op } from 'sequelize';
 
@@ -26,31 +27,44 @@ class NewsController {
       const minDate = new Date();
       minDate.setMonth(minDate.getMonth() - 4);
 
-      const rows = await models.news.findAll({
-        where: {
-          fecha: {
-            [Op.gte]: minDate.toISOString().slice(0, 10)
-          }
-        },
-        include: [
-          {
-            model: models.news_likes,
-            as: 'likes',
-            attributes: ['userId'],
-            required: false
-          }
-        ],
-        order: [['fecha', 'DESC'], ['id', 'DESC']]
-      });
+      const [rows, types] = await Promise.all([
+        models.news.findAll({
+          where: {
+            fecha: {
+              [Op.gte]: minDate.toISOString().slice(0, 10)
+            }
+          },
+          order: [['fecha', 'DESC'], ['id', 'DESC']]
+        }),
+        models.catalog.findAll({
+          where: { category: 'news_type', active: 'YES' },
+          order: [['sortOrder', 'ASC'], ['name', 'ASC']]
+        })
+      ]);
 
       // Si hay usuario autenticado, obtener su id
       const currentUserId = req.user?.id;
 
+      // Cargar likes de noticias en una sola query y hacer join en memoria
+      const newsIds = rows.map((r) => r.id);
+      const allLikes = newsIds.length > 0
+        ? await models.likes.findAll({
+            where: { targetType: 'news', targetId: { [Op.in]: newsIds } },
+            attributes: ['targetId', 'userId']
+          })
+        : [];
+
+      const likesByNewsId = new Map();
+      for (const like of allLikes) {
+        if (!likesByNewsId.has(like.targetId)) likesByNewsId.set(like.targetId, []);
+        likesByNewsId.get(like.targetId).push(like.userId);
+      }
+
       const parsedNews = rows.map((row) => {
         const plain = row.toJSON();
-        const likesArr = Array.isArray(plain.likes) ? plain.likes : [];
-        const likesCount = likesArr.length;
-        const likedByCurrentUser = currentUserId ? likesArr.some(like => like.userId === currentUserId) : false;
+        const usersWhoLiked = likesByNewsId.get(plain.id) || [];
+        const likesCount = usersWhoLiked.length;
+        const likedByCurrentUser = currentUserId ? usersWhoLiked.includes(currentUserId) : false;
         return {
           ...plain,
           likesCount,
@@ -58,8 +72,18 @@ class NewsController {
         };
       });
 
+      await req.logAction({
+        accion: 'Noticias consultadas',
+        apartado: 'News',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `news=${parsedNews.length}; types=${types.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({
-        news: parsedNews
+        news: parsedNews,
+        types
       });
     } catch (error) {
       return res.status(500).json({ message: 'Error interno del servidor' });
@@ -68,8 +92,18 @@ class NewsController {
 
   getNewsTypes = async (req, res) => {
     try {
-      const types = await models.news_types.findAll({
-        order: [['name', 'ASC'], ['id', 'ASC']]
+      const types = await models.catalog.findAll({
+        where: { category: 'news_type', active: 'YES' },
+        order: [['sortOrder', 'ASC'], ['name', 'ASC']]
+      });
+
+      await req.logAction({
+        accion: 'Tipos de noticia consultados',
+        apartado: 'News',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `types=${types.length}`,
+        type: 'info'
       });
 
       return res.status(200).json({ types });
@@ -91,13 +125,13 @@ class NewsController {
 
       if (!title || !description || !fecha) {
         await tx.rollback();
-        return res.status(400).json({ message: 'Título, fecha y descripción son obligatorios.' });
+        return res.status(400).json({ message: 'TÃ­tulo, fecha y descripciÃ³n son obligatorios.' });
       }
 
-      const typeExists = await models.news_types.findOne({ where: { name: type } });
+      const typeExists = await models.catalog.findOne({ where: { category: 'news_type', key: type, active: 'YES' } });
       if (!typeExists) {
         await tx.rollback();
-        return res.status(400).json({ message: 'El tipo de noticia no es válido.' });
+        return res.status(400).json({ message: 'El tipo de noticia no es vÃ¡lido.' });
       }
 
       const newsCreated = await models.news.create({
@@ -111,6 +145,15 @@ class NewsController {
       }, { transaction: tx });
 
       await tx.commit();
+
+      await req.logAction({
+        accion: 'Noticia creada correctamente',
+        apartado: 'News',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `newsId=${newsCreated.id}; type=${type}; title=${title}`,
+        type: 'info'
+      });
 
       return res.status(201).json({
         message: 'Noticia creada correctamente.',
@@ -126,7 +169,7 @@ class NewsController {
     try {
       const newsId = Number(req.params.id);
       if (!newsId) {
-        return res.status(400).json({ message: 'ID de noticia inválido.' });
+        return res.status(400).json({ message: 'ID de noticia invÃ¡lido.' });
       }
 
       const row = await models.news.findByPk(newsId);
@@ -146,12 +189,12 @@ class NewsController {
       const note = String(req.body?.note ?? row.note ?? '').trim();
 
       if (!title || !description || !fecha) {
-        return res.status(400).json({ message: 'Título, fecha y descripción son obligatorios.' });
+        return res.status(400).json({ message: 'TÃ­tulo, fecha y descripciÃ³n son obligatorios.' });
       }
 
-      const typeExists = await models.news_types.findOne({ where: { name: type } });
+      const typeExists = await models.catalog.findOne({ where: { category: 'news_type', key: type, active: 'YES' } });
       if (!typeExists) {
-        return res.status(400).json({ message: 'El tipo de noticia no es válido.' });
+        return res.status(400).json({ message: 'El tipo de noticia no es vÃ¡lido.' });
       }
 
       row.title = title;
@@ -160,6 +203,15 @@ class NewsController {
       row.description = description;
       row.note = note || null;
       await row.save();
+
+      await req.logAction({
+        accion: 'Noticia actualizada correctamente',
+        apartado: 'News',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `newsId=${row.id}; type=${type}; title=${title}`,
+        type: 'info'
+      });
 
       return res.status(200).json({
         message: 'Noticia actualizada correctamente.',
@@ -174,7 +226,7 @@ class NewsController {
     try {
       const newsId = Number(req.params.id);
       if (!newsId) {
-        return res.status(400).json({ message: 'ID de noticia inválido.' });
+        return res.status(400).json({ message: 'ID de noticia invÃ¡lido.' });
       }
 
       const row = await models.news.findByPk(newsId);
@@ -189,7 +241,7 @@ class NewsController {
 
       const file = req.file;
       if (!file) {
-        return res.status(400).json({ message: 'No se recibió ninguna imagen.' });
+        return res.status(400).json({ message: 'No se recibiÃ³ ninguna imagen.' });
       }
 
       const extByMime = {
@@ -227,6 +279,15 @@ class NewsController {
       row.image = imageUrl;
       await row.save();
 
+      await req.logAction({
+        accion: 'Imagen de noticia actualizada',
+        apartado: 'News',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `newsId=${row.id}; key=${key}`,
+        type: 'info'
+      });
+
       return res.status(200).json({
         message: 'Imagen de noticia actualizada.',
         news: row,
@@ -261,6 +322,15 @@ class NewsController {
       }
 
       await row.destroy();
+
+      await req.logAction({
+        accion: 'Noticia eliminada correctamente',
+        apartado: 'News',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `newsId=${newsId}`,
+        type: 'info'
+      });
 
       return res.status(200).json({
         message: 'Noticia eliminada correctamente.'
@@ -302,13 +372,13 @@ class NewsController {
             ) AS avatarUrl,
             (
               SELECT COUNT(*)
-              FROM news_comments_likes ncl
-              WHERE ncl.comment_id = nc.id
+              FROM likes l
+              WHERE l.target_type = 'news_comment' AND l.target_id = nc.id
             ) AS likesCount,
             (
               SELECT COUNT(*)
-              FROM news_comments_likes ncl
-              WHERE ncl.comment_id = nc.id AND ncl.user_id = :currentUserId
+              FROM likes l
+              WHERE l.target_type = 'news_comment' AND l.target_id = nc.id AND l.user_id = :currentUserId
             ) AS likedByCurrentUser
           FROM news_comments nc
           INNER JOIN Users u ON u.id = nc.user_id
@@ -326,6 +396,15 @@ class NewsController {
         likesCount: Number(c.likesCount || 0),
         likedByCurrentUser: Number(c.likedByCurrentUser) > 0,
       }));
+
+      await req.logAction({
+        accion: 'Comentarios de noticia consultados',
+        apartado: 'News',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `newsId=${newsId}; comments=${parsed.length}`,
+        type: 'info'
+      });
 
       return res.status(200).json({ comments: parsed });
     } catch (_error) {
@@ -379,6 +458,15 @@ class NewsController {
         }
       );
 
+      await req.logAction({
+        accion: 'Comentario de noticia creado',
+        apartado: 'News',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `newsId=${newsId}; commentId=${created.id}`,
+        type: 'info'
+      });
+
       return res.status(201).json({
         message: 'Comentario publicado correctamente.',
         comment: {
@@ -407,12 +495,6 @@ class NewsController {
         return res.status(400).json({ message: 'ID de noticia invalido.' });
       }
 
-      const liked = req.body?.liked;
-      if (typeof liked !== 'boolean') {
-        await tx.rollback();
-        return res.status(400).json({ message: 'El campo liked debe ser booleano.' });
-      }
-
       const userId = req.user?.id;
       if (!userId) {
         await tx.rollback();
@@ -430,15 +512,18 @@ class NewsController {
         return res.status(404).json({ message: 'Noticia no encontrada.' });
       }
 
-      const likeRow = await models.news_likes.findOne({
-        where: { newsId, userId },
+      const likeRow = await models.likes.findOne({
+        where: { targetType: 'news', targetId: newsId, userId },
         transaction: tx,
         lock: tx.LOCK.UPDATE
       });
 
-      if (liked) {
+      const currentlyLiked = Boolean(likeRow);
+      const nextLiked = !currentlyLiked;
+
+      if (nextLiked) {
         if (!likeRow) {
-          await models.news_likes.create({ newsId, userId }, { transaction: tx });
+          await models.likes.create({ targetType: 'news', targetId: newsId, userId }, { transaction: tx });
         }
       } else {
         if (likeRow) {
@@ -447,17 +532,29 @@ class NewsController {
       }
 
       // Contar likes actuales
-      const likesCount = await models.news_likes.count({ where: { newsId }, transaction: tx });
+      const likesCount = await models.likes.count({ where: { targetType: 'news', targetId: newsId }, transaction: tx });
 
       await tx.commit();
 
+      await req.logAction({
+        accion: nextLiked ? 'Like agregado a noticia' : 'Like removido de noticia',
+        apartado: 'News',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `newsId=${newsId}; likesCount=${likesCount}`,
+        type: 'info'
+      });
+
       return res.status(200).json({
         newsId,
-        liked,
+        liked: nextLiked,
         likesCount
       });
     } catch (_error) {
       await tx.rollback();
+      if (_error instanceof LikesValidationError) {
+        return res.status(400).json({ message: _error.message });
+      }
       return res.status(500).json({ message: 'Error interno del servidor' });
     }
   };
@@ -470,12 +567,6 @@ class NewsController {
       if (!newsId || !commentId) {
         await tx.rollback();
         return res.status(400).json({ message: 'ID invalido.' });
-      }
-
-      const liked = req.body?.liked;
-      if (typeof liked !== 'boolean') {
-        await tx.rollback();
-        return res.status(400).json({ message: 'El campo liked debe ser booleano.' });
       }
 
       const userId = req.user?.id;
@@ -496,15 +587,18 @@ class NewsController {
         return res.status(404).json({ message: 'Comentario no encontrado.' });
       }
 
-      const likeRow = await models.news_comments_likes.findOne({
-        where: { commentId, userId },
+      const likeRow = await models.likes.findOne({
+        where: { targetType: 'news_comment', targetId: commentId, userId },
         transaction: tx,
         lock: tx.LOCK.UPDATE
       });
 
-      if (liked) {
+      const currentlyLiked = Boolean(likeRow);
+      const nextLiked = !currentlyLiked;
+
+      if (nextLiked) {
         if (!likeRow) {
-          await models.news_comments_likes.create({ commentId, userId }, { transaction: tx });
+          await models.likes.create({ targetType: 'news_comment', targetId: commentId, userId }, { transaction: tx });
         }
       } else {
         if (likeRow) {
@@ -512,16 +606,28 @@ class NewsController {
         }
       }
 
-      const likesCount = await models.news_comments_likes.count({
-        where: { commentId },
+      const likesCount = await models.likes.count({
+        where: { targetType: 'news_comment', targetId: commentId },
         transaction: tx
       });
 
       await tx.commit();
 
-      return res.status(200).json({ commentId, liked, likesCount });
+      await req.logAction({
+        accion: nextLiked ? 'Like agregado a comentario de noticia' : 'Like removido de comentario de noticia',
+        apartado: 'News',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `newsId=${newsId}; commentId=${commentId}; likesCount=${likesCount}`,
+        type: 'info'
+      });
+
+      return res.status(200).json({ commentId, liked: nextLiked, likesCount });
     } catch (_error) {
       await tx.rollback();
+      if (_error instanceof LikesValidationError) {
+        return res.status(400).json({ message: _error.message });
+      }
       return res.status(500).json({ message: 'Error interno del servidor' });
     }
   };
@@ -529,3 +635,4 @@ class NewsController {
 
 const ctrlNews = new NewsController();
 export { ctrlNews };
+

@@ -160,3 +160,4 @@ module.exports = {
     await queryInterface.bulkDelete('menu', null, {});
   }
 };
+

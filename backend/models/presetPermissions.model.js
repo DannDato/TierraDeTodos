@@ -8,7 +8,7 @@ export default (sequelize, DataTypes) => {
     },
 
     role: {
-      type: DataTypes.ENUM('SUPER-ADMIN', 'ADMIN', 'MOD', 'POLICE', 'STREAMER', 'USER', 'VIP'),
+      type: DataTypes.STRING,
       allowNull: false
     },
 
@@ -34,6 +34,10 @@ export default (sequelize, DataTypes) => {
       {
         name: 'preset_permissions_role_index',
         fields: ['role']
+      },
+      {
+        name: 'preset_permissions_permission_key_index',
+        fields: ['permissionKey']
       }
     ]
   });
@@ -85,10 +89,10 @@ export default (sequelize, DataTypes) => {
       { role: 'SUPER-ADMIN', permissionKey: 'editions.gest', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'editions.edit', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'editions.remove', active: true },
-      { role: 'SUPER-ADMIN', permissionKey: 'news_types.view', active: true },
-      { role: 'SUPER-ADMIN', permissionKey: 'news_types.gest', active: true },
-      { role: 'SUPER-ADMIN', permissionKey: 'news_types.edit', active: true },
-      { role: 'SUPER-ADMIN', permissionKey: 'news_types.remove', active: true },
+      { role: 'SUPER-ADMIN', permissionKey: 'catalog.news_type.view', active: true },
+      { role: 'SUPER-ADMIN', permissionKey: 'catalog.news_type.gest', active: true },
+      { role: 'SUPER-ADMIN', permissionKey: 'catalog.news_type.edit', active: true },
+      { role: 'SUPER-ADMIN', permissionKey: 'catalog.news_type.remove', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'permissions.view', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'permissions.gest', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'permissions.edit', active: true },
@@ -110,10 +114,10 @@ export default (sequelize, DataTypes) => {
       { role: 'SUPER-ADMIN', permissionKey: 'ticket_catalogs.gest', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'ticket_catalogs.edit', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'ticket_catalogs.remove', active: true },
-      { role: 'SUPER-ADMIN', permissionKey: 'ticket_statuses.view', active: true },
-      { role: 'SUPER-ADMIN', permissionKey: 'ticket_statuses.gest', active: true },
-      { role: 'SUPER-ADMIN', permissionKey: 'ticket_statuses.edit', active: true },
-      { role: 'SUPER-ADMIN', permissionKey: 'ticket_statuses.remove', active: true },
+      { role: 'SUPER-ADMIN', permissionKey: 'catalog.ticket_status.view', active: true },
+      { role: 'SUPER-ADMIN', permissionKey: 'catalog.ticket_status.gest', active: true },
+      { role: 'SUPER-ADMIN', permissionKey: 'catalog.ticket_status.edit', active: true },
+      { role: 'SUPER-ADMIN', permissionKey: 'catalog.ticket_status.remove', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'emblems.view', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'emblems.gest', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'emblems.edit', active: true },
@@ -168,10 +172,10 @@ export default (sequelize, DataTypes) => {
       { role: 'ADMIN', permissionKey: 'editions.gest', active: true },
       { role: 'ADMIN', permissionKey: 'editions.edit', active: true },
       { role: 'ADMIN', permissionKey: 'editions.remove', active: true },
-      { role: 'ADMIN', permissionKey: 'news_types.view', active: true },
-      { role: 'ADMIN', permissionKey: 'news_types.gest', active: true },
-      { role: 'ADMIN', permissionKey: 'news_types.edit', active: true },
-      { role: 'ADMIN', permissionKey: 'news_types.remove', active: true },
+      { role: 'ADMIN', permissionKey: 'catalog.news_type.view', active: true },
+      { role: 'ADMIN', permissionKey: 'catalog.news_type.gest', active: true },
+      { role: 'ADMIN', permissionKey: 'catalog.news_type.edit', active: true },
+      { role: 'ADMIN', permissionKey: 'catalog.news_type.remove', active: true },
       { role: 'ADMIN', permissionKey: 'permissions.view', active: true },
       { role: 'ADMIN', permissionKey: 'permissions.gest', active: true },
       { role: 'ADMIN', permissionKey: 'permissions.edit', active: true },
@@ -193,10 +197,10 @@ export default (sequelize, DataTypes) => {
       { role: 'ADMIN', permissionKey: 'ticket_catalogs.gest', active: true },
       { role: 'ADMIN', permissionKey: 'ticket_catalogs.edit', active: true },
       { role: 'ADMIN', permissionKey: 'ticket_catalogs.remove', active: true },
-      { role: 'ADMIN', permissionKey: 'ticket_statuses.view', active: true },
-      { role: 'ADMIN', permissionKey: 'ticket_statuses.gest', active: true },
-      { role: 'ADMIN', permissionKey: 'ticket_statuses.edit', active: true },
-      { role: 'ADMIN', permissionKey: 'ticket_statuses.remove', active: true },
+      { role: 'ADMIN', permissionKey: 'catalog.ticket_status.view', active: true },
+      { role: 'ADMIN', permissionKey: 'catalog.ticket_status.gest', active: true },
+      { role: 'ADMIN', permissionKey: 'catalog.ticket_status.edit', active: true },
+      { role: 'ADMIN', permissionKey: 'catalog.ticket_status.remove', active: true },
       { role: 'ADMIN', permissionKey: 'emblems.view', active: true },
       { role: 'ADMIN', permissionKey: 'emblems.gest', active: true },
       { role: 'ADMIN', permissionKey: 'emblems.edit', active: true },
@@ -269,5 +273,29 @@ export default (sequelize, DataTypes) => {
     }
   };
 
+  PresetPermissions.associate = (models) => {
+    PresetPermissions.belongsTo(models.Roles, {
+      foreignKey: 'role',
+      targetKey: 'role',
+      as: 'roleRef',
+      constraints: false
+    });
+
+    PresetPermissions.belongsTo(models.Permissions, {
+      foreignKey: 'permissionKey',
+      targetKey: 'key',
+      as: 'permissionRef',
+      constraints: false
+    });
+
+    PresetPermissions.hasMany(models.Users, {
+      foreignKey: 'role',
+      sourceKey: 'role',
+      as: 'usersByRole',
+      constraints: false
+    });
+  };
+
   return PresetPermissions;
 };
+

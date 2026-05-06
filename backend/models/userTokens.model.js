@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
   const UserTokens = sequelize.define("UserTokens", {
     userId: {
       type: DataTypes.INTEGER,
@@ -36,9 +36,11 @@ export default (sequelize, DataTypes) => {
   });
 
   UserTokens.associate = (models) => {
-    UserTokens.belongsTo(models.Users, { foreignKey: 'userId', as: 'user' });
+    UserTokens.belongsTo(models.Users, { foreignKey: 'userId', as: 'user',
+      constraints: false });
   };
 
 
   return UserTokens;
 };
+

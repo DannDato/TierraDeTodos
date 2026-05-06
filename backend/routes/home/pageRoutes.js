@@ -9,3 +9,4 @@ router.get('/rules', ctrlPage.getActiveEditionRules);
 router.get('/timeline', ctrlPage.getActiveEditionTimeline);
 
 export default router;
+

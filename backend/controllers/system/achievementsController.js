@@ -90,7 +90,7 @@ class AchievementsController {
   uploadEmblemIcon = async (req, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ message: 'No se subió ningún archivo.' });
+        return res.status(400).json({ message: 'No se subiÃ³ ningÃºn archivo.' });
       }
 
       const userId = req.user?.id || 'unknown';
@@ -114,6 +114,15 @@ class AchievementsController {
       const url = (process.env.R2_PUBLIC_URL
         ? process.env.R2_PUBLIC_URL.replace(/\/$/, '')
         : `${process.env.R2_ENDPOINT}/${process.env.R2_BUCKET}`.replace(/\/$/, '')) + `/${key}`;
+
+      await req.logAction({
+        accion: 'Icono de emblema subido',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `key=${key}`,
+        type: 'info'
+      });
 
       return res.status(201).json({ url });
     } catch (error) {
@@ -140,9 +149,18 @@ class AchievementsController {
         order: [['username', 'ASC'], ['id', 'ASC']]
       });
 
+      await req.logAction({
+        accion: 'Usuarios asignables para emblemas consultados',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `users=${users.length}; q=${q}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ users });
     } catch (error) {
-      handleError(res, req, error, 'Error al cargar usuarios para asignación de emblemas');
+      handleError(res, req, error, 'Error al cargar usuarios para asignaciÃ³n de emblemas');
     }
   };
 
@@ -183,6 +201,15 @@ class AchievementsController {
         order: [['userId', 'ASC'], ['editionId', 'DESC'], ['order', 'ASC'], ['earnedAt', 'DESC']]
       });
 
+      await req.logAction({
+        accion: 'Emblemas de usuarios consultados',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `userEmblems=${userEmblems.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ userEmblems });
     } catch (error) {
       handleError(res, req, error, 'Error al cargar emblemas asignados a usuarios');
@@ -218,17 +245,17 @@ class AchievementsController {
 
       if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
       if (!emblem) return res.status(404).json({ message: 'Emblema no encontrado' });
-      if (!edition) return res.status(404).json({ message: 'Edición no encontrada' });
+      if (!edition) return res.status(404).json({ message: 'EdiciÃ³n no encontrada' });
 
       if (emblem.editionId !== editionId) {
-        return res.status(400).json({ message: 'El emblema debe pertenecer a la misma edición' });
+        return res.status(400).json({ message: 'El emblema debe pertenecer a la misma ediciÃ³n' });
       }
 
       if (sourceGoalId) {
         const goal = await models.goals.findByPk(sourceGoalId);
         if (!goal) return res.status(404).json({ message: 'Logro fuente no encontrado' });
         if (goal.editionId !== editionId || goal.emblemId !== emblemId) {
-          return res.status(400).json({ message: 'El logro fuente debe pertenecer a la misma edición y emblema' });
+          return res.status(400).json({ message: 'El logro fuente debe pertenecer a la misma ediciÃ³n y emblema' });
         }
       }
 
@@ -247,6 +274,15 @@ class AchievementsController {
         order
       });
 
+      await req.logAction({
+        accion: 'Emblema asignado a usuario',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `assignmentId=${created.id}; targetUserId=${userId}; emblemId=${emblemId}`,
+        type: 'info'
+      });
+
       return res.status(201).json(created);
     } catch (error) {
       handleError(res, req, error, 'Error al asignar emblema al usuario');
@@ -256,10 +292,10 @@ class AchievementsController {
   updateUserEmblem = async (req, res) => {
     try {
       const id = parseNumber(req.params.id);
-      if (!id) return res.status(400).json({ message: 'ID inválido' });
+      if (!id) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
       const row = await models.user_emblems.findByPk(id);
-      if (!row) return res.status(404).json({ message: 'Asignación de emblema no encontrada' });
+      if (!row) return res.status(404).json({ message: 'AsignaciÃ³n de emblema no encontrada' });
 
       const nextSourceGoalId = req.body?.sourceGoalId === null || req.body?.sourceGoalId === ''
         ? null
@@ -278,7 +314,7 @@ class AchievementsController {
         const goal = await models.goals.findByPk(nextSourceGoalId);
         if (!goal) return res.status(404).json({ message: 'Logro fuente no encontrado' });
         if (goal.editionId !== row.editionId || goal.emblemId !== row.emblemId) {
-          return res.status(400).json({ message: 'El logro fuente debe corresponder al mismo emblema y edición' });
+          return res.status(400).json({ message: 'El logro fuente debe corresponder al mismo emblema y ediciÃ³n' });
         }
       }
 
@@ -287,24 +323,41 @@ class AchievementsController {
       row.order = nextOrder;
       await row.save();
 
+      await req.logAction({
+        accion: 'Asignacion de emblema actualizada',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `assignmentId=${row.id}; equipped=${nextIsEquipped}; order=${nextOrder}`,
+        type: 'info'
+      });
+
       return res.status(200).json(row);
     } catch (error) {
-      handleError(res, req, error, 'Error al actualizar asignación de emblema');
+      handleError(res, req, error, 'Error al actualizar asignaciÃ³n de emblema');
     }
   };
 
   deleteUserEmblem = async (req, res) => {
     try {
       const id = parseNumber(req.params.id);
-      if (!id) return res.status(400).json({ message: 'ID inválido' });
+      if (!id) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
       const row = await models.user_emblems.findByPk(id);
-      if (!row) return res.status(404).json({ message: 'Asignación de emblema no encontrada' });
+      if (!row) return res.status(404).json({ message: 'AsignaciÃ³n de emblema no encontrada' });
 
       await row.destroy();
-      return res.status(200).json({ message: 'Asignación eliminada correctamente' });
+      await req.logAction({
+        accion: 'Asignacion de emblema eliminada',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `assignmentId=${id}`,
+        type: 'info'
+      });
+      return res.status(200).json({ message: 'AsignaciÃ³n eliminada correctamente' });
     } catch (error) {
-      handleError(res, req, error, 'Error al eliminar asignación de emblema');
+      handleError(res, req, error, 'Error al eliminar asignaciÃ³n de emblema');
     }
   };
 
@@ -333,6 +386,15 @@ class AchievementsController {
         order: [['editionId', 'DESC'], ['createdAt', 'DESC'], ['id', 'DESC']]
       });
 
+      await req.logAction({
+        accion: 'Emblemas consultados',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `emblems=${emblems.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ emblems });
     } catch (error) {
       handleError(res, req, error, 'Error al cargar emblemas');
@@ -355,17 +417,17 @@ class AchievementsController {
       }
 
       if (!EMBLEM_RARITIES.includes(rarity)) {
-        return res.status(400).json({ message: 'rarity inválida' });
+        return res.status(400).json({ message: 'rarity invÃ¡lida' });
       }
 
       const edition = await models.Edition.findByPk(editionId);
       if (!edition) {
-        return res.status(404).json({ message: 'Edición no encontrada' });
+        return res.status(404).json({ message: 'EdiciÃ³n no encontrada' });
       }
 
       const duplicated = await models.emblems.findOne({ where: { editionId, name } });
       if (duplicated) {
-        return res.status(409).json({ message: 'Ya existe un emblema con ese nombre en la edición seleccionada' });
+        return res.status(409).json({ message: 'Ya existe un emblema con ese nombre en la ediciÃ³n seleccionada' });
       }
 
       const created = await models.emblems.create({
@@ -379,6 +441,15 @@ class AchievementsController {
         isActive
       });
 
+      await req.logAction({
+        accion: 'Emblema creado',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `emblemId=${created.id}; editionId=${editionId}; name=${name}`,
+        type: 'info'
+      });
+
       return res.status(201).json(created);
     } catch (error) {
       handleError(res, req, error, 'Error al crear emblema');
@@ -388,7 +459,7 @@ class AchievementsController {
   updateEmblem = async (req, res) => {
     try {
       const emblemId = parseNumber(req.params.id);
-      if (!emblemId) return res.status(400).json({ message: 'ID inválido' });
+      if (!emblemId) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
       const emblem = await models.emblems.findByPk(emblemId);
       if (!emblem) return res.status(404).json({ message: 'Emblema no encontrado' });
@@ -413,17 +484,17 @@ class AchievementsController {
       }
 
       if (!EMBLEM_RARITIES.includes(nextRarity)) {
-        return res.status(400).json({ message: 'rarity inválida' });
+        return res.status(400).json({ message: 'rarity invÃ¡lida' });
       }
 
       const edition = await models.Edition.findByPk(nextEditionId);
       if (!edition) {
-        return res.status(404).json({ message: 'Edición no encontrada' });
+        return res.status(404).json({ message: 'EdiciÃ³n no encontrada' });
       }
 
       const duplicated = await models.emblems.findOne({ where: { editionId: nextEditionId, name: nextName } });
       if (duplicated && duplicated.id !== emblem.id) {
-        return res.status(409).json({ message: 'Ya existe un emblema con ese nombre en la edición seleccionada' });
+        return res.status(409).json({ message: 'Ya existe un emblema con ese nombre en la ediciÃ³n seleccionada' });
       }
 
       emblem.editionId = nextEditionId;
@@ -445,6 +516,15 @@ class AchievementsController {
       emblem.isActive = nextIsActive;
       await emblem.save();
 
+      await req.logAction({
+        accion: 'Emblema actualizado',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `emblemId=${emblem.id}; editionId=${nextEditionId}; name=${nextName}`,
+        type: 'info'
+      });
+
       return res.status(200).json(emblem);
     } catch (error) {
       handleError(res, req, error, 'Error al actualizar emblema');
@@ -454,7 +534,7 @@ class AchievementsController {
   deleteEmblem = async (req, res) => {
     try {
       const emblemId = parseNumber(req.params.id);
-      if (!emblemId) return res.status(400).json({ message: 'ID inválido' });
+      if (!emblemId) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
       const emblem = await models.emblems.findByPk(emblemId);
       if (!emblem) return res.status(404).json({ message: 'Emblema no encontrado' });
@@ -466,7 +546,7 @@ class AchievementsController {
 
       if (linkedGoals > 0 || linkedUsers > 0) {
         return res.status(409).json({
-          message: 'No se puede eliminar el emblema porque está ligado a logros o usuarios',
+          message: 'No se puede eliminar el emblema porque estÃ¡ ligado a logros o usuarios',
           linkedGoals,
           linkedUsers
         });
@@ -481,6 +561,14 @@ class AchievementsController {
       }
 
       await emblem.destroy();
+      await req.logAction({
+        accion: 'Emblema eliminado',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `emblemId=${emblem.id}; name=${emblem.name}`,
+        type: 'info'
+      });
       return res.status(200).json({ message: 'Emblema eliminado correctamente' });
     } catch (error) {
       handleError(res, req, error, 'Error al eliminar emblema');
@@ -513,6 +601,15 @@ class AchievementsController {
         order: [['editionId', 'DESC'], ['createdAt', 'DESC'], ['id', 'DESC']]
       });
 
+      await req.logAction({
+        accion: 'Logros consultados',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `goals=${goals.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ goals });
     } catch (error) {
       handleError(res, req, error, 'Error al cargar logros');
@@ -538,23 +635,23 @@ class AchievementsController {
       }
 
       if (!GOAL_TYPES.includes(type)) {
-        return res.status(400).json({ message: 'type inválido' });
+        return res.status(400).json({ message: 'type invÃ¡lido' });
       }
 
       if (!GOAL_PROGRESS_TYPES.includes(progressType)) {
-        return res.status(400).json({ message: 'progressType inválido' });
+        return res.status(400).json({ message: 'progressType invÃ¡lido' });
       }
 
       if (!Number.isFinite(targetValue) || targetValue < 0) {
-        return res.status(400).json({ message: 'targetValue inválido' });
+        return res.status(400).json({ message: 'targetValue invÃ¡lido' });
       }
 
       if (req.body?.startDate && !startDate) {
-        return res.status(400).json({ message: 'startDate inválida' });
+        return res.status(400).json({ message: 'startDate invÃ¡lida' });
       }
 
       if (req.body?.endDate && !endDate) {
-        return res.status(400).json({ message: 'endDate inválida' });
+        return res.status(400).json({ message: 'endDate invÃ¡lida' });
       }
 
       if (startDate && endDate && endDate < startDate) {
@@ -566,16 +663,16 @@ class AchievementsController {
         models.emblems.findByPk(emblemId)
       ]);
 
-      if (!edition) return res.status(404).json({ message: 'Edición no encontrada' });
+      if (!edition) return res.status(404).json({ message: 'EdiciÃ³n no encontrada' });
       if (!emblem) return res.status(404).json({ message: 'Emblema no encontrado' });
 
       if (emblem.editionId !== editionId) {
-        return res.status(400).json({ message: 'El emblema debe pertenecer a la misma edición del logro' });
+        return res.status(400).json({ message: 'El emblema debe pertenecer a la misma ediciÃ³n del logro' });
       }
 
       const duplicated = await models.goals.findOne({ where: { editionId, title } });
       if (duplicated) {
-        return res.status(409).json({ message: 'Ya existe un logro con ese título en la edición seleccionada' });
+        return res.status(409).json({ message: 'Ya existe un logro con ese tÃ­tulo en la ediciÃ³n seleccionada' });
       }
 
       const created = await models.goals.create({
@@ -592,6 +689,15 @@ class AchievementsController {
         endDate
       });
 
+      await req.logAction({
+        accion: 'Logro creado',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `goalId=${created.id}; editionId=${editionId}; emblemId=${emblemId}`,
+        type: 'info'
+      });
+
       return res.status(201).json(created);
     } catch (error) {
       handleError(res, req, error, 'Error al crear logro');
@@ -601,7 +707,7 @@ class AchievementsController {
   updateGoal = async (req, res) => {
     try {
       const goalId = parseNumber(req.params.id);
-      if (!goalId) return res.status(400).json({ message: 'ID inválido' });
+      if (!goalId) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
       const goal = await models.goals.findByPk(goalId);
       if (!goal) return res.status(404).json({ message: 'Logro no encontrado' });
@@ -632,23 +738,23 @@ class AchievementsController {
       }
 
       if (!GOAL_TYPES.includes(nextType)) {
-        return res.status(400).json({ message: 'type inválido' });
+        return res.status(400).json({ message: 'type invÃ¡lido' });
       }
 
       if (!GOAL_PROGRESS_TYPES.includes(nextProgressType)) {
-        return res.status(400).json({ message: 'progressType inválido' });
+        return res.status(400).json({ message: 'progressType invÃ¡lido' });
       }
 
       if (!Number.isFinite(nextTargetValue) || nextTargetValue < 0) {
-        return res.status(400).json({ message: 'targetValue inválido' });
+        return res.status(400).json({ message: 'targetValue invÃ¡lido' });
       }
 
       if (req.body?.startDate !== undefined && req.body?.startDate !== null && req.body?.startDate !== '' && !nextStartDate) {
-        return res.status(400).json({ message: 'startDate inválida' });
+        return res.status(400).json({ message: 'startDate invÃ¡lida' });
       }
 
       if (req.body?.endDate !== undefined && req.body?.endDate !== null && req.body?.endDate !== '' && !nextEndDate) {
-        return res.status(400).json({ message: 'endDate inválida' });
+        return res.status(400).json({ message: 'endDate invÃ¡lida' });
       }
 
       if (nextStartDate && nextEndDate && nextEndDate < nextStartDate) {
@@ -660,16 +766,16 @@ class AchievementsController {
         models.emblems.findByPk(nextEmblemId)
       ]);
 
-      if (!edition) return res.status(404).json({ message: 'Edición no encontrada' });
+      if (!edition) return res.status(404).json({ message: 'EdiciÃ³n no encontrada' });
       if (!emblem) return res.status(404).json({ message: 'Emblema no encontrado' });
 
       if (emblem.editionId !== nextEditionId) {
-        return res.status(400).json({ message: 'El emblema debe pertenecer a la misma edición del logro' });
+        return res.status(400).json({ message: 'El emblema debe pertenecer a la misma ediciÃ³n del logro' });
       }
 
       const duplicated = await models.goals.findOne({ where: { editionId: nextEditionId, title: nextTitle } });
       if (duplicated && duplicated.id !== goal.id) {
-        return res.status(409).json({ message: 'Ya existe un logro con ese título en la edición seleccionada' });
+        return res.status(409).json({ message: 'Ya existe un logro con ese tÃ­tulo en la ediciÃ³n seleccionada' });
       }
 
       goal.editionId = nextEditionId;
@@ -685,6 +791,15 @@ class AchievementsController {
       goal.endDate = nextEndDate;
       await goal.save();
 
+      await req.logAction({
+        accion: 'Logro actualizado',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `goalId=${goal.id}; editionId=${nextEditionId}; emblemId=${nextEmblemId}`,
+        type: 'info'
+      });
+
       return res.status(200).json(goal);
     } catch (error) {
       handleError(res, req, error, 'Error al actualizar logro');
@@ -694,7 +809,7 @@ class AchievementsController {
   deleteGoal = async (req, res) => {
     try {
       const goalId = parseNumber(req.params.id);
-      if (!goalId) return res.status(400).json({ message: 'ID inválido' });
+      if (!goalId) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
       const goal = await models.goals.findByPk(goalId);
       if (!goal) return res.status(404).json({ message: 'Logro no encontrado' });
@@ -713,6 +828,14 @@ class AchievementsController {
       }
 
       await goal.destroy();
+      await req.logAction({
+        accion: 'Logro eliminado',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `goalId=${goal.id}; title=${goal.title}`,
+        type: 'info'
+      });
       return res.status(200).json({ message: 'Logro eliminado correctamente' });
     } catch (error) {
       handleError(res, req, error, 'Error al eliminar logro');
@@ -744,9 +867,18 @@ class AchievementsController {
         })
       ]);
 
+      await req.logAction({
+        accion: 'Catalogo de logros consultado',
+        apartado: 'Achievements',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `emblems=${emblems.length}; goals=${goals.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ emblems, goals });
     } catch (error) {
-      handleError(res, req, error, 'Error al cargar catálogo de logros');
+      handleError(res, req, error, 'Error al cargar catÃ¡logo de logros');
     }
   };
 }

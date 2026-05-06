@@ -9,13 +9,7 @@ export default (sequelize, DataTypes) => {
 
     user: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'Users', // nombre de la tabla
-        key: 'id'
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'SET NULL'
+      allowNull: true
     },
 
     device_hash: {

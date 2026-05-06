@@ -44,6 +44,23 @@ export default (sequelize, DataTypes) => {
     ]
   });
 
+  commands.associate = (models) => {
+    commands.hasMany(models.command_permissions, {
+      foreignKey: 'commandId',
+      as: 'permissionLinks',
+      constraints: false
+    });
+
+    commands.belongsToMany(models.Permissions, {
+      through: models.command_permissions,
+      foreignKey: 'commandId',
+      otherKey: 'permissionKey',
+      targetKey: 'key',
+      as: 'permissionRefs',
+      constraints: false
+    });
+  };
+
   commands.seed = async () => {
     const seedCommands = [
       {
@@ -100,3 +117,4 @@ export default (sequelize, DataTypes) => {
 
   return commands;
 };
+

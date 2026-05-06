@@ -1,4 +1,4 @@
-// Modelo: community
+﻿// Modelo: community
 // Guarda información de comunidades creadas por streamers
 
 export default (sequelize, DataTypes) => {
@@ -19,8 +19,7 @@ export default (sequelize, DataTypes) => {
     },
     lider: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'Users', key: 'id' }
+      allowNull: false
     },
     color: {
       type: DataTypes.STRING,
@@ -61,11 +60,28 @@ export default (sequelize, DataTypes) => {
     ]
   });
 
+  Community.seed = async () => {
+    const validate = await Community.findAll();
+    if (validate.length > 0) return;
+    await Community.bulkCreate([
+      { id: 2, name: 'Lazytos', shortname: 'lazytos', lider: 5, color: '#00bdb0', color2: '#ffffff', description: 'Los  lazytos mas bonitos del condado', logo_url: 'https://descargas.dannprod.com/tdt-system/communities/5/logo_1778008349432.webp', createdAt: '2026-04-28T14:42:52.000Z', updatedAt: '2026-05-05T19:12:29.000Z' },
+      { id: 3, name: 'locochones', shortname: 'locochones', lider: 6, color: '#ffffff', color2: '#ffffff', description: 'Los  lazytos mas bonitos del condado', logo_url: '', createdAt: '2026-04-28T14:42:52.000Z', updatedAt: '2026-04-28T14:42:52.000Z' },
+      { id: 5, name: 'Datolovers', shortname: 'datotes', lider: 1, color: '#FFFFFF', color2: '#8f8f8f', description: 'asdadasdasdasdasd', logo_url: 'https://descargas.dannprod.com/tdt-system/communities/1/logo_1778008240719.gif', createdAt: '2026-05-04T22:18:28.000Z', updatedAt: '2026-05-05T19:10:41.000Z' },
+      { id: 7, name: 'Comunidad Extra', shortname: 'extra', lider: 3, color: '#FFFFFF', color2: '#8f8f8f', description: 'asdadasdasdasdasd', logo_url: '', createdAt: '2026-05-04T22:18:28.000Z', updatedAt: '2026-05-05T19:10:41.000Z' },
+      { id: 8, name: 'Azetianos', shortname: 'asasas', lider: 2, color: '#ffffff', color2: '#ffffff', description: 'Los  lazytos mas bonitos del condado', logo_url: '', createdAt: '2026-04-28T14:42:52.000Z', updatedAt: '2026-04-28T14:42:52.000Z' },
+      { id: 9, name: 'Efesota', shortname: 'ede', lider: 4, color: '#FFFFFF', color2: '#8f8f8f', description: 'asdadasdasdasdasd', logo_url: '', createdAt: '2026-05-04T22:18:28.000Z', updatedAt: '2026-05-05T19:10:41.000Z' },
+    ]);
+  };
+
   Community.associate = (models) => {
-    Community.belongsTo(models.Users, { foreignKey: 'lider', as: 'leader' });
-    Community.hasMany(models.user_community, { foreignKey: 'communityId', as: 'members' });
-    Community.hasMany(models.user_community_request, { foreignKey: 'communityId', as: 'requests' });
+    Community.belongsTo(models.Users, { foreignKey: 'lider', as: 'leader',
+      constraints: false });
+    Community.hasMany(models.user_community, { foreignKey: 'communityId', as: 'members',
+      constraints: false });
+    Community.hasMany(models.user_community_request, { foreignKey: 'communityId', as: 'requests',
+      constraints: false });
   };
 
   return Community;
 };
+

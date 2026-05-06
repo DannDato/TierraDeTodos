@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
 
     const EditionDates = sequelize.define('EditionDates', {
         id:{
@@ -71,7 +71,8 @@ export default (sequelize, DataTypes) => {
     EditionDates.associate = (models) => {
     EditionDates.belongsTo(models.Edition, {
         foreignKey: 'editionId',
-        as: 'edition'
+        as: 'edition',
+      constraints: false
     });
     };
 

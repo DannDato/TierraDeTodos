@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
   const goals = sequelize.define('goals', {
     id: {
       type: DataTypes.INTEGER,
@@ -7,13 +7,11 @@ export default (sequelize, DataTypes) => {
     },
     editionId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'edition', key: 'id' }
+      allowNull: false
     },
     emblemId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'emblems', key: 'id' }
+      allowNull: false
     },
     title: {
       type: DataTypes.STRING,
@@ -88,30 +86,35 @@ export default (sequelize, DataTypes) => {
     goals.belongsTo(models.Edition, {
       foreignKey: 'editionId',
       as: 'edition',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
     });
 
     goals.belongsTo(models.emblems, {
       foreignKey: 'emblemId',
       as: 'emblem',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
     });
 
     goals.hasMany(models.user_goals, {
       foreignKey: 'goalId',
-      as: 'user_goal_entries'
+      as: 'user_goal_entries',
+      constraints: false
     });
 
     goals.hasMany(models.user_emblems, {
       foreignKey: 'sourceGoalId',
-      as: 'source_user_emblems'
+      as: 'source_user_emblems',
+      constraints: false
     });
 
     goals.belongsToMany(models.Users, {
       through: models.user_goals,
       foreignKey: 'goalId',
       otherKey: 'userId',
-      as: 'users'
+      as: 'users',
+      constraints: false
     });
   };
 

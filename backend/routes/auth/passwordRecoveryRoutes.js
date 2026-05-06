@@ -7,3 +7,4 @@ router.post("/request-password-recovery", PasswordRecoveryController.requestPass
 router.post("/reset-password", PasswordRecoveryController.resetPassword);
 
 export default router;
+

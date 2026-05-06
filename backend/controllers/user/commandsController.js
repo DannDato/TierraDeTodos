@@ -46,6 +46,15 @@ class CommandsController {
         .filter((item) => item.canUse)
         .map(({ canUse, ...item }) => item);
 
+      await req.logAction({
+        accion: 'Comandos del usuario consultados',
+        apartado: 'Commands',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `commands=${commands.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ commands });
     } catch (error) {
       return handleError(res, req, error, 'Error al obtener comandos del usuario');
@@ -55,3 +64,4 @@ class CommandsController {
 
 const ctrlCommands = new CommandsController();
 export { ctrlCommands };
+

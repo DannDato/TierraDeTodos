@@ -1,4 +1,4 @@
-// Modelo: user_community_request
+﻿// Modelo: user_community_request
 // Postulaciones de usuarios para unirse a una comunidad, pendientes de aprobación
 
 export default (sequelize, DataTypes) => {
@@ -10,13 +10,11 @@ export default (sequelize, DataTypes) => {
     },
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'Users', key: 'id' }
+      allowNull: false
     },
     communityId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'community', key: 'id' }
+      allowNull: false
     },
     status: {
       type: DataTypes.ENUM('PENDING', 'APPROVED', 'REJECTED'),
@@ -34,8 +32,7 @@ export default (sequelize, DataTypes) => {
     },
     reviewedBy: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-      references: { model: 'Users', key: 'id' }
+      allowNull: true
     }
   }, {
     tableName: 'user_community_request',
@@ -43,10 +40,14 @@ export default (sequelize, DataTypes) => {
   });
 
   UserCommunityRequest.associate = (models) => {
-    UserCommunityRequest.belongsTo(models.Users, { foreignKey: 'userId', as: 'user' });
-    UserCommunityRequest.belongsTo(models.community, { foreignKey: 'communityId', as: 'community' });
-    UserCommunityRequest.belongsTo(models.Users, { foreignKey: 'reviewedBy', as: 'reviewer' });
+    UserCommunityRequest.belongsTo(models.Users, { foreignKey: 'userId', as: 'user',
+      constraints: false });
+    UserCommunityRequest.belongsTo(models.community, { foreignKey: 'communityId', as: 'community',
+      constraints: false });
+    UserCommunityRequest.belongsTo(models.Users, { foreignKey: 'reviewedBy', as: 'reviewer',
+      constraints: false });
   };
 
   return UserCommunityRequest;
 };
+

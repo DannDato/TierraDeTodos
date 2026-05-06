@@ -5,7 +5,7 @@ import { getEquippedEmblemsByUser } from '../../../helpers/getEquippedEmblems.js
 
 class UsersController {
   async getAssignableStatuses(transaction) {
-    return models.user_statuses.findAll({
+    return models.system_statuses.findAll({
       attributes: ['status', 'detail', 'color'],
       where: { asignable: 'YES', active: 'YES' },
       order: [['status', 'ASC']],
@@ -62,7 +62,7 @@ class UsersController {
         attributes: ['role', 'color'],
         where: { active: 'YES' }
       });
-      const statusesCatalog = await models.user_statuses.findAll({
+      const statusesCatalog = await models.system_statuses.findAll({
         attributes: ['status', 'color'],
         where: { active: 'YES' }
       });
@@ -133,7 +133,7 @@ class UsersController {
         return res.status(404).json({ message: 'Usuario no encontrado' });
       }
 
-      req.logAction({
+      await req.logAction({
         accion: 'Revision de usuario por ID',
         apartado: 'Usuarios',
         userId: req.user?.id,
@@ -229,7 +229,7 @@ class UsersController {
 
       const [roleRecord, statusRecord, assignableRoles, assignableStatuses] = await Promise.all([
         models.Roles.findOne({ attributes: ['color', 'complementary', 'enfasis', 'extra'], where: { role: user.role, active: 'YES' } }),
-        models.user_statuses.findOne({ attributes: ['color'], where: { status: user.account, active: 'YES' } }),
+        models.system_statuses.findOne({ attributes: ['color'], where: { status: user.account, active: 'YES' } }),
         this.getAssignableRoles(),
         this.getAssignableStatuses()
       ]);
@@ -582,3 +582,4 @@ class UsersController {
 
 const ctrlUsers = new UsersController();
 export { ctrlUsers };
+

@@ -9,7 +9,7 @@ class SystemController {
 			const queryKeys = String(req.query?.keys || '')
 				.split(',')
 				.map((key) => key.trim().toLowerCase())
-				.filter(Boolean);
+				.filter((key) => key.length > 0 && /^[a-z0-9._-]+$/.test(key));
 
 			const where = {
 				active: true,
@@ -31,21 +31,39 @@ class SystemController {
 				return acc;
 			}, {});
 
+			await req.logAction({
+				accion: 'Configuracion publica consultada',
+				apartado: 'System',
+				userId: req.user?.id,
+				username: req.user?.username,
+				valor: `keys=${queryKeys.length || settings.length}`,
+				type: 'info'
+			});
+
 			return res.status(200).json({ settings, config });
 		} catch (_error) {
 			return res.status(500).json({ message: 'Error interno del servidor' });
 		}
 	};
 
-	getSettings = async (_req, res) => {
+	getSettings = async (req, res) => {
 		try {
 			const settings = await models.system.findAll({
 				order: [['category', 'ASC'], ['key', 'ASC']]
 			});
 
+			await req.logAction({
+				accion: 'Configuracion del sistema consultada',
+				apartado: 'System',
+				userId: req.user?.id,
+				username: req.user?.username,
+				valor: `settings=${settings.length}`,
+				type: 'info'
+			});
+
 			return res.status(200).json({ settings });
 		} catch (error) {
-			handleError(res, _req, error, 'Error al cargar configuraciones del sistema');
+			handleError(res, req, error, 'Error al cargar configuraciones del sistema');
 		}
 	};
 
@@ -56,17 +74,40 @@ class SystemController {
 				return res.status(400).json({ message: 'No se recibieron configuraciones para actualizar.' });
 			}
 
-			for (const setting of updates) {
+			const normalizedUpdates = updates.reduce((acc, setting) => {
 				const key = String(setting?.key || '').trim().toLowerCase();
-				if (!key) continue;
+				if (!key) return acc;
+				acc.set(key, setting);
+				return acc;
+			}, new Map());
 
-				const row = await models.system.findOne({ where: { key } });
-				if (!row || !row.editable) continue;
+			const keys = Array.from(normalizedUpdates.keys());
+			if (keys.length > 0) {
+				const rows = await models.system.findAll({
+					where: {
+						key: { [Op.in]: keys },
+						editable: true
+					}
+				});
 
-				if ('value' in setting) row.value = setting.value;
-				if ('active' in setting) row.active = Boolean(setting.active);
-				await row.save();
+				await Promise.all(rows.map(async (row) => {
+					const update = normalizedUpdates.get(String(row.key || '').toLowerCase());
+					if (!update) return;
+
+					if ('value' in update) row.value = update.value;
+					if ('active' in update) row.active = Boolean(update.active);
+					await row.save();
+				}));
 			}
+
+			await req.logAction({
+				accion: 'Configuracion del sistema actualizada',
+				apartado: 'System',
+				userId: req.user?.id,
+				username: req.user?.username,
+				valor: `updates=${updates.length}`,
+				type: 'info'
+			});
 
 			return res.status(200).json({ message: 'Configuraciones actualizadas correctamente.' });
 		} catch (error) {
@@ -74,8 +115,15 @@ class SystemController {
 		}
 	};
 
-	getHealth = async (_req, res) => {
+	getHealth = async (req, res) => {
 		try {
+			await req.logAction({
+				accion: 'Healthcheck consultado',
+				apartado: 'System',
+				userId: req.user?.id,
+				username: req.user?.username,
+				type: 'info'
+			});
 			return res.status(200).json({
 				status: 'ok',
 				service: 'system',
@@ -84,7 +132,7 @@ class SystemController {
 				uptime: process.uptime()
 			});
 		} catch (error) {
-			handleError(res, _req, error, 'Error al obtener health del sistema');
+			handleError(res, req, error, 'Error al obtener health del sistema');
 		}
 	};
 
@@ -92,3 +140,4 @@ class SystemController {
 
 const ctrlSystem = new SystemController();
 export { ctrlSystem };
+

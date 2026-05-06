@@ -18,3 +18,4 @@ router.get('/communities/:id/member-options', verifyToken, canView, communitiesC
 router.post('/communities/:id/bulk-action', verifyToken, canManage, communitiesController.bulkAction);
 
 export default router;
+

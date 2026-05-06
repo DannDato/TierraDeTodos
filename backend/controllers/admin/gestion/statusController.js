@@ -14,7 +14,7 @@ class StatusController {
           us.active,
           us.immutable,
           (SELECT COUNT(id) FROM Users WHERE account = us.status) AS users
-        FROM user_statuses us
+        FROM system_statuses us
         ORDER BY us.status ASC
       `);
 
@@ -54,7 +54,7 @@ class StatusController {
         return res.status(400).json({ message: 'Valores inválidos para asignable o active' });
       }
 
-      const existingStatus = await models.user_statuses.findOne({
+      const existingStatus = await models.system_statuses.findOne({
         where: { status: normalizedStatus },
         transaction
       });
@@ -64,7 +64,7 @@ class StatusController {
         return res.status(409).json({ message: 'Ya existe un estatus con ese nombre' });
       }
 
-      const createdStatus = await models.user_statuses.create(
+      const createdStatus = await models.system_statuses.create(
         {
           status: normalizedStatus,
           detail: normalizedDetail,
@@ -114,7 +114,7 @@ class StatusController {
         return res.status(400).json({ message: 'ID de estatus inválido' });
       }
 
-      const statusRecord = await models.user_statuses.findByPk(statusId, { transaction });
+      const statusRecord = await models.system_statuses.findByPk(statusId, { transaction });
       if (!statusRecord) {
         await transaction.rollback();
         return res.status(404).json({ message: 'Estatus no encontrado' });
@@ -152,7 +152,7 @@ class StatusController {
       const statusChanged = oldStatus !== nextStatus;
 
       if (statusChanged) {
-        const duplicated = await models.user_statuses.findOne({
+        const duplicated = await models.system_statuses.findOne({
           where: { status: nextStatus },
           transaction
         });
@@ -226,7 +226,7 @@ class StatusController {
         return res.status(400).json({ message: 'ID de estatus inválido' });
       }
 
-      const statusRecord = await models.user_statuses.findByPk(statusId, { transaction });
+      const statusRecord = await models.system_statuses.findByPk(statusId, { transaction });
       if (!statusRecord) {
         await transaction.rollback();
         return res.status(404).json({ message: 'Estatus no encontrado' });
@@ -268,3 +268,4 @@ class StatusController {
 
 const ctrlStatus = new StatusController();
 export { ctrlStatus };
+

@@ -64,6 +64,15 @@ class MenuController {
       })
       .filter(Boolean);
 
+    // await req.logAction({
+    //   accion: 'Menu dinamico consultado',
+    //   apartado: 'Menu',
+    //   userId: req.user?.id,
+    //   username: req.user?.username,
+    //   valor: `items=${menuItems.length}; activeAccount=${isActive}`,
+    //   type: 'info'
+    // });
+
     return res.status(200).json({
       menuItems,
       permissions: userPermissions
@@ -87,3 +96,4 @@ class MenuController {
 
 const ctrlMenu = new MenuController();
 export { ctrlMenu };
+

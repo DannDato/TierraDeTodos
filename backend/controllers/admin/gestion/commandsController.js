@@ -29,6 +29,14 @@ class CommandsAdminController {
   getAll = async (req, res) => {
     try {
       const commands = await models.commands.findAll({ order: [['command', 'ASC'], ['id', 'ASC']] });
+      await req.logAction({
+        accion: 'Catalogo de comandos consultado',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `commands=${commands.length}`,
+        type: 'info'
+      });
       return res.status(200).json({
         commands: commands.map((row) => ({
           ...row.toJSON(),
@@ -36,7 +44,7 @@ class CommandsAdminController {
         }))
       });
     } catch (error) {
-      return handleError(res, req, error, 'Error al cargar comandos de gestión');
+      return handleError(res, req, error, 'Error al cargar comandos de gestiÃ³n');
     }
   };
 
@@ -47,9 +55,17 @@ class CommandsAdminController {
         where: { active: true },
         order: [['key', 'ASC']]
       });
+      await req.logAction({
+        accion: 'Opciones de permisos para comandos consultadas',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `permissions=${permissions.length}`,
+        type: 'info'
+      });
       return res.status(200).json({ permissions });
     } catch (error) {
-      return handleError(res, req, error, 'Error al cargar catálogo de permisos para comandos');
+      return handleError(res, req, error, 'Error al cargar catÃ¡logo de permisos para comandos');
     }
   };
 
@@ -62,7 +78,7 @@ class CommandsAdminController {
       const active = normalizeBoolean(req.body?.active, true);
 
       if (!command || !description) {
-        return res.status(400).json({ message: 'Comando y descripción son obligatorios.' });
+        return res.status(400).json({ message: 'Comando y descripciÃ³n son obligatorios.' });
       }
 
       const duplicate = await models.commands.findOne({ where: { command } });
@@ -76,6 +92,15 @@ class CommandsAdminController {
         details,
         permissions: JSON.stringify(permissions),
         active
+      });
+
+      await req.logAction({
+        accion: 'Comando creado correctamente',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `commandId=${created.id}; command=${command}`,
+        type: 'info'
       });
 
       return res.status(201).json({
@@ -92,7 +117,7 @@ class CommandsAdminController {
   update = async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!id) return res.status(400).json({ message: 'ID inválido' });
+      if (!id) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
       const current = await models.commands.findByPk(id);
       if (!current) return res.status(404).json({ message: 'Comando no encontrado' });
@@ -104,7 +129,7 @@ class CommandsAdminController {
       const active = req.body?.active === undefined ? Boolean(current.active) : normalizeBoolean(req.body?.active, Boolean(current.active));
 
       if (!command || !description) {
-        return res.status(400).json({ message: 'Comando y descripción son obligatorios.' });
+        return res.status(400).json({ message: 'Comando y descripciÃ³n son obligatorios.' });
       }
 
       const duplicate = await models.commands.findOne({ where: { command } });
@@ -118,6 +143,15 @@ class CommandsAdminController {
       current.permissions = JSON.stringify(permissions);
       current.active = active;
       await current.save();
+
+      await req.logAction({
+        accion: 'Comando actualizado correctamente',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `commandId=${current.id}; command=${command}`,
+        type: 'info'
+      });
 
       return res.status(200).json({
         command: {
@@ -133,3 +167,4 @@ class CommandsAdminController {
 
 const ctrlCommandsAdmin = new CommandsAdminController();
 export { ctrlCommandsAdmin };
+

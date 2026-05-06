@@ -12,3 +12,4 @@ router.put('/system-settings/links', verifyToken, checkPermissions(['system.gest
 router.put('/system-settings/:key', verifyToken, checkPermissions(['system.gest']), ctrlSystemAdmin.upsertSetting);
 
 export default router;
+

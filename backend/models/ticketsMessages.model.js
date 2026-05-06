@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
   const tickets_messages = sequelize.define('tickets_messages', {
     id: {
       type: DataTypes.INTEGER,
@@ -61,15 +61,18 @@ export default (sequelize, DataTypes) => {
 
   tickets_messages.associate = (models) => {
     tickets_messages.belongsTo(models.tickets, {
-      foreignKey: 'ticket_id',
-      as: 'ticket'
+      foreignKey: 'ticketId',
+      as: 'ticket',
+      constraints: false
     });
 
     tickets_messages.belongsTo(models.Users, {
-      foreignKey: 'user_id',
-      as: 'user'
+      foreignKey: 'userId',
+      as: 'user',
+      constraints: false
     });
   };
 
   return tickets_messages;
 };
+

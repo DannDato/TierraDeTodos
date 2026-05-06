@@ -11,3 +11,4 @@ export async function up(queryInterface, Sequelize) {
 export async function down(queryInterface, Sequelize) {
   await queryInterface.removeColumn('community', 'color2');
 }
+

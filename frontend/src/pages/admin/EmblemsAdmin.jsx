@@ -93,7 +93,7 @@ function EmblemsAdmin() {
       openAlert({
         type: "error",
         title: "No se pudo cargar",
-        message: error.response?.data?.message || "Error al cargar asignaciones de emblemas.",
+        message: error.response?.data?.message || "Error al cargar asignaciones de insignias.",
       });
 
       setUsers([]);
@@ -302,7 +302,7 @@ function EmblemsAdmin() {
 
   return (
     <section className="min-h-screen h-screen py-15 flex items-start justify-center pb-24 text-[var(--white-color)] z-[1]">
-      <LoadingOverlay isVisible={loading || isSaving} message="Cargando asignaciones de emblemas" />
+      <LoadingOverlay isVisible={loading || isSaving} message="Cargando asignaciones de insignias" />
       <AlertModal
         isOpen={alertConfig.isOpen}
         type={alertConfig.type}
@@ -318,15 +318,15 @@ function EmblemsAdmin() {
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
               <span>{currentUser.role}</span>
               <span>/</span>
-              <span className="text-[var(--secondary-color)]">Emblemas</span>
+              <span className="text-[var(--secondary-color)]">Insignias</span>
             </div>
 
             <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--ins-text-white)] tracking-tight flex items-center gap-3">
               <Award size={30} className="text-[var(--secondary-color)]" />
-              Asignación de Emblemas
+              Asignación de Insignias
             </h1>
             <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
-              Página exclusiva para administradores con permiso para Asignar emblemas manuales, controla orden y estado equipado.
+              Página exclusiva para administradores con permiso para Asignar insignias manuales, controla orden y estado equipado.
             </p>
           </div>
 

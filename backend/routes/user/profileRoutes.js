@@ -19,3 +19,4 @@ router.patch("/profile/username", verifyToken, ctrlProfile.requestUsernameChange
 router.post("/profile/verify-change", verifyToken, ctrlProfile.verifyProfileChange);
 
 export default router;
+

@@ -54,7 +54,7 @@ const yesNoOptions = [
 ];
 
 const tabs = [
-  { id: "emblems", label: "Emblemas", icon: <Gem size={16} />, activeIconClassName: "text-[var(--secondary-color)]" },
+  { id: "emblems", label: "Insignias", icon: <Gem size={16} />, activeIconClassName: "text-[var(--secondary-color)]" },
   { id: "goals", label: "Logros", icon: <Target size={16} />, activeIconClassName: "text-[var(--secondary-color)]" },
 ];
 
@@ -145,7 +145,7 @@ function AchievementsManagerView() {
       openAlert({
         type: "error",
         title: "No se pudieron cargar",
-        message: error.response?.data?.message || "Error al cargar emblemas y logros.",
+        message: error.response?.data?.message || "Error al cargar insignias y logros.",
       });
       setEditions([]);
       setEmblems([]);
@@ -377,9 +377,9 @@ function AchievementsManagerView() {
 
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-extrabold text-[var(--ins-text-white)]">Emblemas y Logros</h2>
+          <h2 className="text-2xl font-extrabold text-[var(--ins-text-white)]">Insignias y Logros</h2>
           <p className="text-sm text-[var(--ins-text-gray)] mt-1">
-            Gestiona emblemas de edición y define qué logros los otorgan al completarse.
+            Gestiona insignias de edición y define qué logros las otorgan al completarse.
           </p>
         </div>
 
@@ -415,7 +415,7 @@ function AchievementsManagerView() {
             size="md"
             className="flex items-center gap-2 self-start shrink-0 whitespace-nowrap"
             href={EmblemTemplate}
-            download="plantilla-emblemas.psd"
+            download="plantilla-insignias.psd"
             target="_blank"
           >
             <Download size={18} /> Descargar plantilla
@@ -430,7 +430,7 @@ function AchievementsManagerView() {
       {activeTab === "emblems" ? (
         filteredEmblems.length === 0 ? (
           <div className="rounded-3xl border border-[var(--white-color)]/5 bg-[var(--black-color)]/20 py-12 text-center text-[var(--ins-text-gray)]">
-            No hay emblemas para mostrar.
+            No hay insignias para mostrar.
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">

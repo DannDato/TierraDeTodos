@@ -179,7 +179,7 @@ Si `FOLDER` esta vacio, los prefijos quedan como abajo.
 - `AccessCodes`
 - `UserDevices`
 - `Attempts`
-- `UserStatuses`
+- `SystemStatuses`
 - `UserStatusHistory`
 - `Menu`
 

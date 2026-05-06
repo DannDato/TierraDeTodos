@@ -663,30 +663,33 @@ function Profile() {
 
               {/* Verification code input for email change */}
               {showEmailVerification && (
-                <div className="mt-4 flex flex-col md:flex-row md:items-end gap-2">
-                  <Input
-                    label="Código de verificación (enviado al nuevo correo)"
-                    value={emailVerificationCode}
-                    onChange={e => setEmailVerificationCode(e.target.value)}
-                    disabled={isVerifyingEmail}
-                    className="md:max-w-xs"
-                  />
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleVerifyEmailCode}
-                    disabled={isVerifyingEmail || !emailVerificationCode}
-                  >
-                    Verificar
-                  </Button>
-                  <Button
-                    variant="cancel"
-                    size="sm"
-                    onClick={() => setShowEmailVerification(false)}
-                    disabled={isVerifyingEmail}
-                  >
-                    Cancelar
-                  </Button>
+                <div className="mt-4">
+                  <p className="text-xs text-[var(--ins-text-gray)] mb-2">Código de verificación enviado al nuevo correo</p>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={emailVerificationCode}
+                      onChange={e => setEmailVerificationCode(e.target.value)}
+                      disabled={isVerifyingEmail}
+                      placeholder="Ingresa el código"
+                      className="max-w-[180px]"
+                    />
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleVerifyEmailCode}
+                      disabled={isVerifyingEmail || !emailVerificationCode}
+                    >
+                      Verificar
+                    </Button>
+                    <Button
+                      variant="cancel"
+                      size="sm"
+                      onClick={() => setShowEmailVerification(false)}
+                      disabled={isVerifyingEmail}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
                 </div>
               )}
 

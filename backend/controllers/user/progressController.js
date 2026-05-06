@@ -124,6 +124,15 @@ class ProgressController {
           }, 0) / userGoals.length) * 100)
         : 0;
 
+      await req.logAction({
+        accion: 'Progreso del usuario consultado',
+        apartado: 'Progress',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `emblems=${totalEmblems}; goals=${userGoals.length}; equipped=${equippedCount}`,
+        type: 'info'
+      });
+
       return res.status(200).json({
         userEmblems,
         allEmblems: userEmblems.filter((item) => !item.isEquipped),
@@ -169,7 +178,7 @@ class ProgressController {
 
       if (nextIdSet.size !== nextCombinedIds.length) {
         await transaction.rollback();
-        return res.status(400).json({ message: 'No se permiten insignias repetidas en la organización' });
+        return res.status(400).json({ message: 'No se permiten insignias repetidas en la organizaciÃ³n' });
       }
 
       const currentRows = await models.user_emblems.findAll({
@@ -182,7 +191,7 @@ class ProgressController {
 
       if (currentIds.length !== nextCombinedIds.length || currentIds.some((id) => !nextIdSet.has(id))) {
         await transaction.rollback();
-        return res.status(400).json({ message: 'La organización enviada no coincide con las insignias del usuario' });
+        return res.status(400).json({ message: 'La organizaciÃ³n enviada no coincide con las insignias del usuario' });
       }
 
       const rowById = new Map(currentRows.map((row) => [row.id, row]));
@@ -203,10 +212,19 @@ class ProgressController {
 
       await transaction.commit();
 
-      return res.status(200).json({ message: 'Organización de insignias actualizada correctamente' });
+      await req.logAction({
+        accion: 'Organizacion de insignias actualizada',
+        apartado: 'Progress',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `equipped=${nextEquippedIds.length}; available=${nextAvailableIds.length}`,
+        type: 'info'
+      });
+
+      return res.status(200).json({ message: 'OrganizaciÃ³n de insignias actualizada correctamente' });
     } catch (error) {
       await transaction.rollback();
-      handleError(res, req, error, 'Error al guardar organización de insignias del usuario');
+      handleError(res, req, error, 'Error al guardar organizaciÃ³n de insignias del usuario');
     }
   };
 }

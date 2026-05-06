@@ -8,3 +8,4 @@ const router = express.Router();
 router.get('/players', verifyToken, ctrlPlayers.players);
 
 export default router;
+

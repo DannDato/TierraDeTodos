@@ -59,7 +59,7 @@ class AdminReportsController {
         return res.status(403).json({ message: 'No autorizado para este apartado' });
       }
 
-      const q = normalizeText(req.query?.q);
+      const q = normalizeText(req.query?.q).slice(0, 200);
       const includeClosed = parseBool(req.query?.includeClosed);
       const includeRejected = parseBool(req.query?.includeRejected);
 
@@ -77,10 +77,10 @@ class AdminReportsController {
 
       if (q) {
         const maybeId = Number(q);
+        const escapedQ = q.replace(/[%_\\]/g, '\\$&');
         where[Op.or] = [
-          { subject: { [Op.like]: `%${q}%` } },
-          { involvedPlayer: { [Op.like]: `%${q}%` } },
-          { '$author.username$': { [Op.like]: `%${q}%` } }
+          { subject: { [Op.like]: `%${escapedQ}%` } },
+          { '$author.username$': { [Op.like]: `%${escapedQ}%` } }
         ];
 
         if (Number.isInteger(maybeId) && maybeId > 0) {
@@ -98,31 +98,52 @@ class AdminReportsController {
             required: false
           }
         ],
-        // Prioriza urgencia y dentro de cada prioridad atiende más viejo primero.
+        // Prioriza urgencia y dentro de cada prioridad atiende mÃ¡s viejo primero.
         order: [
           [literal("CASE `tickets`.`priority_key` WHEN 'URGENTE' THEN 1 WHEN 'ALTA' THEN 2 WHEN 'MEDIA' THEN 3 WHEN 'BAJA' THEN 4 ELSE 5 END"), 'ASC'],
           ['createdAt', 'ASC']
         ]
       });
 
-      const ticketsWithUnread = await Promise.all(
-        tickets.map(async (ticket) => {
-          const unreadCount = await models.tickets_messages.count({
-            where: {
-              ticketId: ticket.id,
-              seenByAdmin: false,
-              sourceScreen: 'TICKETS'
-            }
-          });
+      const ticketIds = tickets.map((ticket) => Number(ticket.id)).filter((id) => Number.isInteger(id) && id > 0);
 
-          return {
-            ...ticket.toJSON(),
-            unreadCount
-          };
-        })
-      );
+      let unreadByTicketId = new Map();
+      if (ticketIds.length > 0) {
+        const unreadRows = await db.query(
+          `
+            SELECT ticketId, COUNT(*) AS unreadCount
+            FROM tickets_messages
+            WHERE ticketId IN (:ticketIds)
+            AND seenByAdmin = 0
+            AND sourceScreen = 'TICKETS'
+            GROUP BY ticketId
+          `,
+          {
+            replacements: { ticketIds },
+            type: db.QueryTypes.SELECT
+          }
+        );
+
+        unreadByTicketId = new Map(
+          unreadRows.map((row) => [Number(row.ticketId), Number(row.unreadCount) || 0])
+        );
+      }
+
+      const ticketsWithUnread = tickets.map((ticket) => ({
+        ...ticket.toJSON(),
+        unreadCount: unreadByTicketId.get(Number(ticket.id)) || 0
+      }));
 
       const canCloseTicket = accessScope.canCloseTickets;
+
+      await req.logAction({
+        accion: 'Bandeja de reportes consultada',
+        apartado: 'Reports',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `tickets=${ticketsWithUnread.length}; includeClosed=${includeClosed}; includeRejected=${includeRejected}; q=${q || ''}`,
+        type: 'info'
+      });
 
       return res.status(200).json({ tickets: ticketsWithUnread, canCloseTicket });
     } catch (error) {
@@ -141,7 +162,7 @@ class AdminReportsController {
       }
 
       const ticketId = Number(req.params.id);
-      if (!ticketId) return res.status(400).json({ message: 'ID inválido' });
+      if (!ticketId) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
       const ticket = await models.tickets.findOne({
         where: { id: ticketId },
@@ -176,6 +197,15 @@ class AdminReportsController {
         order: [['createdAt', 'ASC'], ['id', 'ASC']]
       });
 
+      await req.logAction({
+        accion: 'Mensajes de reporte consultados',
+        apartado: 'Reports',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `ticketId=${ticketId}; messages=${messages.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ ticket, messages });
     } catch (error) {
       handleError(res, req, error, 'Error al obtener mensajes del ticket');
@@ -186,7 +216,7 @@ class AdminReportsController {
   addMessageAsSystem = async (req, res) => {
     try {
       const ticketId = Number(req.params.id);
-      if (!ticketId) return res.status(400).json({ message: 'ID inválido' });
+      if (!ticketId) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
       const ticket = await models.tickets.findByPk(ticketId);
       if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
@@ -198,7 +228,8 @@ class AdminReportsController {
       }
 
       const message = normalizeText(req.body?.message);
-      if (!message) return res.status(400).json({ message: 'El mensaje no puede estar vacío' });
+      if (!message) return res.status(400).json({ message: 'El mensaje no puede estar vacÃ­o' });
+      if (message.length > 5000) return res.status(400).json({ message: 'El mensaje no puede superar 5000 caracteres' });
 
       const created = await models.tickets_messages.create({
         ticketId,
@@ -211,6 +242,15 @@ class AdminReportsController {
         message
       });
 
+      await req.logAction({
+        accion: 'Respuesta administrativa enviada a ticket',
+        apartado: 'Reports',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `ticketId=${ticketId}; messageId=${created.id}`,
+        type: 'info'
+      });
+
       return res.status(201).json({ message: created });
     } catch (error) {
       handleError(res, req, error, 'Error al responder ticket como sistema');
@@ -221,7 +261,7 @@ class AdminReportsController {
   closeTicket = async (req, res) => {
     try {
       const ticketId = Number(req.params.id);
-      if (!ticketId) return res.status(400).json({ message: 'ID inválido' });
+      if (!ticketId) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
       const ticket = await models.tickets.findByPk(ticketId);
       if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
@@ -231,6 +271,15 @@ class AdminReportsController {
       }
 
       await ticket.update({ statusKey: 'CERRADO' });
+
+      await req.logAction({
+        accion: 'Ticket cerrado por administrador',
+        apartado: 'Reports',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `ticketId=${ticket.id}; targetUserId=${ticket.userId}`,
+        type: 'info'
+      });
 
       return res.status(200).json({
         message: 'Ticket cerrado correctamente',
@@ -244,3 +293,4 @@ class AdminReportsController {
 
 const ctrlAdminReports = new AdminReportsController();
 export { ctrlAdminReports };
+

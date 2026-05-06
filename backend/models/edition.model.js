@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
 
     const Edition = sequelize.define('Edition', {
         id:{
@@ -60,34 +60,40 @@ export default (sequelize, DataTypes) => {
     Edition.associate = (models) => {
     Edition.hasMany(models.UserEdition, {
         foreignKey: 'editionId',
-        as: 'userEditions'
+        as: 'userEditions',
+      constraints: false
     });
 
     Edition.belongsToMany(models.Users, {
         through: models.UserEdition,
         foreignKey: 'editionId',
         otherKey: 'userID',
-        as: 'users'
+        as: 'users',
+      constraints: false
     });
 
     Edition.hasMany(models.emblems, {
         foreignKey: 'editionId',
-        as: 'emblems'
+        as: 'emblems',
+      constraints: false
     });
 
     Edition.hasMany(models.goals, {
         foreignKey: 'editionId',
-        as: 'goals'
+        as: 'goals',
+      constraints: false
     });
 
     Edition.hasMany(models.user_goals, {
         foreignKey: 'editionId',
-        as: 'user_goals'
+        as: 'user_goals',
+      constraints: false
     });
 
     Edition.hasMany(models.user_emblems, {
         foreignKey: 'editionId',
-        as: 'user_emblems'
+        as: 'user_emblems',
+      constraints: false
     });
     };
 

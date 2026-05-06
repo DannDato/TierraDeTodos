@@ -8,3 +8,4 @@ const router = express.Router();
 router.get("/menu", verifyToken, ctrlMenu.getUserMenu);
 
 export default router;
+

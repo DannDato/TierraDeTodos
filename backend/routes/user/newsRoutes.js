@@ -19,3 +19,4 @@ router.post('/news/:id/comments', verifyToken, ctrlNews.createNewsComment);
 router.post('/news/:id/comments/:commentId/likes', verifyToken, ctrlNews.toggleCommentLike);
 
 export default router;
+

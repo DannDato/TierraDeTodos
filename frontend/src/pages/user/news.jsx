@@ -47,6 +47,7 @@ function News() {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsSubmitting, setCommentsSubmitting] = useState(false);
   const [commentLikesMap, setCommentLikesMap] = useState({});
+  const pendingNewsLikes = useRef(new Set());
   const pendingCommentLikes = useRef(new Set());
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
@@ -82,24 +83,19 @@ function News() {
       try {
         setLoading(true);
 
-        const [newsResult, typesResult, menuResult] = await Promise.allSettled([
+        const [newsResult, menuResult] = await Promise.allSettled([
           api.get("/user/news"),
-          api.get("/user/news/types"),
           api.get("/system/menu"),
         ]);
 
         if (newsResult.status === "fulfilled") {
           const payload = newsResult.value?.data;
           const candidates = Array.isArray(payload) ? payload : payload?.news;
-          setNews(Array.isArray(candidates) ? candidates : []);
-        } else {
-          setNews([]);
-        }
+          const typeCandidates = Array.isArray(payload) ? [] : payload?.types;
 
-        if (typesResult.status === "fulfilled") {
-          const typesPayload = typesResult.value?.data;
-          const candidates = Array.isArray(typesPayload) ? typesPayload : typesPayload?.types;
-          const parsedTypes = Array.isArray(candidates) ? candidates : [];
+          setNews(Array.isArray(candidates) ? candidates : []);
+
+          const parsedTypes = Array.isArray(typeCandidates) ? typeCandidates : [];
           setNewsTypes(parsedTypes);
           if (parsedTypes.length > 0) {
             setFormData((prev) => ({
@@ -108,6 +104,7 @@ function News() {
             }));
           }
         } else {
+          setNews([]);
           setNewsTypes([]);
         }
 
@@ -218,45 +215,48 @@ function News() {
 
     const articleId = Number(article?.id);
     if (!articleId) return;
+    if (pendingNewsLikes.current.has(articleId)) return;
 
-    // Usar el estado actual de news (no normalizedNews) para evitar bug visual
-    // Optimista: UI rápida, pero siempre sincroniza con backend
+    const currentArticle = news.find((item) => Number(item.id) === articleId) || article;
+    const previousState = {
+      likesCount: Math.max(0, Number(currentArticle?.likesCount || 0)),
+      likedByCurrentUser: Boolean(currentArticle?.likedByCurrentUser),
+    };
+    const optimisticState = {
+      likesCount: Math.max(0, previousState.likesCount + (previousState.likedByCurrentUser ? -1 : 1)),
+      likedByCurrentUser: !previousState.likedByCurrentUser,
+    };
+
+    pendingNewsLikes.current.add(articleId);
+
     setNews((prev) => {
       return prev.map((item) => {
         if (Number(item.id) !== articleId) return item;
-        const wasLiked = Boolean(item.likedByCurrentUser);
-        const willLike = !wasLiked;
         return {
           ...item,
-          likesCount: Math.max(0, Number(item.likesCount || 0) + (willLike ? 1 : -1)),
-          likedByCurrentUser: willLike
+          likesCount: optimisticState.likesCount,
+          likedByCurrentUser: optimisticState.likedByCurrentUser,
         };
       });
     });
 
     try {
-      // Determinar el valor real a enviar según el estado actual
-      const wasLiked = Boolean(article.likedByCurrentUser);
-      const willLike = !wasLiked;
-      const { data } = await api.post(`/user/news/${articleId}/likes`, { liked: willLike });
-      // El backend responde con el estado real tras la operación
+      const { data } = await api.post(`/user/news/${articleId}/likes`, {});
       setNews((prev) => prev.map((item) => {
         if (Number(item.id) !== articleId) return item;
         return {
           ...item,
           likesCount: Number.isFinite(data?.likesCount) ? Math.max(0, data.likesCount) : item.likesCount,
-          likedByCurrentUser: !!data?.liked
+          likedByCurrentUser: !!data?.liked,
         };
       }));
     } catch (error) {
-      // Rollback visual
       setNews((prev) => prev.map((item) => {
         if (Number(item.id) !== articleId) return item;
-        const wasLiked = Boolean(item.likedByCurrentUser);
         return {
           ...item,
-          likesCount: Math.max(0, Number(item.likesCount || 0) + (wasLiked ? 1 : -1)),
-          likedByCurrentUser: wasLiked
+          likesCount: previousState.likesCount,
+          likedByCurrentUser: previousState.likedByCurrentUser,
         };
       }));
       openAlert({
@@ -264,6 +264,8 @@ function News() {
         title: "No se pudo actualizar el like",
         message: error.response?.data?.message || "Intenta de nuevo en un momento.",
       });
+    } finally {
+      pendingNewsLikes.current.delete(articleId);
     }
   };
 
@@ -312,7 +314,7 @@ function News() {
           };
         }
         setCommentLikesMap(likesInit);
-      } catch (_error) {
+      } catch {
         setComments([]);
         setCommentLikesMap({});
       } finally {
@@ -626,7 +628,7 @@ function News() {
     try {
       const { data } = await api.post(
         `/user/news/${selectedNews.id}/comments/${commentId}/likes`,
-        { liked: willLike }
+        {}
       );
       setCommentLikesMap((prev) => ({
         ...prev,
@@ -635,7 +637,7 @@ function News() {
           likedByCurrentUser: !!data?.liked,
         },
       }));
-    } catch (_error) {
+    } catch {
       // Rollback
       setCommentLikesMap((prev) => ({
         ...prev,
@@ -749,8 +751,9 @@ function News() {
                     <h2 className="text-3xl font-extrabold text-white drop-shadow-lg leading-tight">{featuredNews.title}</h2>
                     <button
                       type="button"
-                      className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-black/30 hover:bg-black/45 border border-white/20 transition-colors"
+                      className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-black/30 hover:bg-black/45 border border-white/20 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       onClick={(event) => handleToggleLike(event, featuredNews)}
+                      disabled={pendingNewsLikes.current.has(Number(featuredNews.id))}
                       aria-label={isNewsLiked(featuredNews.id) ? "Quitar like" : "Dar like"}
                     >
                       <Heart size={16} className={isNewsLiked(featuredNews.id) ? "text-red-500 fill-red-500" : "text-white"} />
@@ -796,8 +799,9 @@ function News() {
                     </button>
                     <button
                       type="button"
-                      className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 bg-black/25 hover:bg-black/40 border border-white/15 transition-colors"
+                      className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 bg-black/25 hover:bg-black/40 border border-white/15 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       onClick={(event) => handleToggleLike(event, article)}
+                      disabled={pendingNewsLikes.current.has(Number(article.id))}
                       aria-label={isNewsLiked(article.id) ? "Quitar like" : "Dar like"}
                     >
                       <Heart size={15} className={isNewsLiked(article.id) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-white)]"} />
@@ -1051,8 +1055,9 @@ function News() {
                                 </span>
                                 <button
                                   type="button"
-                                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-black/20 hover:bg-black/35 border border-white/10 transition-colors"
+                                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-black/20 hover:bg-black/35 border border-white/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                   onClick={() => handleToggleCommentLike(entry.id)}
+                                  disabled={pendingCommentLikes.current.has(entry.id)}
                                   aria-label={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "Quitar like" : "Dar like"}
                                 >
                                   <Heart

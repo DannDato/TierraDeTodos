@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
   const UserUsernames = sequelize.define('UserUsernames', {
     id: {
       type: DataTypes.INTEGER,
@@ -31,8 +31,10 @@ export default (sequelize, DataTypes) => {
   });
 
   UserUsernames.associate = (models) => {
-    UserUsernames.belongsTo(models.Users, { foreignKey: 'userId', as: 'user' });
+    UserUsernames.belongsTo(models.Users, { foreignKey: 'userId', as: 'user',
+      constraints: false });
   };
 
   return UserUsernames;
 };
+

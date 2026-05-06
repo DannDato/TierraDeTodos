@@ -12,3 +12,4 @@ router.put('/statuses/:id', verifyToken, checkPermissions(['statuses.edit']), ct
 router.delete('/statuses/:id', verifyToken, checkPermissions(['statuses.remove']), ctrlStatus.deleteStatus);
 
 export default router;
+

@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
 
   const Permissions = sequelize.define('Permissions', {
     id: {
@@ -40,12 +40,36 @@ export default (sequelize, DataTypes) => {
   });
 
   Permissions.associate = (models) => {
+    Permissions.hasMany(models.PresetPermissions, {
+      foreignKey: 'permissionKey',
+      sourceKey: 'key',
+      as: 'presetPermissions',
+      constraints: false
+    });
+
+    Permissions.hasMany(models.command_permissions, {
+      foreignKey: 'permissionKey',
+      sourceKey: 'key',
+      as: 'commandLinks',
+      constraints: false
+    });
+
+    Permissions.belongsToMany(models.commands, {
+      through: models.command_permissions,
+      foreignKey: 'permissionKey',
+      otherKey: 'commandId',
+      sourceKey: 'key',
+      as: 'commands',
+      constraints: false
+    });
+
     Permissions.belongsToMany(models.Users, {
       through: models.UserPermissions,
       foreignKey: 'permission',
       sourceKey: 'key',
       otherKey: 'userId',
-      as: 'users'
+      as: 'users',
+      constraints: false
     });
   };
 
@@ -105,10 +129,10 @@ export default (sequelize, DataTypes) => {
       { key: 'editions.edit', name: 'Editar ediciones', description: 'Permite actualizar ediciones, fechas y reglas', active: true },
       { key: 'editions.remove', name: 'Eliminar ediciones', description: 'Permite eliminar ediciones, fechas y reglas', active: true },
 
-      { key: 'news_types.view', name: 'Ver tipos de noticias', description: 'Permite consultar tipos de noticias', active: true },
-      { key: 'news_types.gest', name: 'Gestionar tipos de noticias', description: 'Permite crear tipos de noticias', active: true },
-      { key: 'news_types.edit', name: 'Editar tipos de noticias', description: 'Permite actualizar tipos de noticias', active: true },
-      { key: 'news_types.remove', name: 'Eliminar tipos de noticias', description: 'Permite eliminar tipos de noticias', active: true },
+      { key: 'catalog.news_type.view', name: 'Ver tipos de noticias', description: 'Permite consultar tipos de noticias', active: true },
+      { key: 'catalog.news_type.gest', name: 'Gestionar tipos de noticias', description: 'Permite crear tipos de noticias', active: true },
+      { key: 'catalog.news_type.edit', name: 'Editar tipos de noticias', description: 'Permite actualizar tipos de noticias', active: true },
+      { key: 'catalog.news_type.remove', name: 'Eliminar tipos de noticias', description: 'Permite eliminar tipos de noticias', active: true },
 
       { key: 'permissions.view', name: 'Ver permisos', description: 'Permite consultar el catálogo de permisos', active: true },
       { key: 'permissions.gest', name: 'Gestionar permisos', description: 'Permite crear permisos', active: true },
@@ -137,10 +161,10 @@ export default (sequelize, DataTypes) => {
       { key: 'ticket_catalogs.edit', name: 'Editar catálogos de tickets', description: 'Permite actualizar tipos y prioridades de tickets', active: true },
       { key: 'ticket_catalogs.remove', name: 'Eliminar catálogos de tickets', description: 'Permite eliminar tipos y prioridades de tickets', active: true },
 
-      { key: 'ticket_statuses.view', name: 'Ver estados de tickets', description: 'Permite consultar estados de tickets', active: true },
-      { key: 'ticket_statuses.gest', name: 'Gestionar estados de tickets', description: 'Permite crear estados de tickets', active: true },
-      { key: 'ticket_statuses.edit', name: 'Editar estados de tickets', description: 'Permite actualizar estados de tickets', active: true },
-      { key: 'ticket_statuses.remove', name: 'Eliminar estados de tickets', description: 'Permite eliminar estados de tickets', active: true },
+      { key: 'catalog.ticket_status.view', name: 'Ver estados de tickets', description: 'Permite consultar estados de tickets', active: true },
+      { key: 'catalog.ticket_status.gest', name: 'Gestionar estados de tickets', description: 'Permite crear estados de tickets', active: true },
+      { key: 'catalog.ticket_status.edit', name: 'Editar estados de tickets', description: 'Permite actualizar estados de tickets', active: true },
+      { key: 'catalog.ticket_status.remove', name: 'Eliminar estados de tickets', description: 'Permite eliminar estados de tickets', active: true },
 
       { key: 'emblems.view', name: 'Ver emblemas', description: 'Permite consultar catálogo de emblemas', active: true },
       { key: 'emblems.gest', name: 'Gestionar emblemas', description: 'Permite crear emblemas', active: true },
@@ -165,3 +189,4 @@ export default (sequelize, DataTypes) => {
 
   return Permissions;
 };
+

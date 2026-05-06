@@ -236,3 +236,4 @@ class PermissionsController {
 
 const ctrlPermissions = new PermissionsController();
 export { ctrlPermissions };
+

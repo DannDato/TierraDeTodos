@@ -588,26 +588,36 @@ class EditionsController {
         transaction
       });
 
-      let importedCount = 0;
-      for (const row of previousDates) {
-        const exists = await models.EditionDates.findOne({
-          where: { editionId, date: row.date, name: row.name },
-          transaction
-        });
+      const existingDates = await models.EditionDates.findAll({
+        where: { editionId },
+        attributes: ['date', 'name'],
+        transaction
+      });
 
-        if (!exists) {
-          await models.EditionDates.create({
-            editionId,
-            date: row.date,
-            name: row.name,
-            description: row.description,
-            emoji: row.emoji,
-            color: row.color,
-            active: row.active
-          }, { transaction });
-          importedCount += 1;
-        }
+      const existingDateKeys = new Set(
+        existingDates.map((row) => `${String(row.date)}|${String(row.name || '').trim()}`)
+      );
+
+      const rowsToCreate = previousDates
+        .filter((row) => {
+          const rowKey = `${String(row.date)}|${String(row.name || '').trim()}`;
+          return !existingDateKeys.has(rowKey);
+        })
+        .map((row) => ({
+          editionId,
+          date: row.date,
+          name: row.name,
+          description: row.description,
+          emoji: row.emoji,
+          color: row.color,
+          active: row.active
+        }));
+
+      if (rowsToCreate.length > 0) {
+        await models.EditionDates.bulkCreate(rowsToCreate, { transaction });
       }
+
+      const importedCount = rowsToCreate.length;
 
       await transaction.commit();
       return res.status(200).json({ message: 'Fechas importadas correctamente', importedCount });
@@ -773,26 +783,36 @@ class EditionsController {
         transaction
       });
 
-      let importedCount = 0;
-      for (const row of previousRules) {
-        const exists = await models.EditionRules.findOne({
-          where: { editionId, category: row.category, item: row.item },
-          transaction
-        });
+      const existingRules = await models.EditionRules.findAll({
+        where: { editionId },
+        attributes: ['category', 'item'],
+        transaction
+      });
 
-        if (!exists) {
-          await models.EditionRules.create({
-            editionId,
-            category: row.category,
-            item: row.item,
-            icon: row.icon,
-            color: row.color,
-            sortOrder: row.sortOrder,
-            active: row.active
-          }, { transaction });
-          importedCount += 1;
-        }
+      const existingRuleKeys = new Set(
+        existingRules.map((row) => `${String(row.category || '').trim()}|${String(row.item || '').trim()}`)
+      );
+
+      const rowsToCreate = previousRules
+        .filter((row) => {
+          const rowKey = `${String(row.category || '').trim()}|${String(row.item || '').trim()}`;
+          return !existingRuleKeys.has(rowKey);
+        })
+        .map((row) => ({
+          editionId,
+          category: row.category,
+          item: row.item,
+          icon: row.icon,
+          color: row.color,
+          sortOrder: row.sortOrder,
+          active: row.active
+        }));
+
+      if (rowsToCreate.length > 0) {
+        await models.EditionRules.bulkCreate(rowsToCreate, { transaction });
       }
+
+      const importedCount = rowsToCreate.length;
 
       await transaction.commit();
       return res.status(200).json({ message: 'Reglas importadas correctamente', importedCount });
@@ -804,3 +824,4 @@ class EditionsController {
 
 const ctrlEditions = new EditionsController();
 export { ctrlEditions };
+

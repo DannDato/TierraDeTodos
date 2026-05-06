@@ -11,9 +11,19 @@ class CredentialController {
         ip = '148.202.104.78';
       }
 
-      const response = await fetch(`http://ip-api.com/json/${ip}`);
-      const data = await response.json();
-      const country = data.countryCode;
+      let country = 'MX';
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const geoResponse = await fetch(`http://ip-api.com/json/${ip}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (geoResponse.ok) {
+          const geoData = await geoResponse.json();
+          if (geoData?.countryCode) country = geoData.countryCode;
+        }
+      } catch {
+        // fallback silencioso si ip-api no responde
+      }
 
       const userData = await db.query(
         `
@@ -57,7 +67,7 @@ class CredentialController {
               LIMIT 1
             ) AS avatarZoom,
             u.account AS status,
-            (SELECT us.color FROM user_statuses us WHERE us.status = u.account AND us.active = 'YES' LIMIT 1) AS statusColor
+            (SELECT us.color FROM system_statuses us WHERE us.status = u.account AND us.active = 'YES' LIMIT 1) AS statusColor
           FROM Users u
           WHERE u.id = ?
           LIMIT 1;
@@ -73,6 +83,15 @@ class CredentialController {
       if (result?.id) {
         result.equippedEmblems = await getEquippedEmblemsByUser(result.id);
       }
+
+      await req.logAction({
+        accion: 'Credencial consultada',
+        apartado: 'Credencial',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `country=${country}; hasCredential=${Boolean(result?.id)}`,
+        type: 'info'
+      });
 
       return res.json({ user: result });
     } catch (error) {
@@ -92,3 +111,4 @@ class CredentialController {
 
 const ctrlCredential = new CredentialController();
 export { ctrlCredential };
+

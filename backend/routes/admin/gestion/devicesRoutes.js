@@ -11,3 +11,4 @@ router.get('/devices/:deviceHash/history', verifyToken, checkPermissions(['devic
 router.patch('/devices/:deviceHash/users/:userId/authorization', verifyToken, checkPermissions(['devices.edit']), ctrlDevices.updateDeviceAuthorization);
 
 export default router;
+

@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
 
     const EditionRules = sequelize.define('EditionRules', {
         id: {
@@ -72,7 +72,8 @@ export default (sequelize, DataTypes) => {
     EditionRules.associate = (models) => {
         EditionRules.belongsTo(models.Edition, {
             foreignKey: 'editionId',
-            as: 'edition'
+            as: 'edition',
+      constraints: false
         });
     };
 

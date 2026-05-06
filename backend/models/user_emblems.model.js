@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
   const user_emblems = sequelize.define('user_emblems', {
     id: {
       type: DataTypes.INTEGER,
@@ -7,18 +7,15 @@ export default (sequelize, DataTypes) => {
     },
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'Users', key: 'id' }
+      allowNull: false
     },
     emblemId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'emblems', key: 'id' }
+      allowNull: false
     },
     editionId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'edition', key: 'id' }
+      allowNull: false
     },
     earnedAt: {
       type: DataTypes.DATE,
@@ -27,8 +24,7 @@ export default (sequelize, DataTypes) => {
     },
     sourceGoalId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-      references: { model: 'goals', key: 'id' }
+      allowNull: true
     },
     isEquipped: {
       type: DataTypes.BOOLEAN,
@@ -77,25 +73,29 @@ export default (sequelize, DataTypes) => {
     user_emblems.belongsTo(models.Users, {
       foreignKey: 'userId',
       as: 'user',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
     });
 
     user_emblems.belongsTo(models.emblems, {
       foreignKey: 'emblemId',
       as: 'emblem',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
     });
 
     user_emblems.belongsTo(models.Edition, {
       foreignKey: 'editionId',
       as: 'edition',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
     });
 
     user_emblems.belongsTo(models.goals, {
       foreignKey: 'sourceGoalId',
       as: 'source_goal',
-      onDelete: 'SET NULL'
+      onDelete: 'SET NULL',
+      constraints: false
     });
   };
 

@@ -5,9 +5,25 @@ export const checkPermissions = (requiredPermissions = []) => {
 
   return async (req, res, next) => {
 
+    const permissionAliases = {
+      'catalog.news_type.view': 'news_types.view',
+      'catalog.news_type.gest': 'news_types.gest',
+      'catalog.news_type.edit': 'news_types.edit',
+      'catalog.news_type.remove': 'news_types.remove',
+      'catalog.ticket_status.view': 'ticket_statuses.view',
+      'catalog.ticket_status.gest': 'ticket_statuses.gest',
+      'catalog.ticket_status.edit': 'ticket_statuses.edit',
+      'catalog.ticket_status.remove': 'ticket_statuses.remove'
+    };
+
     const normalizedPermissions = Array.isArray(requiredPermissions)
       ? requiredPermissions.filter(Boolean)
       : [];
+
+    const lookupPermissions = [...new Set(normalizedPermissions.flatMap((permissionKey) => {
+      const alias = permissionAliases[permissionKey];
+      return alias ? [permissionKey, alias] : [permissionKey];
+    }))];
 
     req.requiredPermissions = normalizedPermissions;
 
@@ -28,7 +44,7 @@ export const checkPermissions = (requiredPermissions = []) => {
           LIMIT 1
         `,
         {
-          replacements: { userId: req.user?.id, requiredPermissions: normalizedPermissions },
+          replacements: { userId: req.user?.id, requiredPermissions: lookupPermissions },
           type: QueryTypes.SELECT
         }
       );

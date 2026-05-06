@@ -17,3 +17,4 @@ router.put('/ticket-catalogs/priorities/:id', verifyToken, checkPermissions(['ti
 router.delete('/ticket-catalogs/priorities/:id', verifyToken, checkPermissions(['ticket_catalogs.remove']), ctrlTicketCatalogs.deletePriority);
 
 export default router;
+

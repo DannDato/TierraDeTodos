@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
 
   const Sessions = sequelize.define('Sessions', {
 
@@ -57,7 +57,8 @@ export default (sequelize, DataTypes) => {
     Sessions.belongsTo(models.Users,{
       foreignKey:'userId',
       as:'user',
-      onDelete:'CASCADE'
+      onDelete:'CASCADE',
+      constraints: false
     });
 
   };

@@ -23,3 +23,4 @@ router.post('/editions/:id/rules/import-previous', verifyToken, checkPermissions
 router.delete('/editions/:id', verifyToken, checkPermissions(['editions.remove']), ctrlEditions.deleteEdition);
 
 export default router;
+

@@ -12,3 +12,4 @@ router.post('/commands', verifyToken, checkPermissions(['commands.gest']), ctrlC
 router.put('/commands/:id', verifyToken, checkPermissions(['commands.edit']), ctrlCommandsAdmin.update);
 
 export default router;
+

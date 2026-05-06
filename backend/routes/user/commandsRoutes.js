@@ -8,3 +8,4 @@ const router = express.Router();
 router.get('/commands', verifyToken, ctrlCommands.getUserCommands);
 
 export default router;
+

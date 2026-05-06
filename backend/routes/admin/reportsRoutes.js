@@ -12,3 +12,4 @@ router.post('/reports/tickets/:id/messages', verifyToken, checkPermissions(['tic
 router.patch('/reports/tickets/:id/close', verifyToken, checkPermissions(['tickets.close']), ctrlAdminReports.closeTicket);
 
 export default router;
+

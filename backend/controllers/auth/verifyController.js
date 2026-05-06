@@ -187,3 +187,4 @@ class VerifyController {
 
 const ctrlVerify = new VerifyController();
 export { ctrlVerify };
+

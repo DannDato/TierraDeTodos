@@ -1,4 +1,4 @@
-// Modelo: user_community
+﻿// Modelo: user_community
 // Relaciona usuarios con comunidades a las que pertenecen
 
 export default (sequelize, DataTypes) => {
@@ -10,13 +10,11 @@ export default (sequelize, DataTypes) => {
     },
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'Users', key: 'id' }
+      allowNull: false
     },
     communityId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: { model: 'community', key: 'id' }
+      allowNull: false
     },
     joinedAt: {
       type: DataTypes.DATE,
@@ -40,9 +38,12 @@ export default (sequelize, DataTypes) => {
   });
 
   UserCommunity.associate = (models) => {
-    UserCommunity.belongsTo(models.Users, { foreignKey: 'userId', as: 'user' });
-    UserCommunity.belongsTo(models.community, { foreignKey: 'communityId', as: 'community' });
+    UserCommunity.belongsTo(models.Users, { foreignKey: 'userId', as: 'user',
+      constraints: false });
+    UserCommunity.belongsTo(models.community, { foreignKey: 'communityId', as: 'community',
+      constraints: false });
   };
 
   return UserCommunity;
 };
+

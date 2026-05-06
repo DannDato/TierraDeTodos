@@ -26,3 +26,4 @@ router.patch('/community/requests/:requestId/reject', verifyToken, checkPermissi
 router.delete('/community/members/:memberId', verifyToken, checkPermissions(['community.manage']), communityAdminController.removeMember);
 
 export default router;
+

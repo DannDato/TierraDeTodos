@@ -12,3 +12,4 @@ router.patch("/avatar/position", verifyToken, ctrlAvatar.updateAvatarPosition);
 router.delete("/avatar", verifyToken, ctrlAvatar.deleteAvatar);
 
 export default router;
+

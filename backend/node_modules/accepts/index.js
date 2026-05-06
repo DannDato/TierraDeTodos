@@ -236,3 +236,4 @@ function extToMime (type) {
 function validMime (type) {
   return typeof type === 'string'
 }
+

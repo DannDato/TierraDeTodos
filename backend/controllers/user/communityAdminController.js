@@ -73,6 +73,15 @@ class CommunityAdminController {
         email: request.user?.email || null,
       }));
 
+      await req.logAction({
+        accion: 'Solicitudes pendientes de comunidad consultadas',
+        apartado: 'CommunityAdmin',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `communityId=${community.id}; requests=${formattedRequests.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ requests: formattedRequests });
     } catch (error) {
       handleError(res, req, error, 'Error al obtener las solicitudes pendientes de la comunidad');
@@ -133,6 +142,15 @@ class CommunityAdminController {
         }, { transaction });
       });
 
+      await req.logAction({
+        accion: 'Solicitud de comunidad aprobada',
+        apartado: 'CommunityAdmin',
+        userId: reviewerId,
+        username: req.user?.username,
+        valor: `communityId=${community.id}; requestId=${request.id}; targetUserId=${request.userId}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ message: 'Solicitud aprobada correctamente.' });
     } catch (error) {
       if (
@@ -175,6 +193,15 @@ class CommunityAdminController {
         }, { transaction });
       });
 
+      await req.logAction({
+        accion: 'Solicitud de comunidad rechazada',
+        apartado: 'CommunityAdmin',
+        userId: reviewerId,
+        username: req.user?.username,
+        valor: `communityId=${community.id}; requestId=${request.id}; targetUserId=${request.userId}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ message: 'Solicitud rechazada correctamente.' });
     } catch (error) {
       handleError(res, req, error, 'Error al rechazar la solicitud de comunidad');
@@ -187,7 +214,7 @@ class CommunityAdminController {
       const memberId = Number(req.params.memberId);
 
       if (!Number.isInteger(memberId) || memberId <= 0) {
-        return res.status(400).json({ message: 'ID de miembro inválido.' });
+        return res.status(400).json({ message: 'ID de miembro invÃ¡lido.' });
       }
 
       const community = await getManagedCommunity(leaderId);
@@ -197,7 +224,7 @@ class CommunityAdminController {
       }
 
       if (memberId === community.lider) {
-        return res.status(400).json({ message: 'No puedes sacar al líder de la comunidad.' });
+        return res.status(400).json({ message: 'No puedes sacar al lÃ­der de la comunidad.' });
       }
 
       const membership = await models.user_community.findOne({
@@ -213,6 +240,15 @@ class CommunityAdminController {
 
       await membership.destroy();
 
+      await req.logAction({
+        accion: 'Miembro removido de comunidad',
+        apartado: 'CommunityAdmin',
+        userId: leaderId,
+        username: req.user?.username,
+        valor: `communityId=${community.id}; memberId=${memberId}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ message: 'Miembro removido correctamente.' });
     } catch (error) {
       handleError(res, req, error, 'Error al sacar miembro de la comunidad');
@@ -225,19 +261,19 @@ class CommunityAdminController {
       const { platform, streamerUsername, streamerLink, streamerImage, communityName, shortname, color, color2, description, logo_url } = req.body;
 
       if (!communityName || typeof communityName !== 'string' || communityName.trim().length === 0 || communityName.length > 100) {
-        return res.status(400).json({ message: 'Nombre de comunidad inválido (máximo 100 caracteres).' });
+        return res.status(400).json({ message: 'Nombre de comunidad invÃ¡lido (mÃ¡ximo 100 caracteres).' });
       }
       if (!shortname || typeof shortname !== 'string' || shortname.trim().length === 0 || shortname.length > 50 || !/^[a-zA-Z0-9_-]+$/.test(shortname)) {
-        return res.status(400).json({ message: 'Nombre corto inválido (solo alfanuméricos, guiones y guiones bajos, máximo 50 caracteres).' });
+        return res.status(400).json({ message: 'Nombre corto invÃ¡lido (solo alfanumÃ©ricos, guiones y guiones bajos, mÃ¡ximo 50 caracteres).' });
       }
       if (!color || typeof color !== 'string' || !/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color)) {
-        return res.status(400).json({ message: 'Color primario inválido (debe ser un valor hex como #FFFFFF).' });
+        return res.status(400).json({ message: 'Color primario invÃ¡lido (debe ser un valor hex como #FFFFFF).' });
       }
       if (!color2 || typeof color2 !== 'string' || !/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color2)) {
-        return res.status(400).json({ message: 'Color secundario inválido (debe ser un valor hex como #222222).' });
+        return res.status(400).json({ message: 'Color secundario invÃ¡lido (debe ser un valor hex como #222222).' });
       }
       if (description && (typeof description !== 'string' || description.length > 500)) {
-        return res.status(400).json({ message: 'Descripción demasiado larga (máximo 500 caracteres).' });
+        return res.status(400).json({ message: 'DescripciÃ³n demasiado larga (mÃ¡ximo 500 caracteres).' });
       }
 
       const existingMembership = await getUserMembership(userId);
@@ -248,7 +284,7 @@ class CommunityAdminController {
       }
 
       if (community && existingMembership && Number(existingMembership.communityId) !== Number(community.id)) {
-        return res.status(409).json({ message: 'Tu cuenta está asociada a otra comunidad. Contacta a soporte.' });
+        return res.status(409).json({ message: 'Tu cuenta estÃ¡ asociada a otra comunidad. Contacta a soporte.' });
       }
 
       let streamer = await models.streamer.findOne({ where: { userID: userId } });
@@ -286,6 +322,15 @@ class CommunityAdminController {
           await models.user_community.create({ userId, communityId: community.id });
         }
 
+        await req.logAction({
+          accion: 'Comunidad actualizada por lider',
+          apartado: 'CommunityAdmin',
+          userId,
+          username: req.user?.username,
+          valor: `communityId=${community.id}; shortname=${shortname}`,
+          type: 'info'
+        });
+
         return res.status(200).json({ message: 'Comunidad actualizada correctamente', community });
       }
 
@@ -305,8 +350,17 @@ class CommunityAdminController {
       });
 
       if (!joinLeaderToCommunity) {
-        console.warn(`No se pudo unir al líder ${userId} a su comunidad ${community.id}`);
+        console.warn(`No se pudo unir al lÃ­der ${userId} a su comunidad ${community.id}`);
       }
+
+      await req.logAction({
+        accion: 'Comunidad creada correctamente',
+        apartado: 'CommunityAdmin',
+        userId,
+        username: req.user?.username,
+        valor: `communityId=${community.id}; shortname=${shortname}`,
+        type: 'info'
+      });
 
       return res.status(201).json({ message: 'Comunidad creada correctamente', community });
     } catch (error) {
@@ -317,7 +371,7 @@ class CommunityAdminController {
   async uploadCommunityLogo(req, res) {
     try {
       if (!req.file) {
-        return res.status(400).json({ message: 'No se subió ningún archivo.' });
+        return res.status(400).json({ message: 'No se subiÃ³ ningÃºn archivo.' });
       }
 
       const userId = req.user?.id || 'unknown';
@@ -350,6 +404,15 @@ class CommunityAdminController {
       const url = (process.env.R2_PUBLIC_URL
         ? process.env.R2_PUBLIC_URL.replace(/\/$/, '')
         : `${process.env.R2_ENDPOINT}/${process.env.R2_BUCKET}`.replace(/\/$/, '')) + `/${key}`;
+
+      await req.logAction({
+        accion: 'Logo de comunidad subido',
+        apartado: 'CommunityAdmin',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `key=${key}`,
+        type: 'info'
+      });
 
       return res.status(201).json({ url });
     } catch (error) {

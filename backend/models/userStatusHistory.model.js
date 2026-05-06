@@ -42,12 +42,26 @@ export default (sequelize, DataTypes) => {
     const validate  = await UserStatusHistory.findAll();
     if(validate.length > 0) return;
     await UserStatusHistory.create({
-        user: 10,
+        user: 1,
         old_status: 'PENDING',
         new_status: 'ACTIVE',
         reason: 'Porque es diosito',
         changed_by: 1,
         created_at: new Date().toISOString(),
+    });
+  };
+
+  UserStatusHistory.associate = (models) => {
+    UserStatusHistory.belongsTo(models.Users, {
+      foreignKey: 'user',
+      as: 'userRef',
+      constraints: false
+    });
+
+    UserStatusHistory.belongsTo(models.Users, {
+      foreignKey: 'changed_by',
+      as: 'changedByUser',
+      constraints: false
     });
   };
 

@@ -15,9 +15,17 @@ class CommunityController {
   async canManage(req, res) {
     try {
       const canManage = req.user.permissions && req.user.permissions.includes('community.manage');
+      await req.logAction({
+        accion: 'Consulta de permiso de gestion de comunidad',
+        apartado: 'Community',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `canManage=${!!canManage}`,
+        type: 'info'
+      });
       return res.status(200).json({ canManage: !!canManage });
     } catch (error) {
-      handleError(res, req, error, 'Error al verificar permisos de gestión de comunidad');
+      handleError(res, req, error, 'Error al verificar permisos de gestiÃ³n de comunidad');
     }
   }
 
@@ -48,6 +56,15 @@ class CommunityController {
           role: u.role,
           isLeader: u.id === community.lider
         };
+      });
+
+      await req.logAction({
+        accion: 'Miembros de comunidad consultados',
+        apartado: 'Community',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `communityId=${community.id}; members=${members.length}`,
+        type: 'info'
       });
 
       return res.status(200).json({ members });
@@ -148,6 +165,15 @@ class CommunityController {
         members
       };
 
+      await req.logAction({
+        accion: 'Comunidad actual consultada',
+        apartado: 'Community',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `communityId=${c.id}; members=${members.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ community: result });
     } catch (error) {
       handleError(res, req, error, 'Error al obtener tu comunidad');
@@ -246,6 +272,14 @@ class CommunityController {
       });
 
       const isManager = req.user.permissions && req.user.permissions.includes('community.manage');
+      await req.logAction({
+        accion: 'Listado de comunidades consultado',
+        apartado: 'Community',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `communities=${communitiesWithMembers.length}; isManager=${!!isManager}`,
+        type: 'info'
+      });
       return res.status(200).json({ communities: communitiesWithMembers, isManager });
     } catch (error) {
       handleError(res, req, error, 'Error al obtener comunidades');
@@ -258,7 +292,7 @@ class CommunityController {
       const communityId = Number(req.params.id);
 
       if (!Number.isInteger(communityId) || communityId <= 0) {
-        return res.status(400).json({ message: 'ID de comunidad inválido.' });
+        return res.status(400).json({ message: 'ID de comunidad invÃ¡lido.' });
       }
 
       const community = await models.community.findByPk(communityId);
@@ -275,17 +309,25 @@ class CommunityController {
         where: { lider: userId }
       });
       if (liderMembership) {
-        return res.status(400).json({ message: 'No puedes unirte a otra comunidad porque eres líder de una comunidad.' });
+        return res.status(400).json({ message: 'No puedes unirte a otra comunidad porque eres lÃ­der de una comunidad.' });
       }
 
       const existingPendingRequest = await models.user_community_request.findOne({
         where: { userId, status: 'PENDING' }
       });
       if (existingPendingRequest) {
-        return res.status(409).json({ message: 'Ya tienes una solicitud pendiente de revisión.' });
+        return res.status(409).json({ message: 'Ya tienes una solicitud pendiente de revisiÃ³n.' });
       }
 
       await models.user_community_request.create({ userId, communityId });
+      await req.logAction({
+        accion: 'Solicitud de ingreso a comunidad creada',
+        apartado: 'Community',
+        userId,
+        username: req.user?.username,
+        valor: `communityId=${communityId}`,
+        type: 'info'
+      });
       return res.status(201).json({ message: 'Tu solicitud fue enviada correctamente.' });
     } catch (error) {
       handleError(res, req, error, 'Error al unirse a la comunidad');
@@ -298,7 +340,7 @@ class CommunityController {
       const communityId = Number(req.params.id);
 
       if (!Number.isInteger(communityId) || communityId <= 0) {
-        return res.status(400).json({ message: 'ID de comunidad inválido.' });
+        return res.status(400).json({ message: 'ID de comunidad invÃ¡lido.' });
       }
 
       const community = await models.community.findByPk(communityId);
@@ -312,10 +354,18 @@ class CommunityController {
       }
 
       if (community.lider === userId) {
-        return res.status(400).json({ message: 'El líder no puede salir de la comunidad. Designa un nuevo líder primero.' });
+        return res.status(400).json({ message: 'El lÃ­der no puede salir de la comunidad. Designa un nuevo lÃ­der primero.' });
       }
 
       await membership.destroy();
+      await req.logAction({
+        accion: 'Usuario abandono comunidad',
+        apartado: 'Community',
+        userId,
+        username: req.user?.username,
+        valor: `communityId=${communityId}`,
+        type: 'info'
+      });
       return res.status(200).json({ message: 'Has salido de la comunidad correctamente.' });
     } catch (error) {
       handleError(res, req, error, 'Error al dejar la comunidad');
@@ -328,7 +378,7 @@ class CommunityController {
       const requestId = Number(req.params.requestId);
 
       if (!Number.isInteger(requestId) || requestId <= 0) {
-        return res.status(400).json({ message: 'ID de solicitud inválido.' });
+        return res.status(400).json({ message: 'ID de solicitud invÃ¡lido.' });
       }
 
       const request = await models.user_community_request.findOne({
@@ -340,13 +390,22 @@ class CommunityController {
       });
 
       if (!request) {
-        return res.status(404).json({ message: 'No se encontró una solicitud pendiente para cancelar.' });
+        return res.status(404).json({ message: 'No se encontrÃ³ una solicitud pendiente para cancelar.' });
       }
 
       await request.update({
         status: 'REJECTED',
         reviewedAt: new Date(),
         reviewedBy: userId
+      });
+
+      await req.logAction({
+        accion: 'Solicitud de comunidad cancelada',
+        apartado: 'Community',
+        userId,
+        username: req.user?.username,
+        valor: `requestId=${requestId}`,
+        type: 'info'
       });
 
       return res.status(200).json({ message: 'Solicitud cancelada correctamente.' });
@@ -362,6 +421,15 @@ class CommunityController {
         where: { userId, status: 'PENDING' },
       });
 
+      await req.logAction({
+        accion: 'Solicitud actual de comunidad consultada',
+        apartado: 'Community',
+        userId,
+        username: req.user?.username,
+        valor: `hasPendingRequest=${Boolean(request)}`,
+        type: 'info'
+      });
+
       return res.status(200).json({
         request: request || null,
         hasPendingRequest: Boolean(request)
@@ -373,3 +441,4 @@ class CommunityController {
 }
 
 export const communityController = new CommunityController();
+
