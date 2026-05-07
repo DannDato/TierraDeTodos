@@ -593,7 +593,7 @@ function Users() {
           </div> */}
         </div>
 
-        <div className="bg-black/20 rounded-[2rem] border border-[var(--white-color)]/5 overflow-hidden shadow-md p-6">
+        <div className="box-main p-6">
           <div className="flex flex-col md:flex-row md:items-end gap-4 mb-6">
             <div className="flex-1 relative">
               <input

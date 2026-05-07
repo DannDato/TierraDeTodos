@@ -314,7 +314,7 @@ function EmblemsAdmin() {
 
       <div className="w-full px-0 mx-0 text-[var(--ins-text-white)]">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-          <div>
+          <div className="px-2">
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
               <span>{currentUser.role}</span>
               <span>/</span>
@@ -333,14 +333,14 @@ function EmblemsAdmin() {
           <Button
             variant="primary"
             size="md"
-            className="flex items-center gap-2 self-start shrink-0 whitespace-nowrap bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+            className="flex mx-2 items-center gap-2 self-start shrink-0 whitespace-nowrap bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
             onClick={openCreateModal}
           >
             <Plus size={18} /> Nueva asignación
           </Button>
         </div>
 
-        <div className="bg-black/10 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8 backdrop-blur-lg border border-white/10">
+        <div className="box-main p-6">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--ins-text-gray)] mb-2">Filtro edición</p>
@@ -447,7 +447,7 @@ function AssignmentDetailModal({ item, users, editions, emblems, goals, isSaving
     <div className="fixed inset-x-0 top-0 bottom-16 z-[100] flex items-center justify-center p-4 overflow-hidden">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-2xl rounded-3xl border border-white/10 bg-[var(--ins-background)]/50 backdrop-blur-lg shadow-2xl flex flex-col max-h-[80dvh]">
+      <div className="relative w-full max-w-2xl modal-main">
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--white-color)]/10">
           <div>
             <h3 className="text-xl font-bold text-[var(--ins-text-white)] flex items-center gap-2">

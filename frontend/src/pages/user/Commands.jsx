@@ -154,7 +154,7 @@ function Commands() {
 
       <div className="w-full px-0 mx-0 text-[var(--ins-text-white)]">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-          <div>
+          <div className="px-2">
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
               <span>{currentUser.role}</span>
               <span>/</span>
@@ -191,7 +191,7 @@ function Commands() {
           </div>
         </div>
 
-        <div className="bg-black/10 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8 backdrop-blur-lg border border-white/10">
+        <div className="box-main p-6">
           <div className="flex items-center justify-between mb-4 relative z-10">
             <h2 className="text-xl font-bold mb-0 flex items-center gap-2 text-[var(--ins-text-white)]">
               <CircleDashed size={24} style={{ color: "var(--secondary-color)" }} />
@@ -202,7 +202,7 @@ function Commands() {
             </span>
           </div>
 
-          <div className="rounded-2xl bg-[var(--black-color)]/20 overflow-hidden">
+          <div className=" p-6">
             <Table
               columns={commandColumns}
               data={filteredCommands}

@@ -24,7 +24,7 @@ import Commands from "./pages/user/Commands";
 import Users from "./pages/admin/users";
 import Gestion from "./pages/admin/gestion";
 import Reports from "./pages/admin/Reports";
-import EmblemsAdmin from "./pages/admin/EmblemsAdmin";
+import EmblemsAdmin from "./pages/admin/Emblems";
 
 import NotFound from "./pages/home/NotFound";
 import LoadingOverlay from "./components/shared/LoadingOverlay";

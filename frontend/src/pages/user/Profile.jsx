@@ -114,7 +114,6 @@ function Profile() {
     }
   };
 
-  const [isFlipped, setIsFlipped] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
@@ -536,7 +535,7 @@ function Profile() {
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
 
-          <div>
+          <div className="px-2">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-2">
               <span>{currentUser.role}</span>
               <span>/</span>
@@ -564,8 +563,6 @@ function Profile() {
               currentStatus={currentStatus}
               isInactiveStatus={isInactiveStatus}
               isCancelledStatus={isCancelledStatus}
-              isFlipped={isFlipped}
-              onToggleFlip={() => setIsFlipped(!isFlipped)}
               avatarInputRef={avatarInputRef}
               onAvatarInputChange={handleAvatarInputChange}
               onAvatarClick={handleAvatarClick}
@@ -583,9 +580,9 @@ function Profile() {
           {/* RIGHT: ADDITIONAL INFO - SIN CAMBIOS */}
           <div className="w-full lg:flex-1 min-w-0 space-y-6">
             {/* INFORMACION */}
-            <div className="bg-black/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10">
+            <div className="box-main p-6">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <User size={24} />
+                <User size={24} className="text-[var(--secondary-color)]" />
                 Tu información
               </h2>
 
@@ -704,7 +701,7 @@ function Profile() {
 
 
             {/* STATUS */}
-            <div className="bg-black/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10 pb-9">
+            <div className="box-main p-6">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-full"
@@ -809,7 +806,7 @@ function Profile() {
             )}
 
             {/* SECURITY */}
-            <div className="bg-black/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10">
+            <div className="box-main p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                   <ShieldAlert size={20} className="text-[var(--secondary-color)]" />

@@ -145,7 +145,7 @@ function Reports() {
 
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
+            <div className="px-2">
               <div className="flex items-center gap-2 text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-widest mb-2">
                 <span>ADMIN</span><span>/</span><span className="text-[var(--secondary-color)]">Reports</span>
               </div>
@@ -181,16 +181,16 @@ function Reports() {
           </div>
         </div>
 
-        <div className="bg-black/10 rounded-3xl p-6 border border-white/10">
+        <div className="box-main p-6">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <MessageSquareWarning size={18} className="text-[var(--secondary-color)]" />
             Tickets pendientes
           </h2>
 
           {loading ? (
-            <div className="rounded-2xl bg-black/10 py-10 px-4 text-center text-[var(--ins-text-gray)]">Cargando tickets...</div>
+            <div className="box-main py-10 px-4 text-center text-[var(--ins-text-gray)]">Cargando tickets...</div>
           ) : tickets.length === 0 ? (
-            <div className="rounded-2xl bg-black/10 py-10 px-4 text-center text-[var(--ins-text-gray)]">No hay tickets con los filtros actuales.</div>
+            <div className="box-main py-10 px-4 text-center text-[var(--ins-text-gray)]">No hay tickets con los filtros actuales.</div>
           ) : (
             <div className="space-y-3 max-h-[70vh] overflow-y-auto tdt-scrollbar pr-1">
               {tickets.map((ticket) => (

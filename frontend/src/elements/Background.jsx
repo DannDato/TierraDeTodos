@@ -1,11 +1,13 @@
 
 
 function Background({
-  // backgroundImage = "/img/banner.gif",
-  backgroundImage = "/img/banner2.webp",
+  // backgroundImage = "/img/banner2.gif",
+  // backgroundImage = "/img/pollos.jpg",
+  // backgroundImage = "/img/banner2.webp",
+  backgroundImage = "/img/banner.webp",
   // backgroundImage = "/img/bannergif.webp",
   overlayColor = "rgba(39, 37, 35, 0.51)",
-  blur = "50px",
+  blur = "20px",
   children,
   className = "",
   ...props
@@ -34,7 +36,7 @@ function Background({
       >
       </div>
       <div
-        className="absolute bg-cover inset-0 flex items-center justify-center p-5 z-1"
+        className="absolute bg-cover inset-0 flex items-center justify-center p-0 md:p-5 z-1"
         style={{
           zIndex: 10,
         }}

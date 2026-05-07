@@ -1,4 +1,5 @@
-import { User, Upload } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Sparkles, User, Upload } from "lucide-react";
 import cancelledStamp from "../../img/cancelled.png";
 
 function Credencial({
@@ -6,8 +7,8 @@ function Credencial({
   currentStatus,
   isInactiveStatus,
   isCancelledStatus,
-  isFlipped = false,
-  onToggleFlip = () => {},
+  isFlipped,
+  onToggleFlip,
   avatarInputRef,
   onAvatarInputChange = () => {},
   onAvatarClick = () => {},
@@ -22,7 +23,27 @@ function Credencial({
   readOnly = false,
   lazyImages = false,
 }) {
+  const is_flip_controlled = typeof isFlipped === "boolean";
+  const [internal_is_flipped, set_internal_is_flipped] = useState(Boolean(isFlipped));
   const UserFallbackIcon = User;
+
+  useEffect(() => {
+    if (is_flip_controlled) {
+      set_internal_is_flipped(Boolean(isFlipped));
+    }
+  }, [is_flip_controlled, isFlipped]);
+
+  const resolved_is_flipped = is_flip_controlled ? isFlipped : internal_is_flipped;
+
+  const handle_flip = () => {
+    if (typeof onToggleFlip === "function") {
+      onToggleFlip();
+    }
+
+    if (!is_flip_controlled) {
+      set_internal_is_flipped((current_value) => !current_value);
+    }
+  };
 
   const toRgba = (hexColor, alpha) => {
     const normalized = typeof hexColor === "string" ? hexColor.trim().replace("#", "") : "";
@@ -103,8 +124,18 @@ function Credencial({
       })
     : [];
 
+  const isNewMember = (() => {
+    if (!user?.createdAt) return false;
+
+    const createdAtDate = new Date(user.createdAt);
+    if (Number.isNaN(createdAtDate.getTime())) return false;
+
+    const elapsedDays = Math.floor((Date.now() - createdAtDate.getTime()) / (1000 * 60 * 60 * 24));
+    return elapsedDays >= 0 && elapsedDays <= 10;
+  })();
+
   return (
-    <div className="w-full max-w-[370px] lg:max-w-[420px] lg:shrink-0">
+    <div className="w-full max-w-[370px] lg:max-w-[420px] lg:shrink-0 hover:cursor-pointer">
       <div className="rounded-3xl ">
       <style>{`
         .credential-container {
@@ -180,9 +211,9 @@ function Credencial({
         </div>
       ) : (
         <div
-          className={`credential-container credential-themed relative ${readOnly ? "" : "cursor-pointer"} select-none ${isFlipped ? "flipped" : ""}`}
+          className={`credential-container credential-themed relative cursor-pointer select-none ${resolved_is_flipped ? "flipped" : ""}`}
           style={credentialThemeStyle}
-          onDoubleClick={readOnly ? undefined : onToggleFlip}
+          onDoubleClick={handle_flip}
         >
           {!readOnly && (
             <input
@@ -198,7 +229,7 @@ function Credencial({
           <div className={`credential-flipper min-w-[340px] ${isCancelledStatus ? 'is-cancelled' : ''}`}>
             <div className="credential-front ">
               <div
-                className="h-full rounded-3xl paper-texture flex flex-col pt-5 pb-3 px-6 text-gray-900 border border-[rgba(139,110,58,0.3)]"
+                className="h-full rounded-3xl paper-texture relative flex flex-col pt-5 pb-3 px-6 text-gray-900 border border-[rgba(139,110,58,0.3)]"
                 style={credentialPaperStyle}
               >
                 <div className="flex items-center gap-3 pb-3 border-b border-[rgba(139,110,58,0.5)] mb-3">
@@ -311,7 +342,14 @@ function Credencial({
                 </div>
 
                 <div className="border-b border-[rgba(139,110,58,0.25)] pb-2 mb-2 h-auto flex-1 flex flex-col">
-                  <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Insignias</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="credential-label block font-bold uppercase text-[12px] tracking-wider">Insignias</span>
+                    {isNewMember ? (
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] bg-emerald-500/20 border border-emerald-400/40 text-emerald-900">
+                        <Sparkles size={10} /> Nuevo
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="mt-1 flex-1 h-full rounded border border-dashed border-[rgba(139,110,58,0.35)] bg-black/5 p-[3px] flex flex-wrap content-start gap-[3px]">
                     {equippedEmblems.length ? (
                       equippedEmblems.map((emblem) => {

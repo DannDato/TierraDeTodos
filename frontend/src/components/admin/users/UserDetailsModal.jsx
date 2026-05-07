@@ -226,7 +226,7 @@ function UserDetailsModal({
         className="absolute inset-0 bg-[var(--black-color)]/60 backdrop-blur-sm transition-opacity animate-[fadeIn_0.2s_ease-out]"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-6xl h-[calc(100%-2rem)] sm:h-[calc(100%-3rem)] max-h-[820px] flex flex-col rounded-3xl bg-[var(--ins-background)]/50 backdrop-blur-lg border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden transform transition-all animate-[slideUp_0.3s_ease-out]">
+      <div className="relative w-full max-w-6xl h-[calc(100%-2rem)] sm:h-[calc(100%-3rem)] max-h-[820px] flex flex-col modal-main overflow-hidden transform transition-all animate-[slideUp_0.3s_ease-out]">
         <div className="relative flex-shrink-0 px-8 py-6 bg-[var(--white-color)]/[0.02] overflow-hidden">
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-[var(--secondary-color)]/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
 

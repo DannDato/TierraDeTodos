@@ -257,7 +257,7 @@ function Community() {
             <div className="w-full  px-0 mx-0 text-[var(--ins-text-white)]">
                 {/* HEADER */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-                    <div>
+                    <div className="px-2">
                         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-2">
                         <span>{currentUser.role}</span>
                         <span>/</span>
@@ -293,7 +293,7 @@ function Community() {
             </div>
             <div className="flex flex-col lg:flex-row gap-8 items-start w-full  px-0 mx-0 mb-4">
                 <div className="w-full ">
-                    <div className="bg-black/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10 p-10">
+                    <div className="box-main p-6">
                         <div className="grid grid-cols-2 md:grid-cols-2 gap-4 items-center mb-6 alig">
                             <div className="items-center flex gap-2 ">
                                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
@@ -335,7 +335,7 @@ function Community() {
             </div>
             <div className="flex flex-col lg:flex-row gap-8 items-start w-full  px-0 mx-0">
                 <div className="w-full ">
-                    <div className="bg-black/10 rounded-3xl p-6 backdrop-blur-sm border border-white/10 p-10">
+                    <div className="box-main p-6">
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                             <Video size={24} style={{ color: "var(--secondary-color)" }}/>
                             Todas las comunidades
@@ -506,7 +506,7 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, has
         <div className="fixed inset-0 z-[120] flex items-center justify-center transition-opacity duration-200 ">
 
             <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full max-w-5xl rounded-3xl  p-8 shadow-2xl animate-fadeInUp bg-[var(--ins-background)]/50 backdrop-blur-sm border border-white/10 mt-[-65px]" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="relative w-full max-w-5xl  p-8 mt-[-65px] modal-main" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
                 <button onClick={onClose} className="absolute top-4 right-4 text-[var(--ins-text-white)] hover:text-[var(--secondary-color)] text-2xl font-bold">×</button>
                 <div className="grid grid-cols-1 lg:grid-cols-3">
                     <div className="">

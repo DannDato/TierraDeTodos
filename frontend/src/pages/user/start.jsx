@@ -221,7 +221,7 @@ function Start() {
         {/* ESTADISTICAS DEL JUGADOR */}
         {/* ========================================================= */}
         <div
-          className="box-main p-6 shadow-md flex flex-col relative overflow-hidden pb-8   cursor-pointer transition-transform hover:-translate-y-0.5"
+          className="box-main cursor-pointer  p-6 flex flex-col relative overflow-hidden pb-8 "
           onClick={() => navigate('/progress')}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
@@ -347,14 +347,14 @@ function Start() {
         </div>
         {/* CONTENIDO PRINCIPAL*/}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-          <div className="col-span-2 flex flex-col gap-6 p-8 box-main shadow-md max-h-120  ">
+          <div className="col-span-2 flex flex-col gap-6 p-8 max-h-120 box-main cursor-pointer   ">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
               <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
               Ultima noticia destacada
             </h2>
             {featuredNews && (
               <div
-                className="relative h-80 w-full rounded-3xl overflow-hidden shadow-md group cursor-pointer"
+                className="relative h-80 w-full rounded-3xl overflow-hidden cursor-pointer box-main"
                 onClick={() => goToNewsDetail(featuredNews.id)}
                 onDoubleClick={() => goToNewsDetail(featuredNews.id)}
               >
@@ -381,9 +381,7 @@ function Start() {
           </div>
 
           <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="box-main p-6 shadow-md h-80 flex flex-col items-center relative overflow-hidden gap-5 h-120  ">
-              <div className="absolute -top-24 -right-24 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
-
+            <div className="box-main cursor-pointer  p-6 h-80 flex flex-col items-center relative overflow-hidden gap-5 h-120  ">
               <div className="w-full relative z-10">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
                   <Play size={24} style={{ color: "var(--secondary-color)" }}/>

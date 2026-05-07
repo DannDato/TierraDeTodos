@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Heart, Plus, UserRound, X } from "lucide-react";
+import { ChevronRight, Heart, Plus, UserRound, X, Newspaper } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
@@ -677,7 +677,7 @@ function News() {
 
       <div className="w-full mx-0">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 ">
-          <div>
+          <div className="px-2">
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
               <span>{currentUser.role}</span>
               <span>/</span>
@@ -724,92 +724,107 @@ function News() {
         </div>
 
         {sortedNews.length === 0 ? (
-          <div className="rounded-3xl border border-white/10 bg-black/10 py-14 text-center text-[var(--ins-text-gray)]">
-            No hay noticias para mostrar.
+          <div className="box-main p-6 text-center text-[var(--ins-text-gray)] mb-6">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
+              <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
+              mmmm... no hay noticias por aquí
+            </h2>
           </div>
         ) : (
-          <div className="p-10 bg-black/10 rounded-3xl border border-white/10">
+          <div className="box-main p-6">
           <>
             {featuredNews && (
-              <div
-                className="relative h-80 w-full rounded-3xl overflow-hidden shadow-md group cursor-pointer mb-4"
-                onDoubleClick={() => openNewsModal(featuredNews)}
-                onClick={() => openNewsModal(featuredNews)}
-              >
-                <img
-                  src={featuredNews.image}
-                  alt={featuredNews.title}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+              <div>
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
+                  <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
+                  Ultima noticia destacada
+                </h2>
+                <div
+                  className="relative h-80 w-full overflow-hidden cursor-pointer mb-4 box-main"
+                  onDoubleClick={() => openNewsModal(featuredNews)}
+                  onClick={() => openNewsModal(featuredNews)}
+                >
+                  <img
+                    src={featuredNews.image}
+                    alt={featuredNews.title}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
-                <div className="absolute bottom-0 left-0 p-8 w-full">
-                  <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(featuredNews.type) }}>
-                    {featuredNews.type}
-                  </span>
-                  <div className="flex items-center justify-between gap-4 mb-2">
-                    <h2 className="text-3xl font-extrabold text-white drop-shadow-lg leading-tight">{featuredNews.title}</h2>
-                    <button
-                      type="button"
-                      className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-black/30 hover:bg-black/45 border border-white/20 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                      onClick={(event) => handleToggleLike(event, featuredNews)}
-                      disabled={pendingNewsLikes.current.has(Number(featuredNews.id))}
-                      aria-label={isNewsLiked(featuredNews.id) ? "Quitar like" : "Dar like"}
-                    >
-                      <Heart size={16} className={isNewsLiked(featuredNews.id) ? "text-red-500 fill-red-500" : "text-white"} />
-                      <span className="text-xs font-bold text-white">{Number(featuredNews.likesCount || 0)}</span>
-                    </button>
+                  <div className="absolute bottom-0 left-0 p-8 w-full">
+                    <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(featuredNews.type) }}>
+                      {featuredNews.type}
+                    </span>
+                    <div className="flex items-center justify-between gap-4 mb-2">
+                      <h2 className="text-3xl font-extrabold text-white drop-shadow-lg leading-tight">{featuredNews.title}</h2>
+                      <button
+                        type="button"
+                        className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-black/30 hover:bg-black/45 border border-white/20 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        onClick={(event) => handleToggleLike(event, featuredNews)}
+                        disabled={pendingNewsLikes.current.has(Number(featuredNews.id))}
+                        aria-label={isNewsLiked(featuredNews.id) ? "Quitar like" : "Dar like"}
+                      >
+                        <Heart size={16} className={isNewsLiked(featuredNews.id) ? "text-red-500 fill-red-500" : "text-white"} />
+                        <span className="text-xs font-bold text-white">{Number(featuredNews.likesCount || 0)}</span>
+                      </button>
+                    </div>
+                    <p className="text-gray-200 text-sm max-w-xl drop-shadow-md line-clamp-2">{featuredNews.description}</p>
                   </div>
-                  <p className="text-gray-200 text-sm max-w-xl drop-shadow-md line-clamp-2">{featuredNews.description}</p>
                 </div>
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-              {regularNews.map((article) => (
-                <div
-                  key={article.id}
-                  className="bg-black/10 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group flex flex-col"
-                  onDoubleClick={() => openNewsModal(article)}
-                >
-                  <div className="h-40 overflow-hidden relative">
-                    <img
-                      src={article.image}
-                      alt={article.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  </div>
-                  <div className="p-6 flex flex-col flex-1 relative pb-16">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded-md" style={{ backgroundColor: getBadgeColor(article.type) }}>
-                        {article.type}
-                      </span>
-                      <span className="text-xs text-[var(--white-color)] font-medium">{article.dateLabel}</span>
+            <div>
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] mt-20">
+                <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
+                Noticias anteriores
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                {regularNews.map((article) => (
+                  <div
+                    key={article.id}
+                    className="overflow-hidden cursor-pointer group flex flex-col modal-main "
+                    onDoubleClick={() => openNewsModal(article)}
+                  >
+                    <div className="h-40 overflow-hidden relative">
+                      <img
+                        src={article.image}
+                        alt={article.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
                     </div>
-                    <h3 className="text-lg font-bold text-[var(--ins-text-white)] mb-2 leading-tight group-hover:text-[var(--secondary-color)] transition-colors">
-                      {article.title}
-                    </h3>
-                    <p className="text-sm text-[var(--gray-color)] flex-1 line-clamp-3">{article.description}</p>
-                    <button
-                      type="button"
-                      className="mt-4 flex items-center text-[var(--secondary-color)] text-sm font-bold"
-                      onClick={() => openNewsModal(article)}
-                    >
-                      Leer más <ChevronRight size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 bg-black/25 hover:bg-black/40 border border-white/15 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                      onClick={(event) => handleToggleLike(event, article)}
-                      disabled={pendingNewsLikes.current.has(Number(article.id))}
-                      aria-label={isNewsLiked(article.id) ? "Quitar like" : "Dar like"}
-                    >
-                      <Heart size={15} className={isNewsLiked(article.id) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-white)]"} />
-                      <span className="text-xs font-semibold text-[var(--ins-text-white)]">{Number(article.likesCount || 0)}</span>
-                    </button>
+                    <div className="p-6 flex flex-col flex-1 relative pb-16">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded-md" style={{ backgroundColor: getBadgeColor(article.type) }}>
+                          {article.type}
+                        </span>
+                        <span className="text-xs text-[var(--white-color)] font-medium">{article.dateLabel}</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-[var(--ins-text-white)] mb-2 leading-tight group-hover:text-[var(--secondary-color)] transition-colors">
+                        {article.title}
+                      </h3>
+                      <p className="text-sm text-[var(--gray-color)] flex-1 line-clamp-3">{article.description}</p>
+                      <button
+                        type="button"
+                        className="mt-4 flex items-center text-[var(--secondary-color)] text-sm font-bold"
+                        onClick={() => openNewsModal(article)}
+                      >
+                        Leer más <ChevronRight size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 bg-black/25 hover:bg-black/40 border border-white/15 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        onClick={(event) => handleToggleLike(event, article)}
+                        disabled={pendingNewsLikes.current.has(Number(article.id))}
+                        aria-label={isNewsLiked(article.id) ? "Quitar like" : "Dar like"}
+                      >
+                        <Heart size={15} className={isNewsLiked(article.id) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-white)]"} />
+                        <span className="text-xs font-semibold text-[var(--ins-text-white)]">{Number(article.likesCount || 0)}</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </>
           </div>
@@ -818,8 +833,9 @@ function News() {
 
       {selectedNews && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeNewsModal} />
-          <div className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] rounded-3xl bg-[var(--ins-background)]/60 backdrop-blur-lg border border-white/10 shadow-2xl overflow-y-auto tdt-scrollbar flex flex-col ">
+          <div className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] overflow-y-auto tdt-scrollbar flex flex-col modal-main">
             <div
               className={`relative h-56 md:h-72 w-full ${isEditingSelected ? "cursor-pointer" : ""}`}
               onClick={() => {
@@ -1099,7 +1115,7 @@ function News() {
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeCreateModal} />
           <form
             onSubmit={handleCreateNews}
-            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] rounded-3xl bg-[var(--ins-background)]/50 backdrop-blur-lg border border-white/10 shadow-2xl overflow-hidden flex flex-col"
+            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] overflow-hidden flex flex-col modal-main"
           >
             <div
               className="relative h-56 md:h-72 w-full cursor-pointer"

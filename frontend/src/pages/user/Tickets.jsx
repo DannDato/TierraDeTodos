@@ -239,7 +239,7 @@ function Tickets() {
       <div className="w-full px-0 mx-0 text-[var(--ins-text-white)]">
 
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 px-2">
           <div className="flex items-center gap-2 text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-widest mb-2">
             <span>{currentUser.role}</span><span>/</span>
             <span className="text-[var(--secondary-color)]">Tickets</span>
@@ -261,7 +261,7 @@ function Tickets() {
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
 
           {/* ── Formulario ── */}
-          <form onSubmit={handleSubmit} className="xl:col-span-2 bg-black/10 rounded-3xl p-6 space-y-4 border border-white/10">
+          <form onSubmit={handleSubmit} className="xl:col-span-2 box-main p-6 space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <LifeBuoy size={18} className="text-[var(--secondary-color)]" />
               Nuevo ticket
@@ -291,7 +291,7 @@ function Tickets() {
 
             <Input label="Asunto" value={formData.subject} onChange={(e) => handleChange("subject", e.target.value)} placeholder="Ej. Me robaron cofres en X Y Z" disabled={maxReached} />
 
-            <div className="rounded-xl bg-black/10 p-4 border border-white/10">
+            <div className="p-4">
               <div className="flex items-center gap-2 mb-3 text-[var(--ins-text-gray)] text-sm font-semibold">
                 <MapPinned size={16} className="text-[var(--secondary-color)]" /> Coordenadas del incidente (opcionales)
               </div>
@@ -313,16 +313,16 @@ function Tickets() {
           </form>
 
           {/* ── Lista de tickets ── */}
-          <div className="xl:col-span-3 bg-black/10 rounded-3xl p-6 border border-white/10">
+          <div className="xl:col-span-3 box-main p-6">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <MessageSquareWarning size={18} className="text-[var(--secondary-color)]" />
               Mis tickets
             </h2>
 
             {ticketsLoading ? (
-              <div className="rounded-2xl bg-black/10 py-10 px-4 text-center text-[var(--ins-text-gray)]">Cargando tickets...</div>
+              <div className="box-main py-10 px-4 text-center text-[var(--ins-text-gray)]">Cargando tickets...</div>
             ) : tickets.length === 0 ? (
-              <div className="rounded-2xl bg-black/10 py-10 px-4 text-center text-[var(--ins-text-gray)]">Aún no has creado ningún ticket.</div>
+              <div className="box-main py-10 px-4 text-center text-[var(--ins-text-gray)]">Aún no has creado ningún ticket.</div>
             ) : (
               <div className="space-y-3 max-h-[620px] overflow-y-auto tdt-scrollbar pr-1">
                 {tickets.map((ticket) => (
@@ -354,7 +354,7 @@ function Tickets() {
 // ─── SummaryCard ─────────────────────────────────────────────────────────────
 function SummaryCard({ label, value, color = "text-[var(--ins-text-white)]" }) {
   return (
-    <div className="bg-black/10 rounded-2xl p-4 border border-white/10">
+    <div className="box-main p-6">
       <p className="text-xs uppercase tracking-widest text-[var(--ins-text-gray)] font-bold">{label}</p>
       <p className={`text-2xl font-extrabold mt-2 ${color}`}>{value}</p>
     </div>
