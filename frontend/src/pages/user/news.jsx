@@ -835,99 +835,54 @@ function News() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
 
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeNewsModal} />
-          <div className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] overflow-y-auto tdt-scrollbar flex flex-col modal-main">
-            <div
-              className={`relative h-56 md:h-72 w-full ${isEditingSelected ? "cursor-pointer" : ""}`}
-              onClick={() => {
-                if (isEditingSelected) editImageInputRef.current?.click();
-              }}
-            >
-              <img src={editImagePreview || selectedNews.image} alt={selectedNews.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
-              {isEditingSelected && (
-                <div className="absolute inset-0 flex items-center justify-center text-white/90 text-sm font-bold tracking-wider uppercase bg-black/25">
-                  Click para cambiar imagen
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  closeNewsModal();
-                }}
-                className="absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors"
-              >
-                <X size={18} />
-              </button>
-              <input
-                ref={editImageInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(event) => handleImageChange(event, "edit")}
-              />
-              <div
-                className="absolute bottom-0 left-0 p-6 w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(isEditingSelected ? editFormData.type : selectedNews.type) }}>
-                  {isEditingSelected ? editFormData.type : selectedNews.type}
-                </span>
-                <div className="flex items-end justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    {isEditingSelected ? (
-                      <input
-                        type="text"
-                        value={editFormData.title}
-                        onChange={(e) => setEditFormData((prev) => ({ ...prev, title: e.target.value }))}
-                        className="w-full bg-transparent border-b border-white/50 text-2xl md:text-3xl font-extrabold text-white leading-tight outline-none focus:border-white"
-                      />
-                    ) : (
-                      <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-tight">{selectedNews.title}</h2>
-                    )}
+          <div className="relative w-full md:w-[96vw] xl:w-[92vw] max-w-[1700px] h-[90vh] md:h-[88vh] mt-[-65px] overflow-y-auto md:overflow-hidden tdt-scrollbar modal-main">
+            {isEditingSelected ? (
+              <div className="h-full flex flex-col overflow-y-auto tdt-scrollbar">
+                <div
+                  className="relative h-56 md:h-72 w-full cursor-pointer"
+                  onClick={() => {
+                    editImageInputRef.current?.click();
+                  }}
+                >
+                  <img src={editImagePreview || selectedNews.image} alt={selectedNews.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+                  <div className="absolute inset-0 flex items-center justify-center text-white/90 text-sm font-bold tracking-wider uppercase bg-black/25">
+                    Click para cambiar imagen
                   </div>
-
-                  {!isEditingSelected && canEditSelected && (
-                    <div className="flex flex-wrap items-center justify-end gap-2 max-w-[52vw] md:max-w-none">
-                      <Button
-                        type="button"
-                        variant="primary"
-                        className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white text-xs md:text-sm px-3 py-2 md:px-6 md:py-3 rounded-xl md:rounded-3xl"
-                        onClick={startEditSelected}
-                      >
-                        Editar noticia
-                      </Button>
-
-                      {hasDeletePermission && (
-                        <Button
-                          type="button"
-                          variant="cancel"
-                          className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white text-xs md:text-sm px-3 py-2 md:px-6 md:py-3 rounded-xl md:rounded-3xl"
-                          onClick={handleDeleteSelected}
-                        >
-                          Eliminar
-                        </Button>
-                      )}
-                    </div>
-                  )}
-
-                  {!isEditingSelected && !canEditSelected && hasDeletePermission && (
-                    <Button
-                      type="button"
-                      variant="cancel"
-                      className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white text-xs md:text-sm px-3 py-2 md:px-6 md:py-3 rounded-xl md:rounded-3xl"
-                      onClick={handleDeleteSelected}
-                    >
-                      Eliminar
-                    </Button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeNewsModal();
+                    }}
+                    className="absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                  <input
+                    ref={editImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => handleImageChange(event, "edit")}
+                  />
+                  <div
+                    className="absolute bottom-0 left-0 p-6 w-full"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(editFormData.type) }}>
+                      {editFormData.type}
+                    </span>
+                    <input
+                      type="text"
+                      value={editFormData.title}
+                      onChange={(e) => setEditFormData((prev) => ({ ...prev, title: e.target.value }))}
+                      className="w-full bg-transparent border-b border-white/50 text-2xl md:text-3xl font-extrabold text-white leading-tight outline-none focus:border-white"
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="p-6 space-y-4">
-              {isEditingSelected ? (
-                <>
+                <div className="p-6 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Tipo</span>
@@ -970,140 +925,281 @@ function News() {
                       style={{ fontFamily: '"Times New Roman", Times, serif' }}
                     />
                   </div>
-                </>
-              ) : (
-                <>
-                  <div
-                    className="-mx-6 -mt-6 px-6 py-6 bg-white"
-                    style={{
-                      backgroundImage:
-                        "radial-gradient(rgba(0,0,0,0.06) 0.45px, transparent 0.45px), linear-gradient(0deg, rgba(0,0,0,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px)",
-                      backgroundSize: "3px 3px, 14px 14px, 18px 18px",
-                      backgroundPosition: "0 0, 0 0, 0 0",
-                    }}
-                  >
-                    <div className="flex flex-wrap gap-4 text-xs text-black/65 uppercase tracking-wider font-semibold mb-4">
-                      <span>Fecha: {selectedNews.dateLabel}</span>
-                      <span>Reportero: {selectedNews.Reporter}</span>
+
+                  <div className="pt-4 border-t border-white/10">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--ins-text-white)] mb-3">
+                      Comentarios
+                    </h3>
+
+                    <div className="mt-3 mb-4 flex flex-col gap-2">
+                      <textarea
+                        rows={3}
+                        value={commentText}
+                        onChange={(event) => setCommentText(event.target.value)}
+                        placeholder="Escribe tu comentario..."
+                        className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
+                        maxLength={1000}
+                      />
+                      <div className="flex items-center justify-end">
+                        <Button
+                          type="button"
+                          variant="primary"
+                          className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+                          onClick={handleSendComment}
+                          disabled={commentsSubmitting || !String(commentText || "").trim()}
+                        >
+                          Comentar
+                        </Button>
+                      </div>
                     </div>
 
-                    <p className="text-lg md:text-2xl text-black text-justify whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-                      {selectedNews.description}
-                    </p>
-
-                    {selectedNews.note ? (
-                      <p className="mt-4 text-base text-black/75 whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-                        Nota: {selectedNews.note}
-                      </p>
-                    ) : null}
-                  </div>
-                </>
-              )}
-
-              <div className="pt-4 border-t border-white/10">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--ins-text-white)] mb-3">
-                  Comentarios
-                </h3>
-
-                <div className="mt-3 mb-4 flex flex-col gap-2">
-                  <textarea
-                    rows={3}
-                    value={commentText}
-                    onChange={(event) => setCommentText(event.target.value)}
-                    placeholder="Escribe tu comentario..."
-                    className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
-                    maxLength={1000}
-                  />
-                  <div className="flex items-center justify-end">
-                    <Button
-                      type="button"
-                      variant="primary"
-                      className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
-                      onClick={handleSendComment}
-                      disabled={commentsSubmitting || !String(commentText || "").trim()}
-                    >
-                      Comentar
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {commentsLoading ? (
-                    <p className="text-sm text-[var(--ins-text-gray)]">Cargando comentarios...</p>
-                  ) : sortedComments.length === 0 ? (
-                    <p className="text-sm text-[var(--ins-text-gray)]">Aun no hay comentarios. Se la primera persona en comentar.</p>
-                  ) : (
-                    sortedComments.map((entry) => (
-                      <div key={entry.id} className="rounded-2xl bg-black/15 p-3 border border-white/5">
-                        <div className="flex items-start gap-3">
-                          <Link
-                            to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
-                            className="w-9 h-9 rounded-full bg-black/35 border border-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center hover:border-[var(--secondary-color)] transition-colors"
-                            title={`Ver jugador ${entry.username || "Usuario"}`}
-                          >
-                            {entry.avatarUrl ? (
-                              <img src={entry.avatarUrl} alt={entry.username || "Usuario"} className="w-full h-full object-cover" />
-                            ) : (
-                              <UserRound size={16} className="text-[var(--ins-text-gray)]" />
-                            )}
-                          </Link>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="space-y-3">
+                      {commentsLoading ? (
+                        <p className="text-sm text-[var(--ins-text-gray)]">Cargando comentarios...</p>
+                      ) : sortedComments.length === 0 ? (
+                        <p className="text-sm text-[var(--ins-text-gray)]">Aun no hay comentarios. Se la primera persona en comentar.</p>
+                      ) : (
+                        sortedComments.map((entry) => (
+                          <div key={entry.id} className="rounded-2xl bg-black/15 p-3 border border-white/5">
+                            <div className="flex items-start gap-3">
                               <Link
                                 to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
-                                className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] truncate transition-colors"
+                                className="w-9 h-9 rounded-full bg-black/35 border border-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center hover:border-[var(--secondary-color)] transition-colors"
                                 title={`Ver jugador ${entry.username || "Usuario"}`}
                               >
-                                {entry.username || "Usuario"}
+                                {entry.avatarUrl ? (
+                                  <img src={entry.avatarUrl} alt={entry.username || "Usuario"} className="w-full h-full object-cover" />
+                                ) : (
+                                  <UserRound size={16} className="text-[var(--ins-text-gray)]" />
+                                )}
                               </Link>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <span className="text-[11px] text-[var(--ins-text-gray)] whitespace-nowrap">
-                                  {entry.createdAt
-                                    ? new Date(entry.createdAt).toLocaleString("es-MX", {
-                                      day: "2-digit",
-                                      month: "short",
-                                      year: "numeric",
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })
-                                    : ""}
-                                </span>
-                                <button
-                                  type="button"
-                                  className="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-black/20 hover:bg-black/35 border border-white/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                                  onClick={() => handleToggleCommentLike(entry.id)}
-                                  disabled={pendingCommentLikes.current.has(entry.id)}
-                                  aria-label={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "Quitar like" : "Dar like"}
-                                >
-                                  <Heart
-                                    size={12}
-                                    className={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-gray)]"}
-                                  />
-                                  <span className="text-[11px] font-semibold text-[var(--ins-text-gray)]">
-                                    {commentLikesMap[entry.id]?.likesCount ?? 0}
-                                  </span>
-                                </button>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <Link
+                                    to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
+                                    className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] truncate transition-colors"
+                                    title={`Ver jugador ${entry.username || "Usuario"}`}
+                                  >
+                                    {entry.username || "Usuario"}
+                                  </Link>
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    <span className="text-[11px] text-[var(--ins-text-gray)] whitespace-nowrap">
+                                      {entry.createdAt
+                                        ? new Date(entry.createdAt).toLocaleString("es-MX", {
+                                          day: "2-digit",
+                                          month: "short",
+                                          year: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })
+                                        : ""}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-black/20 hover:bg-black/35 border border-white/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                      onClick={() => handleToggleCommentLike(entry.id)}
+                                      disabled={pendingCommentLikes.current.has(entry.id)}
+                                      aria-label={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "Quitar like" : "Dar like"}
+                                    >
+                                      <Heart
+                                        size={12}
+                                        className={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-gray)]"}
+                                      />
+                                      <span className="text-[11px] font-semibold text-[var(--ins-text-gray)]">
+                                        {commentLikesMap[entry.id]?.likesCount ?? 0}
+                                      </span>
+                                    </button>
+                                  </div>
+                                </div>
+                                <p className="text-sm text-[var(--ins-text-white)] whitespace-pre-wrap break-words">
+                                  {entry.comment}
+                                </p>
                               </div>
                             </div>
-                            <p className="text-sm text-[var(--ins-text-white)] whitespace-pre-wrap break-words">
-                              {entry.comment}
-                            </p>
                           </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3 bg-black/10">
+                  <Button type="button" variant="ghost" className="text-white" onClick={cancelEditSelected} disabled={submitting}>Cancelar</Button>
+                  <Button type="button" variant="primary" className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white" onClick={handleSaveEditedNews} disabled={submitting}>
+                    Guardar cambios
+                  </Button>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col md:grid md:grid-cols-12 md:h-full">
+                <div className="relative h-56 md:h-full md:col-span-4 border-b md:border-b-0 md:border-r border-white/10">
+                  <img src={selectedNews.image} alt={selectedNews.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+                  <button
+                    type="button"
+                    onClick={closeNewsModal}
+                    className="absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                  <div className="absolute bottom-0 left-0 p-5 md:p-6 w-full">
+                    <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(selectedNews.type) }}>
+                      {selectedNews.type}
+                    </span>
+                    <div className="flex flex-col gap-3">
+                      <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-tight">
+                        {selectedNews.title}
+                      </h2>
 
-            {isEditingSelected && (
-              <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3 bg-black/10">
-                <Button type="button" variant="ghost" className="text-white" onClick={cancelEditSelected} disabled={submitting}>Cancelar</Button>
-                <Button type="button" variant="primary" className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white" onClick={handleSaveEditedNews} disabled={submitting}>
-                  Guardar cambios
-                </Button>
+                      {(canEditSelected || hasDeletePermission) && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          {canEditSelected && (
+                            <Button
+                              type="button"
+                              variant="primary"
+                              className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white text-xs md:text-sm px-3 py-2 rounded-xl"
+                              onClick={startEditSelected}
+                            >
+                              Editar noticia
+                            </Button>
+                          )}
+                          {hasDeletePermission && (
+                            <Button
+                              type="button"
+                              variant="cancel"
+                              className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white text-xs md:text-sm px-3 py-2 rounded-xl"
+                              onClick={handleDeleteSelected}
+                            >
+                              Eliminar
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className="px-5 py-5 md:px-6 md:py-6 md:col-span-4 border-b md:border-b-0 md:border-r border-white/10 md:overflow-y-auto md:tdt-scrollbar bg-white h-full"
+                  style={{
+                    backgroundImage:
+                      "radial-gradient(rgba(0,0,0,0.06) 0.45px, transparent 0.45px), linear-gradient(0deg, rgba(0,0,0,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px)",
+                    backgroundSize: "3px 3px, 14px 14px, 18px 18px",
+                    backgroundPosition: "0 0, 0 0, 0 0",
+                  }}
+                >
+                  <div className="flex flex-wrap gap-4 text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-4">
+                    <span>Fecha: {selectedNews.dateLabel}</span>
+                    <span>Reportero: {selectedNews.Reporter}</span>
+                  </div>
+                  <p className="text-lg md:text-xl text-black text-justify whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                    {selectedNews.description}
+                  </p>
+
+                  {selectedNews.note ? (
+                    <p className="mt-4 text-base text-black/75 whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                      Nota: {selectedNews.note}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="px-5 py-5 md:px-6 md:py-6 md:col-span-4 md:h-full md:flex md:flex-col">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--ins-text-white)] mb-3">
+                    Comentarios
+                  </h3>
+
+                  <div className="mb-4 flex flex-col gap-2">
+                    <textarea
+                      rows={3}
+                      value={commentText}
+                      onChange={(event) => setCommentText(event.target.value)}
+                      placeholder="Escribe tu comentario..."
+                      className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
+                      maxLength={1000}
+                    />
+                    <div className="flex items-center justify-end">
+                      <Button
+                        type="button"
+                        variant="primary"
+                        className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+                        onClick={handleSendComment}
+                        disabled={commentsSubmitting || !String(commentText || "").trim()}
+                      >
+                        Comentar
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 md:flex-1 md:overflow-y-auto md:pr-1 md:tdt-scrollbar">
+                    {commentsLoading ? (
+                      <p className="text-sm text-[var(--ins-text-gray)]">Cargando comentarios...</p>
+                    ) : sortedComments.length === 0 ? (
+                      <p className="text-sm text-[var(--ins-text-gray)]">Aun no hay comentarios. Se la primera persona en comentar.</p>
+                    ) : (
+                      sortedComments.map((entry) => (
+                        <div key={entry.id} className="rounded-2xl bg-black/15 p-3 border border-white/5">
+                          <div className="flex items-start gap-3">
+                            <Link
+                              to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
+                              className="w-9 h-9 rounded-full bg-black/35 border border-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center hover:border-[var(--secondary-color)] transition-colors"
+                              title={`Ver jugador ${entry.username || "Usuario"}`}
+                            >
+                              {entry.avatarUrl ? (
+                                <img src={entry.avatarUrl} alt={entry.username || "Usuario"} className="w-full h-full object-cover" />
+                              ) : (
+                                <UserRound size={16} className="text-[var(--ins-text-gray)]" />
+                              )}
+                            </Link>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <Link
+                                  to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
+                                  className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] truncate transition-colors"
+                                  title={`Ver jugador ${entry.username || "Usuario"}`}
+                                >
+                                  {entry.username || "Usuario"}
+                                </Link>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <span className="text-[11px] text-[var(--ins-text-gray)] whitespace-nowrap">
+                                    {entry.createdAt
+                                      ? new Date(entry.createdAt).toLocaleString("es-MX", {
+                                        day: "2-digit",
+                                        month: "short",
+                                        year: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
+                                      : ""}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-black/20 hover:bg-black/35 border border-white/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                    onClick={() => handleToggleCommentLike(entry.id)}
+                                    disabled={pendingCommentLikes.current.has(entry.id)}
+                                    aria-label={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "Quitar like" : "Dar like"}
+                                  >
+                                    <Heart
+                                      size={12}
+                                      className={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-gray)]"}
+                                    />
+                                    <span className="text-[11px] font-semibold text-[var(--ins-text-gray)]">
+                                      {commentLikesMap[entry.id]?.likesCount ?? 0}
+                                    </span>
+                                  </button>
+                                </div>
+                              </div>
+                              <p className="text-sm text-[var(--ins-text-white)] whitespace-pre-wrap break-words">
+                                {entry.comment}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
