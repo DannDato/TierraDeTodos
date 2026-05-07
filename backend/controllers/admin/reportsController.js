@@ -111,12 +111,12 @@ class AdminReportsController {
       if (ticketIds.length > 0) {
         const unreadRows = await db.query(
           `
-            SELECT ticketId, COUNT(*) AS unreadCount
+            SELECT ticket_id AS ticketId, COUNT(*) AS unreadCount
             FROM tickets_messages
-            WHERE ticketId IN (:ticketIds)
-            AND seenByAdmin = 0
-            AND sourceScreen = 'TICKETS'
-            GROUP BY ticketId
+            WHERE ticket_id IN (:ticketIds)
+            AND seen_by_admin = 0
+            AND source_screen = 'TICKETS'
+            GROUP BY ticket_id
           `,
           {
             replacements: { ticketIds },
@@ -287,6 +287,38 @@ class AdminReportsController {
       });
     } catch (error) {
       handleError(res, req, error, 'Error al cerrar ticket');
+    }
+  };
+
+  rejectTicket = async (req, res) => {
+    try {
+      const ticketId = Number(req.params.id);
+      if (!ticketId) return res.status(400).json({ message: 'ID inválido' });
+
+      const ticket = await models.tickets.findByPk(ticketId);
+      if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
+
+      if (ticket.statusKey !== 'ABIERTO') {
+        return res.status(409).json({ message: 'Solo se pueden rechazar tickets abiertos' });
+      }
+
+      await ticket.update({ statusKey: 'RECHAZADO' });
+
+      await req.logAction({
+        accion: 'Ticket rechazado por administrador',
+        apartado: 'Reports',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `ticketId=${ticket.id}; targetUserId=${ticket.userId}`,
+        type: 'info'
+      });
+
+      return res.status(200).json({
+        message: 'Ticket rechazado correctamente',
+        ticket
+      });
+    } catch (error) {
+      handleError(res, req, error, 'Error al rechazar ticket');
     }
   };
 }

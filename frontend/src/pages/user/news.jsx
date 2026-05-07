@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Heart, Plus, UserRound, X, Newspaper } from "lucide-react";
+import { ChevronRight, Heart, Newspaper, Pencil, Plus, Save, Send, Trash2, UserRound, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
@@ -9,6 +9,7 @@ import Select from "../../elements/Select";
 import AlertModal from "../../elements/AlertModal";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import tdtNewsImage from "../../img/tdtnews.png";
+import bgPaperImage from "../../img/bg-paper.png";
 
 const LIKE_STORAGE_KEY = "tdt_news_liked_map_v1";
 
@@ -837,9 +838,9 @@ function News() {
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeNewsModal} />
           <div className="relative w-full md:w-[96vw] xl:w-[92vw] max-w-[1700px] h-[90vh] md:h-[88vh] mt-[-65px] overflow-y-auto md:overflow-hidden tdt-scrollbar modal-main">
             {isEditingSelected ? (
-              <div className="h-full flex flex-col overflow-y-auto tdt-scrollbar">
+              <div className="h-full flex flex-col md:grid md:grid-cols-12 md:min-h-0 md:overflow-hidden">
                 <div
-                  className="relative h-56 md:h-72 w-full cursor-pointer"
+                  className="relative h-56 md:h-full md:col-span-4 w-full cursor-pointer overflow-hidden"
                   onClick={() => {
                     editImageInputRef.current?.click();
                   }}
@@ -879,10 +880,25 @@ function News() {
                       onChange={(e) => setEditFormData((prev) => ({ ...prev, title: e.target.value }))}
                       className="w-full bg-transparent border-b border-white/50 text-2xl md:text-3xl font-extrabold text-white leading-tight outline-none focus:border-white"
                     />
+                    <div className="mt-3 flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="primary"
+                        className="inline-flex items-center justify-center p-2 rounded-xl bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSaveEditedNews();
+                        }}
+                        disabled={submitting}
+                        aria-label="Guardar cambios"
+                      >
+                        <Save size={16} />
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-4 md:col-span-8 md:h-full md:min-h-0 md:overflow-y-auto md:tdt-scrollbar md:flex md:flex-col">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Tipo</span>
@@ -904,13 +920,13 @@ function News() {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="md:flex-1 md:min-h-0 md:flex md:flex-col">
                     <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Descripción</span>
                     <textarea
                       rows={6}
                       value={editFormData.description}
                       onChange={(e) => setEditFormData((prev) => ({ ...prev, description: e.target.value }))}
-                      className="w-full bg-transparent border-b border-white/30 text-lg text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none"
+                      className="w-full md:flex-1 md:min-h-0 bg-transparent border-b border-white/30 text-lg text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none"
                       style={{ fontFamily: '"Times New Roman", Times, serif' }}
                     />
                   </div>
@@ -926,124 +942,32 @@ function News() {
                     />
                   </div>
 
-                  <div className="pt-4 border-t border-white/10">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--ins-text-white)] mb-3">
-                      Comentarios
-                    </h3>
-
-                    <div className="mt-3 mb-4 flex flex-col gap-2">
-                      <textarea
-                        rows={3}
-                        value={commentText}
-                        onChange={(event) => setCommentText(event.target.value)}
-                        placeholder="Escribe tu comentario..."
-                        className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
-                        maxLength={1000}
-                      />
-                      <div className="flex items-center justify-end">
-                        <Button
-                          type="button"
-                          variant="primary"
-                          className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
-                          onClick={handleSendComment}
-                          disabled={commentsSubmitting || !String(commentText || "").trim()}
-                        >
-                          Comentar
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      {commentsLoading ? (
-                        <p className="text-sm text-[var(--ins-text-gray)]">Cargando comentarios...</p>
-                      ) : sortedComments.length === 0 ? (
-                        <p className="text-sm text-[var(--ins-text-gray)]">Aun no hay comentarios. Se la primera persona en comentar.</p>
-                      ) : (
-                        sortedComments.map((entry) => (
-                          <div key={entry.id} className="rounded-2xl bg-black/15 p-3 border border-white/5">
-                            <div className="flex items-start gap-3">
-                              <Link
-                                to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
-                                className="w-9 h-9 rounded-full bg-black/35 border border-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center hover:border-[var(--secondary-color)] transition-colors"
-                                title={`Ver jugador ${entry.username || "Usuario"}`}
-                              >
-                                {entry.avatarUrl ? (
-                                  <img src={entry.avatarUrl} alt={entry.username || "Usuario"} className="w-full h-full object-cover" />
-                                ) : (
-                                  <UserRound size={16} className="text-[var(--ins-text-gray)]" />
-                                )}
-                              </Link>
-
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                  <Link
-                                    to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
-                                    className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] truncate transition-colors"
-                                    title={`Ver jugador ${entry.username || "Usuario"}`}
-                                  >
-                                    {entry.username || "Usuario"}
-                                  </Link>
-                                  <div className="flex items-center gap-2 flex-shrink-0">
-                                    <span className="text-[11px] text-[var(--ins-text-gray)] whitespace-nowrap">
-                                      {entry.createdAt
-                                        ? new Date(entry.createdAt).toLocaleString("es-MX", {
-                                          day: "2-digit",
-                                          month: "short",
-                                          year: "numeric",
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        })
-                                        : ""}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      className="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-black/20 hover:bg-black/35 border border-white/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                                      onClick={() => handleToggleCommentLike(entry.id)}
-                                      disabled={pendingCommentLikes.current.has(entry.id)}
-                                      aria-label={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "Quitar like" : "Dar like"}
-                                    >
-                                      <Heart
-                                        size={12}
-                                        className={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-gray)]"}
-                                      />
-                                      <span className="text-[11px] font-semibold text-[var(--ins-text-gray)]">
-                                        {commentLikesMap[entry.id]?.likesCount ?? 0}
-                                      </span>
-                                    </button>
-                                  </div>
-                                </div>
-                                <p className="text-sm text-[var(--ins-text-white)] whitespace-pre-wrap break-words">
-                                  {entry.comment}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
+                  <div className="pt-4 border-t border-white/10 flex items-center justify-end">
+                    <Button type="button" variant="ghost" className="text-white" onClick={cancelEditSelected} disabled={submitting}>Cancelar</Button>
                   </div>
-                </div>
-
-                <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3 bg-black/10">
-                  <Button type="button" variant="ghost" className="text-white" onClick={cancelEditSelected} disabled={submitting}>Cancelar</Button>
-                  <Button type="button" variant="primary" className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white" onClick={handleSaveEditedNews} disabled={submitting}>
-                    Guardar cambios
-                  </Button>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col md:grid md:grid-cols-12 md:h-full">
-                <div className="relative h-56 md:h-full md:col-span-4 border-b md:border-b-0 md:border-r border-white/10">
+              <div className="flex flex-col md:grid md:grid-cols-12 md:h-full md:min-h-0 md:overflow-hidden">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); closeNewsModal(); }}
+                  className="hidden md:inline-flex absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors z-[500]"
+                >
+                  <X size={18} />
+                </button>
+
+                <div className="relative h-56 md:h-full md:min-h-0 md:col-span-4 border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
                   <img src={selectedNews.image} alt={selectedNews.title} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-b from-black/80 via-black/35 to-transparent" />
                   <button
                     type="button"
-                    onClick={closeNewsModal}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors"
+                    onClick={(e) => { e.stopPropagation(); closeNewsModal(); }}
+                    className="absolute top-4 right-4 md:hidden p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors z-[500]"
                   >
                     <X size={18} />
                   </button>
-                  <div className="absolute bottom-0 left-0 p-5 md:p-6 w-full">
+                  <div className="absolute bottom-0 md:bottom-auto md:top-0 left-0 p-5 md:p-6 w-full">
                     <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(selectedNews.type) }}>
                       {selectedNews.type}
                     </span>
@@ -1058,20 +982,22 @@ function News() {
                             <Button
                               type="button"
                               variant="primary"
-                              className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white text-xs md:text-sm px-3 py-2 rounded-xl"
+                              className="inline-flex items-center justify-center p-2 rounded-xl bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
                               onClick={startEditSelected}
+                              aria-label="Editar noticia"
                             >
-                              Editar noticia
+                              <Pencil size={16} />
                             </Button>
                           )}
                           {hasDeletePermission && (
                             <Button
                               type="button"
                               variant="cancel"
-                              className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white text-xs md:text-sm px-3 py-2 rounded-xl"
+                              className="inline-flex items-center justify-center p-2 rounded-xl bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white"
                               onClick={handleDeleteSelected}
+                              aria-label="Eliminar noticia"
                             >
-                              Eliminar
+                              <Trash2 size={16} />
                             </Button>
                           )}
                         </div>
@@ -1081,15 +1007,15 @@ function News() {
                 </div>
 
                 <div
-                  className="px-5 py-5 md:px-6 md:py-6 md:col-span-4 border-b md:border-b-0 md:border-r border-white/10 md:overflow-y-auto md:tdt-scrollbar bg-white h-full"
+                  className="px-5 py-5 md:px-6 md:py-6 md:col-span-4 border-b md:border-b-0 md:border-r border-white/10 md:overflow-hidden bg-white h-full flex flex-col"
                   style={{
-                    backgroundImage:
-                      "radial-gradient(rgba(0,0,0,0.06) 0.45px, transparent 0.45px), linear-gradient(0deg, rgba(0,0,0,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px)",
-                    backgroundSize: "3px 3px, 14px 14px, 18px 18px",
-                    backgroundPosition: "0 0, 0 0, 0 0",
+                    backgroundImage: `url(${bgPaperImage})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
                   }}
                 >
-                  <div className="flex flex-wrap gap-4 text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-4">
+                  <div className="flex flex-row gap-4 text-xs text-black uppercase tracking-wider font-semibold mb-8 justify-between">
                     <span>Fecha: {selectedNews.dateLabel}</span>
                     <span>Reportero: {selectedNews.Reporter}</span>
                   </div>
@@ -1098,40 +1024,41 @@ function News() {
                   </p>
 
                   {selectedNews.note ? (
-                    <p className="mt-4 text-base text-black/75 whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                    <p className="mt-auto pt-6 text-base text-black/75 whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
                       Nota: {selectedNews.note}
                     </p>
                   ) : null}
                 </div>
 
-                <div className="px-5 py-5 md:px-6 md:py-6 md:col-span-4 md:h-full md:flex md:flex-col">
+                <div className="px-5 py-5 md:px-6 md:py-6 md:col-span-4 md:h-full md:min-h-0 md:overflow-hidden md:flex md:flex-col">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--ins-text-white)] mb-3">
                     Comentarios
                   </h3>
 
                   <div className="mb-4 flex flex-col gap-2">
-                    <textarea
-                      rows={3}
-                      value={commentText}
-                      onChange={(event) => setCommentText(event.target.value)}
-                      placeholder="Escribe tu comentario..."
-                      className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
-                      maxLength={1000}
-                    />
-                    <div className="flex items-center justify-end">
+                    <div className="relative">
+                      <textarea
+                        rows={3}
+                        value={commentText}
+                        onChange={(event) => setCommentText(event.target.value)}
+                        placeholder="Escribe tu comentario..."
+                        className="w-full px-4 py-3 pr-14 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
+                        maxLength={1000}
+                      />
                       <Button
                         type="button"
-                        variant="primary"
-                        className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+                        variant="ghost"
+                        className="absolute bottom-2 right-2 p-2 text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] bg-black/30 hover:bg-black/45 rounded-lg"
                         onClick={handleSendComment}
                         disabled={commentsSubmitting || !String(commentText || "").trim()}
+                        aria-label="Enviar comentario"
                       >
-                        Comentar
+                        <Send size={16} />
                       </Button>
                     </div>
                   </div>
 
-                  <div className="space-y-3 md:flex-1 md:overflow-y-auto md:pr-1 md:tdt-scrollbar">
+                  <div className="space-y-3 md:flex-1 md:min-h-0 md:overflow-y-auto md:pr-1 md:tdt-scrollbar">
                     {commentsLoading ? (
                       <p className="text-sm text-[var(--ins-text-gray)]">Cargando comentarios...</p>
                     ) : sortedComments.length === 0 ? (
@@ -1211,10 +1138,10 @@ function News() {
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeCreateModal} />
           <form
             onSubmit={handleCreateNews}
-            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] overflow-hidden flex flex-col modal-main"
+            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] overflow-hidden flex flex-col md:grid md:grid-cols-12 modal-main"
           >
             <div
-              className="relative h-56 md:h-72 w-full cursor-pointer"
+              className="relative h-56 md:h-full md:col-span-4 w-full cursor-pointer overflow-hidden"
               onClick={() => createImageInputRef.current?.click()}
             >
               <img
@@ -1260,7 +1187,7 @@ function News() {
               </div>
             </div>
 
-            <div className="p-6 overflow-y-auto tdt-scrollbar space-y-4">
+            <div className="p-6 overflow-y-auto tdt-scrollbar space-y-4 md:col-span-8 md:min-h-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Tipo</span>
@@ -1308,7 +1235,7 @@ function News() {
               </div>
             </div>
 
-            <div className="px-6 py-4 flex justify-end gap-3 ">
+            <div className="px-6 py-4 flex justify-end gap-3 md:col-span-8">
               <Button type="button" variant="ghost" className="text-white" onClick={closeCreateModal}>
                 Cancelar
               </Button>

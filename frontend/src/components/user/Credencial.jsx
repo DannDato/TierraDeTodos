@@ -135,7 +135,7 @@ function Credencial({
   })();
 
   return (
-    <div className="w-full max-w-[370px] lg:max-w-[420px] lg:shrink-0 hover:cursor-pointer">
+    <div className="w-full max-w-[370px] lg:max-w-[420px] lg:shrink-0 hover:cursor-pointer hover:translate-y-[-5px] transition-transform">
       <div className="rounded-3xl ">
       <style>{`
         .credential-container {

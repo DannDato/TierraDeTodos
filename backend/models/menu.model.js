@@ -101,6 +101,19 @@ export default (sequelize, DataTypes) => {
         active: true
       },
       {
+        id: 13,
+        key: 'menu.progress',
+        name: 'Progreso',
+        icon: 'TrendingUp',
+        path: '/progress',
+        target: '_self',
+        shortAccess: false,
+        orderIndex: 2,
+        required_permissions: ['menu.progress'],
+        menuGroup: 'user',
+        active: true
+      },
+      {
         id: 8,
         key: 'menu.news',
         name: 'Noticias',
@@ -108,7 +121,7 @@ export default (sequelize, DataTypes) => {
         path: '/news',
         target: '_self',
         shortAccess: true,
-        orderIndex: 2,
+        orderIndex: 3,
         required_permissions: ['menu.news'],
         menuGroup: 'user',
         active: true
@@ -121,7 +134,7 @@ export default (sequelize, DataTypes) => {
         path: '/players',
         target: '_self',
         shortAccess: true,
-        orderIndex: 3,
+        orderIndex: 4,
         required_permissions: ['menu.players'],
         menuGroup: 'user',
         active: true
@@ -134,7 +147,7 @@ export default (sequelize, DataTypes) => {
         path: '/tickets',
         target: '_self',
         shortAccess: false,
-        orderIndex: 4,
+        orderIndex: 5,
         required_permissions: ['menu.tickets'],
         menuGroup: 'user',
         active: true
@@ -206,6 +219,19 @@ export default (sequelize, DataTypes) => {
       },
       {
         id: 11,
+        key: 'menu.emblems',
+        name: 'Emblemas',
+        icon: 'Award',
+        path: '/emblems-admin',
+        target: '_self',
+        shortAccess: false,
+        orderIndex: 11,
+        required_permissions: ['emblems.give'],
+        menuGroup: 'admin',
+        active: true
+      },
+      {
+        id: 12,
         key: 'menu.gestion',
         name: 'Gestión',
         icon: 'MonitorCog',
@@ -217,19 +243,6 @@ export default (sequelize, DataTypes) => {
         menuGroup: 'admin',
         active: true
       },
-      {
-        id: 12,
-        key: 'menu.emblems',
-        name: 'Emblemas',
-        icon: 'Award',
-        path: '/emblems-admin',
-        target: '_self',
-        shortAccess: false,
-        orderIndex: 11,
-        required_permissions: ['emblems.give'],
-        menuGroup: 'admin',
-        active: true
-      }
     ];
 
     const allowedKeys = seedMenu.map((item) => item.key);

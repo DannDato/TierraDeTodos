@@ -10,6 +10,7 @@ router.get('/reports/tickets', verifyToken, checkPermissions(['tickets.view', 't
 router.get('/reports/tickets/:id/messages', verifyToken, checkPermissions(['tickets.view', 'tickets.manage', 'tickets.police']), ctrlAdminReports.getMessages);
 router.post('/reports/tickets/:id/messages', verifyToken, checkPermissions(['tickets.manage', 'tickets.police']), ctrlAdminReports.addMessageAsSystem);
 router.patch('/reports/tickets/:id/close', verifyToken, checkPermissions(['tickets.close']), ctrlAdminReports.closeTicket);
+router.patch('/reports/tickets/:id/reject', verifyToken, checkPermissions(['tickets.close']), ctrlAdminReports.rejectTicket);
 
 export default router;
 

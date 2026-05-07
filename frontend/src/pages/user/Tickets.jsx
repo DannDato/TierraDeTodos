@@ -418,7 +418,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
 
   const ticket   = chatData?.ticket;
   const messages = chatData?.messages ?? [];
-  const isOpen   = ticket?.statusKey === "ABIERTO";
+  const isOpen   = loading || ticket?.statusKey === "ABIERTO";
 
   const orderedMessages = useMemo(() => {
     return [...messages].sort((a, b) => {

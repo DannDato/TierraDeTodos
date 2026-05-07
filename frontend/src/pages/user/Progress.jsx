@@ -265,7 +265,7 @@ function Progress() {
 
 				<div className="flex flex-col lg:flex-row gap-8 items-start w-full px-0 mx-0 mb-4">
 					<div className="w-full">
-						<div className="bg-black/10 rounded-3xl backdrop-blur-sm border border-white/10 p-10">
+						<div className="">
 							<div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 								<EmblemsColumn
 									icon={LayoutGrid}
@@ -299,7 +299,7 @@ function Progress() {
 
 				<div className="flex flex-col lg:flex-row gap-8 items-start w-full px-0 mx-0">
 					<div className="w-full">
-						<div className="bg-black/10 rounded-3xl backdrop-blur-sm border border-white/10 p-10 min-h-[240px]">
+						<div className="box-main p-6">
 							<div className="flex items-start justify-between gap-4 mb-6">
 								<div>
 									<h2 className="text-xl font-bold flex items-center gap-2 text-[var(--ins-text-white)]">
@@ -409,7 +409,7 @@ function EmblemsColumn({
 
 	return (
 		<div
-			className={`rounded-3xl border min-h-[420px] p-5 transition-colors ${isDraggedFromHere ? "border-[var(--secondary-color)]/40 bg-white/[0.04]" : "border-white/10 bg-black/10"}`}
+			className={`rounded-3xl border min-h-[420px] p-5 transition-colors ${isDraggedFromHere ? "box-main" : "box-main"}`}
 			onDragOver={(event) => event.preventDefault()}
 			onDrop={() => onDropColumn(columnId)}
 		>

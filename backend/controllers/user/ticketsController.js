@@ -31,12 +31,12 @@ class TicketsController {
       if (ticketIds.length > 0) {
         const unreadRows = await db.query(
           `
-            SELECT ticketId, COUNT(*) AS unreadCount
+            SELECT ticket_id AS ticketId, COUNT(*) AS unreadCount
             FROM tickets_messages
-            WHERE ticketId IN (:ticketIds)
-            AND seenByUser = 0
-            AND sourceScreen = 'REPORTS'
-            GROUP BY ticketId
+            WHERE ticket_id IN (:ticketIds)
+            AND seen_by_user = 0
+            AND source_screen = 'REPORTS'
+            GROUP BY ticket_id
           `,
           {
             replacements: { ticketIds },
@@ -160,7 +160,7 @@ class TicketsController {
         type: 'info'
       });
 
-      return res.status(201).json({ ticket });
+      return res.status(201).json({ ticket: { ...ticket.toJSON(), unreadCount: 0 } });
     } catch (error) {
       handleError(res, req, error, 'Error al crear ticket');
     }

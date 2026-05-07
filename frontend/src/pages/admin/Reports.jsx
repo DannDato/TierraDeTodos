@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Lock, MessageCircle, MessageSquareWarning, Search, Send, ShieldAlert, User, X } from "lucide-react";
+import { CheckCircle2, Lock, MessageCircle, MessageSquareWarning, Search, Send, ShieldAlert, User, X, XCircle } from "lucide-react";
 
 import api from "../../api/axios";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
@@ -294,6 +294,7 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
   const bottomRef = useRef(null);
 
   const ticket = chatData?.ticket;
@@ -336,6 +337,20 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
     }
   };
 
+  const handleRejectTicket = async () => {
+    if (!ticket || ticket.statusKey !== "ABIERTO") return;
+    try {
+      setRejecting(true);
+      const { data } = await api.patch(`/admin/reports/tickets/${ticket.id}/reject`);
+      onTicketClosed?.(data.ticket);
+      onAlert?.({ type: "info", title: "Ticket rechazado", message: "El ticket se rechazó correctamente." });
+    } catch (err) {
+      onAlert?.({ type: "error", title: "No se pudo rechazar", message: err.response?.data?.message || "No se pudo rechazar el ticket." });
+    } finally {
+      setRejecting(false);
+    }
+  };
+
   const handleCloseTicket = async () => {
     if (!ticket || ticket.statusKey !== "ABIERTO") return;
     try {
@@ -354,34 +369,45 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
   const priority = ticket ? priorityMap.get(ticket.priorityKey) : null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center md:p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] bg-[var(--ins-background)]/50 backdrop-blur-lg border border-white/10 max-h-[80hv] mt-[-60px]">
+      <div className="relative w-full md:max-w-3xl rounded-t-3xl md:rounded-3xl shadow-2xl flex flex-col h-full md:h-auto md:max-h-[88vh] bg-[var(--ins-background)]/60 backdrop-blur-lg border border-white/10 md:mt-[-60px]">
 
-        <div className="flex items-start justify-between gap-4 px-6 py-5 bg-black/10">
-          <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-4 px-6 py-5 bg-black/10 border-b border-white/8">
+          <div className="flex-1 min-w-0 flex flex-col gap-3">
             {ticket ? (
               <>
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${st.border} ${st.bg} ${st.text} uppercase tracking-wider`}>{ticket.statusKey}</span>
-                  <span className="text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider" style={{ backgroundColor: `${priority?.color || "#f59e0b"}26`, color: priority?.color || "#f59e0b" }}>{priority?.name || ticket.priorityKey}</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${st.border} ${st.bg} ${st.text} uppercase tracking-wider`}>{ticket.statusKey}</span>
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider" style={{ backgroundColor: `${priority?.color || "#f59e0b"}26`, color: priority?.color || "#f59e0b" }}>{priority?.name || ticket.priorityKey}</span>
                   <span className="text-[10px] font-bold text-[var(--ins-text-dark)] uppercase tracking-wider">#{ticket.id}</span>
                 </div>
-                <h3 className="font-bold text-[var(--ins-text-white)] text-lg leading-tight truncate">{ticket.subject}</h3>
-                {canCloseTicket && ticket.statusKey === "ABIERTO" ? (
-                  <div className="mt-3">
-                    <Button
-                      type="button"
-                      variant="primary"
-                      className="text-xs bg-rose-600/80 hover:bg-rose-600 text-white flex items-center gap-1 px-3 py-2"
-                      onClick={handleCloseTicket}
-                      disabled={closing}
-                    >
-                      <CheckCircle2 size={14} /> {closing ? "Cerrando..." : "Cerrar ticket"}
-                    </Button>
-                  </div>
-                ) : null}
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-bold text-[var(--ins-text-white)] text-xl leading-tight flex-1 min-w-0">{ticket.subject}</h3>
+                  {canCloseTicket && ticket.statusKey === "ABIERTO" ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        className="text-xs bg-rose-600/80 hover:bg-rose-600 text-white flex items-center gap-1 px-3 py-2 flex-shrink-0"
+                        onClick={handleCloseTicket}
+                        disabled={closing || rejecting}
+                      >
+                        <CheckCircle2 size={14} /> {closing ? "Cerrando..." : "Cerrar"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="cancel"
+                        className="text-xs flex items-center gap-1 px-3 py-2 flex-shrink-0"
+                        onClick={handleRejectTicket}
+                        disabled={closing || rejecting}
+                      >
+                        <XCircle size={14} /> {rejecting ? "Rechazando..." : "Rechazar"}
+                      </Button>
+                    </>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2">
                   <Badge>{typeMap.get(ticket.typeKey)?.name || ticket.typeKey}</Badge>
                   {ticket.involvedPlayer ? <BadgeSky>Jugador: {ticket.involvedPlayer}</BadgeSky> : null}
                   {ticket.coordX !== null && ticket.coordY !== null && ticket.coordZ !== null ? (
@@ -393,8 +419,8 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
               <div className="h-6 w-48 bg-white/10 rounded animate-pulse" />
             )}
           </div>
-          <button type="button" onClick={onClose} className="flex-shrink-0 p-1.5 rounded-lg text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-white/10 transition-colors">
-            <X size={18} />
+          <button type="button" onClick={(e) => { e.stopPropagation(); onClose(); }} className="flex-shrink-0 p-2 rounded-xl text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-white/10 transition-colors">
+            <X size={20} />
           </button>
         </div>
 
