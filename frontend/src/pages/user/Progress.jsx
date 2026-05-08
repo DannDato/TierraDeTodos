@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Award, BarChart3, CheckCircle2, GripVertical, LayoutGrid, ShieldCheck, TrendingUp } from "lucide-react";
+import { Award, BarChart3, CheckCircle2, GripVertical, LayoutGrid, RefreshCw, ShieldCheck, TrendingUp } from "lucide-react";
 
 import api from "../../api/axios";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 
 const sortByOrder = (items) => [...items].sort((left, right) => {
 	const orderDiff = (Number(left?.order) || 0) - (Number(right?.order) || 0);
@@ -241,7 +242,9 @@ function Progress() {
 
 	return (
 		<div>
-			<div className="min-h-screen py-15 flex flex-col items-center pb-24 text-[var(--white-color)] z-[1] h-screen">
+			<LoadingOverlay isVisible={loading} message="Cargando progreso" />
+
+			<div className="min-h-screen mt-50 py-15 flex flex-col items-center pb-24 text-[var(--white-color)] z-[1]">
 				<div className="w-full px-0 mx-0 text-[var(--ins-text-white)]">
 					<div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
 						<div>
@@ -292,7 +295,19 @@ function Progress() {
 									activeDrag={dragState}
 								/>
 							</div>
-							{error ? <p className="mt-5 text-sm text-red-300">{error}</p> : null}
+							{error ? (
+							<div className="mt-5 flex items-center gap-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4">
+								<p className="flex-1 text-sm text-red-300">{error}</p>
+								<button
+									type="button"
+									onClick={loadProgress}
+									className="shrink-0 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/15 px-3 py-2 text-xs font-bold text-red-300 hover:bg-red-500/25 transition-colors"
+								>
+									<RefreshCw size={13} />
+									Reintentar
+								</button>
+							</div>
+						) : null}
 						</div>
 					</div>
 				</div>
@@ -340,9 +355,7 @@ function Progress() {
 									</div>
 								</div>
 
-								{loading ? (
-									<div className="text-sm text-[var(--ins-text-gray)]">Cargando estadisticas...</div>
-								) : highlightedGoals.length === 0 ? (
+								{loading ? null : highlightedGoals.length === 0 ? (
 									<div className="text-sm text-[var(--ins-text-gray)]">Aun no hay logros con progreso guardado.</div>
 								) : (
 									<div className="space-y-3">
@@ -460,6 +473,7 @@ function EmblemCard({ item, index, columnId, onDragStart, onDropItem }) {
 	return (
 		<div
 			draggable
+			tabIndex={0}
 			onDragStart={() => onDragStart({ column: columnId, index, itemId: item.id })}
 			onDragEnd={() => onDragStart(null)}
 			onDragOver={(event) => event.preventDefault()}
@@ -468,7 +482,7 @@ function EmblemCard({ item, index, columnId, onDragStart, onDropItem }) {
 				event.stopPropagation();
 				onDropItem(columnId, index);
 			}}
-			className="group rounded-2xl border border-white/10 bg-white/[0.03] p-3 flex items-center gap-3 cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5"
+			className="group rounded-2xl border border-white/10 bg-white/[0.03] p-3 flex items-center gap-3 cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[var(--secondary-color)]/50"
 			title={emblem.description || emblem.name || "Insignia"}
 		>
 			<div className="shrink-0 w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center bg-black/20 border-2" style={{ borderColor: emblemColor }}>

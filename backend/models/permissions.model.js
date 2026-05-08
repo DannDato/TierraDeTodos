@@ -91,6 +91,7 @@
       { key: 'menu.aboutapp', name: 'Acerca de', description: 'Permite ver about app', active: true },
       { key: 'menu.community', name: 'Comunidad', description: 'Permite ver la sección de comunidad', active: true },
       { key: 'menu.progress', name: 'Progreso', description: 'Permite ver la sección de progreso', active: true },
+      { key: 'menu.commands', name: 'Commands', description: 'Permite ver la sección de comandos', active: true },
       { key: 'community.manage', name: 'Gestionar comunidad', description: 'Permite crear y editar comunidades y datos de streamer', active: true },
       { key: 'menu.gestion', name: 'Gestión', description: 'Permite ver gestión de sistema', active: true },
       // derechos de gestion

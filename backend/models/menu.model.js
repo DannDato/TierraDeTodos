@@ -192,6 +192,19 @@ export default (sequelize, DataTypes) => {
         active: true
       },
       {
+        id: 14,
+        key: 'menu.commands',
+        name: 'Commands',
+        icon: 'Code',
+        path: '/commands',
+        target: '_self',
+        shortAccess: false,
+        orderIndex: 7,
+        required_permissions: ['menu.commands'],
+        menuGroup: 'user',
+        active: true
+      },
+      {
         id: 3,
         key: 'menu.users',
         name: 'Usuarios',

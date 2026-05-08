@@ -49,7 +49,6 @@ function Players() {
 	const [selectedPlayer, setSelectedPlayer] = useState(null);
 	const hasLoadedOnce = useRef(false);
 	const sentinelRef = useRef(null);
-	const openTimerRef = useRef(null);
 
 	useEffect(() => {
 		setSearch(String(searchParams.get("search") || ""));
@@ -216,30 +215,8 @@ function Players() {
 		return sortedPlayers.slice(0, visibleCount);
 	}, [sortedPlayers, visibleCount]);
 
-	useEffect(() => {
-		return () => {
-			if (openTimerRef.current) {
-				window.clearTimeout(openTimerRef.current);
-			}
-		};
-	}, []);
-
-	const handleCardClick = (player) => {
-		if (openTimerRef.current) {
-			window.clearTimeout(openTimerRef.current);
-		}
-
-		openTimerRef.current = window.setTimeout(() => {
-			setSelectedPlayer(player);
-			openTimerRef.current = null;
-		}, 220);
-	};
-
-	const handleCardDoubleClick = () => {
-		if (openTimerRef.current) {
-			window.clearTimeout(openTimerRef.current);
-			openTimerRef.current = null;
-		}
+	const handleCardOpen = (player) => {
+		setSelectedPlayer(player);
 	};
 
 	const closeQuickProfile = () => {
@@ -372,7 +349,7 @@ function Players() {
 									<button
 										type="button"
 										onClick={() => setSearch("")}
-										className="absolute left-68 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] transition-colors"
+										className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] transition-colors"
 									>
 										<X size={14} />
 									</button>
@@ -424,9 +401,16 @@ function Players() {
 								return (
 									<div
 										key={player.id}
-										className="w-full flex flex-col items-center"
-										onClick={() => handleCardClick(player)}
-										onDoubleClick={handleCardDoubleClick}
+										className="w-full flex flex-col items-center rounded-2xl "
+										role="button"
+										tabIndex={0}
+										onClick={() => handleCardOpen(player)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter" || e.key === " ") {
+												e.preventDefault();
+												handleCardOpen(player);
+											}
+										}}
 									>
 										<Credencial
 											user={player}
@@ -436,7 +420,15 @@ function Players() {
 											lazyImages
 											readOnly
 										/>
-										<Button variant="ghost" size="sm" className="mt-2" onClick={() => setSelectedPlayer(player)}>
+										<Button
+											variant="ghost"
+											size="sm"
+											className="mt-2"
+											onClick={(e) => {
+												e.stopPropagation();
+												setSelectedPlayer(player);
+											}}
+										>
 											Ver perfil rapido
 										</Button>
 									</div>
@@ -486,6 +478,14 @@ function Players() {
 }
 
 function QuickProfileModal({ player, onClose, canOpenTickets, onOpenTicket, currentStatus }) {
+	useEffect(() => {
+		const onEscape = (e) => {
+			if (e.key === "Escape") onClose?.();
+		};
+		document.addEventListener("keydown", onEscape);
+		return () => document.removeEventListener("keydown", onEscape);
+	}, [onClose]);
+
 	const equippedEmblems = Array.isArray(player?.equippedEmblems) ? player.equippedEmblems : [];
 	const latestVisibleAchievements = [...equippedEmblems]
 		.sort((left, right) => (Number(left?.order) || 0) - (Number(right?.order) || 0))
@@ -508,7 +508,6 @@ function QuickProfileModal({ player, onClose, canOpenTickets, onOpenTicket, curr
 
 	return (
 		<div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-			<div className="absolute inset-0 " onClick={onClose} />
 			<div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 			<div className="relative w-full max-w-5xl overflow-hidden max-h-[88vh] flex flex-col modal-main">
 				<div className="flex items-center justify-between px-6 py-5 border-b border-white/10">

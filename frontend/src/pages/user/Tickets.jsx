@@ -326,7 +326,7 @@ function Tickets() {
             ) : (
               <div className="space-y-3 max-h-[620px] overflow-y-auto tdt-scrollbar pr-1">
                 {tickets.map((ticket) => (
-                  <TicketCard key={ticket.id} ticket={ticket} typeMap={typeMap} priorityMap={priorityMap} onDoubleClick={openChat} />
+                  <TicketCard key={ticket.id} ticket={ticket} typeMap={typeMap} priorityMap={priorityMap} onOpen={openChat} />
                 ))}
               </div>
             )}
@@ -362,13 +362,21 @@ function SummaryCard({ label, value, color = "text-[var(--ins-text-white)]" }) {
 }
 
 // ─── TicketCard ───────────────────────────────────────────────────────────────
-function TicketCard({ ticket, typeMap, priorityMap, onDoubleClick }) {
+function TicketCard({ ticket, typeMap, priorityMap, onOpen }) {
   const st = statusStyle(ticket.statusKey);
   return (
     <article
-      className="rounded-2xl bg-black/10 p-4 border border-white/10 cursor-pointer hover:bg-black/20 transition-colors select-none"
-      onDoubleClick={() => onDoubleClick(ticket)}
-      title="Doble click para abrir historial"
+      className="rounded-2xl bg-black/10 p-4 border border-white/10 cursor-pointer hover:bg-black/20 transition-colors select-none focus:outline-none focus:ring-2 focus:ring-[var(--secondary-color)]/60"
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(ticket)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen(ticket);
+        }
+      }}
+      title="Click para abrir historial"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -405,7 +413,7 @@ function TicketCard({ ticket, typeMap, priorityMap, onDoubleClick }) {
           <ShieldAlert size={12} /> Ver evidencia
         </a>
       )}
-      <p className="text-xs text-[var(--ins-text-dark)] mt-3 italic">Doble click para abrir historial</p>
+      <p className="text-xs text-[var(--ins-text-dark)] mt-3 italic">Click para abrir historial</p>
     </article>
   );
 }
@@ -433,6 +441,14 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  useEffect(() => {
+    const onEscape = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    document.addEventListener("keydown", onEscape);
+    return () => document.removeEventListener("keydown", onEscape);
+  }, [onClose]);
+
   const handleSend = async () => {
     const text = newMessage.trim();
     if (!text || !ticket || !isOpen) return;
@@ -457,7 +473,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] bg-[var(--ins-background)]/50 backdrop-blur-lg border border-white/10 max-h-[80hv] mt-[-60px]">
+      <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] bg-[var(--ins-background)]/50 backdrop-blur-lg border border-white/10">
 
         {/* Header */}
         <div className="flex items-start justify-between gap-4 px-6 py-5 bg-black/10 ">

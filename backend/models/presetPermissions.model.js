@@ -60,6 +60,7 @@ export default (sequelize, DataTypes) => {
       { role: 'SUPER-ADMIN', permissionKey: 'menu.aboutapp', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'menu.community', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'menu.progress', active: true },
+      { role: 'SUPER-ADMIN', permissionKey: 'menu.commands', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'community.manage', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'menu.gestion', active: true },
       { role: 'SUPER-ADMIN', permissionKey: 'gest.roles', active: true },
@@ -145,6 +146,7 @@ export default (sequelize, DataTypes) => {
       { role: 'ADMIN', permissionKey: 'menu.aboutapp', active: true },
       { role: 'ADMIN', permissionKey: 'menu.community', active: true },
       { role: 'ADMIN', permissionKey: 'menu.progress', active: true },
+      { role: 'ADMIN', permissionKey: 'menu.commands', active: true },
       { role: 'ADMIN', permissionKey: 'menu.gestion', active: true },
       { role: 'ADMIN', permissionKey: 'gest.roles', active: true },
       { role: 'ADMIN', permissionKey: 'gest.permissions', active: true },
@@ -223,6 +225,7 @@ export default (sequelize, DataTypes) => {
       { role: 'MOD', permissionKey: 'menu.aboutapp', active: true },
       { role: 'MOD', permissionKey: 'menu.community', active: true },
       { role: 'MOD', permissionKey: 'menu.progress', active: true },
+      { role: 'MOD', permissionKey: 'menu.commands', active: true },
 
       { role: 'POLICE', permissionKey: 'menu.start', active: true },
       { role: 'POLICE', permissionKey: 'menu.tickets', active: true },
@@ -233,6 +236,7 @@ export default (sequelize, DataTypes) => {
       { role: 'POLICE', permissionKey: 'menu.aboutapp', active: true },
       { role: 'POLICE', permissionKey: 'menu.community', active: true },
       { role: 'POLICE', permissionKey: 'menu.progress', active: true },
+      { role: 'POLICE', permissionKey: 'menu.commands', active: true },
 
       { role: 'STREAMER', permissionKey: 'menu.start', active: true },
       { role: 'STREAMER', permissionKey: 'menu.tickets', active: true },
@@ -243,6 +247,7 @@ export default (sequelize, DataTypes) => {
       { role: 'STREAMER', permissionKey: 'menu.aboutapp', active: true },
       { role: 'STREAMER', permissionKey: 'menu.community', active: true },
       { role: 'STREAMER', permissionKey: 'menu.progress', active: true },
+      { role: 'STREAMER', permissionKey: 'menu.commands', active: true },
       { role: 'STREAMER', permissionKey: 'community.manage', active: true },
 
       { role: 'USER', permissionKey: 'menu.start', active: true },
@@ -254,6 +259,7 @@ export default (sequelize, DataTypes) => {
       { role: 'USER', permissionKey: 'menu.aboutapp', active: true },
       { role: 'USER', permissionKey: 'menu.community', active: true },
       { role: 'USER', permissionKey: 'menu.progress', active: true },
+      { role: 'USER', permissionKey: 'menu.commands', active: true },
       { role: 'USER', permissionKey: 'menu.configuration', active: true },
 
       { role: 'VIP', permissionKey: 'menu.start', active: true },
@@ -265,6 +271,7 @@ export default (sequelize, DataTypes) => {
       { role: 'VIP', permissionKey: 'menu.aboutapp', active: true },
       { role: 'VIP', permissionKey: 'menu.community', active: true },
       { role: 'VIP', permissionKey: 'menu.progress', active: true },
+      { role: 'VIP', permissionKey: 'menu.commands', active: true },
       { role: 'VIP', permissionKey: 'menu.configuration', active: true }
     ];
 

@@ -251,6 +251,50 @@ class ProfileController {
         });
     }
   };
+
+    // DELETE /profile/devices/:id
+    revokeDevice = async (req, res) => {
+        try {
+            const userId = req.user.id;
+            const deviceId = parseInt(req.params.id, 10);
+
+            if (!deviceId || Number.isNaN(deviceId)) {
+                return res.status(400).json({ message: 'ID de dispositivo inválido' });
+            }
+
+            const device = await models.UserDevices.findOne({
+                where: { id: deviceId, user: userId }
+            });
+
+            if (!device) {
+                return res.status(404).json({ message: 'Dispositivo no encontrado' });
+            }
+
+            const isCurrent = device.device_hash === req.device?.hash;
+
+            await models.Sessions.update(
+                { revoked: true },
+                { where: { userId, device: device.device_hash, revoked: false } }
+            );
+
+            await req.logAction({
+                accion: 'Sesión de dispositivo revocada',
+                apartado: 'Perfil',
+                userId,
+                username: req.user.username,
+                valor: `deviceId=${deviceId}; isCurrent=${isCurrent}`,
+                type: 'info'
+            });
+
+            if (isCurrent) {
+                return res.status(200).json({ message: 'Sesión cerrada correctamente', redirectToLogin: true });
+            }
+
+            return res.status(200).json({ message: 'Sesión cerrada correctamente en ese dispositivo', redirectToLogin: false });
+        } catch (error) {
+            return handleError(res, error, req, 'Error al revocar dispositivo', 'Perfil');
+        }
+    };
 }
 
 const ctrlProfile = new ProfileController();

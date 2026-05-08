@@ -18,5 +18,8 @@ router.patch("/profile/username", verifyToken, ctrlProfile.requestUsernameChange
 // Verificar cambio (correo o username)
 router.post("/profile/verify-change", verifyToken, ctrlProfile.verifyProfileChange);
 
+// Revocar sesiones de un dispositivo específico
+router.delete("/profile/devices/:id", verifyToken, ctrlProfile.revokeDevice);
+
 export default router;
 

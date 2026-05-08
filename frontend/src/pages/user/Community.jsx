@@ -8,8 +8,9 @@ import InfoRow from "../../elements/InfoRow";
 import Table from "../../elements/Table";
 import CommunityDefault from "../../img/community_default.png";
 import { Link } from "react-router-dom";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 
-import { Video, User, Users, File } from "lucide-react";
+import { Video, User, Users, File, X, RefreshCw } from "lucide-react";
 
 function Community() {
     const BATCH_SIZE = 6;
@@ -62,12 +63,14 @@ function Community() {
         setShowJoinConfirm(false);
         try {
             await api.post(`/user/community/${selected.id}/join`);
+            handleClose();
+            await loadCommunityData();
             setJoinFeedback({
                 isOpen: true,
                 type: "success",
                 title: "Solicitud enviada",
                 message: "El líder de la comunidad revisará tu solicitud y decidirá si te acepta o no.",
-                reload: true,
+                reload: false,
             });
         } catch (_err) {
             setJoinFeedback({
@@ -91,7 +94,7 @@ function Community() {
                 type: "success",
                 title: "Has abandonado la comunidad",
                 message: "Has abandonado la comunidad exitosamente.",
-                reload: true,
+                reload: false,
             });
         } catch (_err) {
             setJoinFeedback({
@@ -194,7 +197,7 @@ function Community() {
         loadCommunityData();
     }, []);
 
-    const closeJoinFeedback = () => {
+    const closeJoinFeedback = async () => {
         const shouldReload = Boolean(joinFeedback.reload);
         setJoinFeedback({
             isOpen: false,
@@ -205,7 +208,7 @@ function Community() {
         });
 
         if (shouldReload) {
-            window.location.reload();
+            await loadCommunityData();
         }
     };
 
@@ -253,6 +256,7 @@ function Community() {
     return (
         <div>
         <div className="min-h-screen py-15 flex flex-col items-center  pb-24 text-[var(--white-color)] z-[1] min-h-screen h-screen">
+            <LoadingOverlay isVisible={loadingCommunities} message="Cargando comunidades..." />
 
             <div className="w-full  px-0 mx-0 text-[var(--ins-text-white)]">
                 {/* HEADER */}
@@ -303,7 +307,20 @@ function Community() {
                             </div>
                             <div>
                                 {myCommunity ? (
-                                    <div key={myCommunity.id} className="cursor-pointer hover:scale-[1.03] transition-transform" onClick={() => handleOpen(myCommunity)}>
+                                    <div
+                                        key={myCommunity.id}
+                                        className="cursor-pointer hover:scale-[1.03] transition-transform"
+                                        onClick={() => handleOpen(myCommunity)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Enter" || event.key === " ") {
+                                                event.preventDefault();
+                                                handleOpen(myCommunity);
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
+                                        title={`Abrir ${myCommunity.name || "comunidad"}`}
+                                    >
                                         <CommunityCard community={myCommunity} />
                                     </div>
                                 ) : hasPendingRequest ? (
@@ -324,8 +341,8 @@ function Community() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="text-sm text-[var(--ins-text-white)]">
-                                        No tienes comunidad registrada.
+                                    <div className="text-sm text-[var(--ins-text-gray)]">
+                                        No tienes ninguna comunidad registrada aún.
                                     </div>
                                 )}
                             </div>
@@ -340,12 +357,20 @@ function Community() {
                             <Video size={24} style={{ color: "var(--secondary-color)" }}/>
                             Todas las comunidades
                         </h2>
-                        {loadingCommunities ? (
-                            <div className="text-[var(--ins-text-white)]">Cargando comunidades...</div>
-                        ) : errorCommunities ? (
-                            <div className="text-red-500">{errorCommunities}</div>
+                        {loadingCommunities ? null : errorCommunities ? (
+                            <div className="flex flex-col items-center gap-3 py-8 text-center">
+                                <p className="text-red-300 font-bold">No se pudieron cargar las comunidades</p>
+                                <p className="text-[var(--ins-text-gray)] text-sm">Revisa tu conexión e intenta de nuevo.</p>
+                                <button
+                                    type="button"
+                                    onClick={loadCommunityData}
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/8 text-sm font-bold text-[var(--ins-text-gray)] hover:text-white hover:bg-white/12 transition-colors"
+                                >
+                                    <RefreshCw size={14} /> Reintentar
+                                </button>
+                            </div>
                         ) : visibleCommunities.length === 0 ? (
-                            <div className="text-[var(--ins-text-white)]">No hay comunidades registradas.</div>
+                            <div className="py-8 text-center text-[var(--ins-text-gray)]">No hay comunidades registradas aún.</div>
                         ) : (
                             <div className="relative flex flex-col items-center justify-center w-full">
                                 {hasPendingRequest && (
@@ -360,7 +385,20 @@ function Community() {
                                 )}
                                 <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xxl:grid-cols-5 gap-6 hover:bounce transition-all ${hasPendingRequest ? "blur-sm pointer-events-none select-none" : ""}`}>
                                     {progressiveCommunities.map((community) => (
-                                        <div key={community.id} className="cursor-pointer hover:scale-[1.03] transition-transform" onClick={() => handleOpen(community)}>
+                                        <div
+                                            key={community.id}
+                                            className="cursor-pointer hover:scale-[1.03] transition-transform"
+                                            onClick={() => handleOpen(community)}
+                                            onKeyDown={(event) => {
+                                                if (event.key === "Enter" || event.key === " ") {
+                                                    event.preventDefault();
+                                                    handleOpen(community);
+                                                }
+                                            }}
+                                            role="button"
+                                            tabIndex={0}
+                                            title={`Abrir ${community.name || "comunidad"}`}
+                                        >
                                             <CommunityCard community={community} />
                                         </div>
                                     ))}
@@ -449,6 +487,13 @@ export default Community;
 // Modal de detalle de comunidad
 function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, hasCommunity, myCommunity, manageComunity }) {
 
+    useEffect(() => {
+        if (!isOpen) return;
+        const onEsc = (event) => { if (event.key === "Escape") onClose(); };
+        window.addEventListener("keydown", onEsc);
+        return () => window.removeEventListener("keydown", onEsc);
+    }, [isOpen, onClose]);
+
 
     if (!isOpen || !community) return null;
 
@@ -503,11 +548,21 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, has
     ];
 
     return (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center transition-opacity duration-200 ">
+        <div className="fixed inset-0 z-[120] flex items-end md:items-center justify-center transition-opacity duration-200 ">
 
             <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full max-w-5xl  p-8 mt-[-65px] modal-main" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
-                <button onClick={onClose} className="absolute top-4 right-4 text-[var(--ins-text-white)] hover:text-[var(--secondary-color)] text-2xl font-bold">×</button>
+            <div className="relative w-full max-w-5xl p-4 md:p-8 modal-main rounded-t-3xl md:rounded-3xl" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+                <button
+                    type="button"
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onClose();
+                    }}
+                    className="absolute top-4 right-4 p-2 rounded-xl text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-white/10 transition-colors"
+                    aria-label="Cerrar detalle"
+                >
+                    <X size={18} />
+                </button>
                 <div className="grid grid-cols-1 lg:grid-cols-3">
                     <div className="">
                         <CommunityCard community={community} className="w-full" />
@@ -574,7 +629,7 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, has
 
                         {community.members && community.members.length === 0 ? (
                         <div className="px-5 py-8 text-sm text-center text-[var(--ins-text-white)]">
-                            No hay movimientos de estatus registrados para este usuario.
+                            No hay miembros registrados para esta comunidad.
                         </div>
                         ) : (
                         <Table

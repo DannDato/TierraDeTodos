@@ -4,14 +4,11 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
 import Button from "../../elements/Button";
-import Input from "../../elements/Input";
 import Select from "../../elements/Select";
 import AlertModal from "../../elements/AlertModal";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import tdtNewsImage from "../../img/tdtnews.png";
 import bgPaperImage from "../../img/bg-paper.png";
-
-const LIKE_STORAGE_KEY = "tdt_news_liked_map_v1";
 
 const createInitialNewsForm = () => ({
   title: "",
@@ -285,14 +282,24 @@ function News() {
     setCommentText("");
   }, []);
 
-  const closeNewsModal = () => {
+  const closeNewsModal = useCallback(() => {
     setSelectedNews(null);
     setIsEditingSelected(false);
     setComments([]);
     setCommentText("");
     setCommentLikesMap({});
     pendingCommentLikes.current.clear();
-  };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== "Escape") return;
+      if (isCreateModalOpen) { setIsCreateModalOpen(false); return; }
+      if (selectedNews) closeNewsModal();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isCreateModalOpen, selectedNews, closeNewsModal]);
 
   useEffect(() => {
     const loadComments = async () => {
@@ -358,6 +365,17 @@ function News() {
     if (submitting) return;
     setIsCreateModalOpen(false);
   };
+
+  useEffect(() => {
+    return () => {
+      if (selectedImagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(selectedImagePreview);
+      }
+      if (editImagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(editImagePreview);
+      }
+    };
+  }, [selectedImagePreview, editImagePreview]);
 
   const handleImageChange = (event, mode = "create") => {
     const file = event.target.files?.[0] || null;
@@ -588,6 +606,15 @@ function News() {
     }
   };
 
+  const handleCommentKeyDown = (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      if (!commentsSubmitting) {
+        handleSendComment();
+      }
+    }
+  };
+
   const performDeleteSelected = async () => {
     if (!selectedNews?.id || !hasDeletePermission) return;
 
@@ -741,9 +768,11 @@ function News() {
                   Ultima noticia destacada
                 </h2>
                 <div
-                  className="relative h-80 w-full overflow-hidden cursor-pointer mb-4 box-main"
-                  onDoubleClick={() => openNewsModal(featuredNews)}
+                  className="relative h-80 w-full overflow-hidden cursor-pointer mb-4 box-main group"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => openNewsModal(featuredNews)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openNewsModal(featuredNews); } }}
                 >
                   <img
                     src={featuredNews.image}
@@ -784,8 +813,11 @@ function News() {
                 {regularNews.map((article) => (
                   <div
                     key={article.id}
-                    className="overflow-hidden cursor-pointer group flex flex-col modal-main "
-                    onDoubleClick={() => openNewsModal(article)}
+                    className="overflow-hidden cursor-pointer group flex flex-col modal-main focus:outline-none focus:ring-2 focus:ring-[var(--secondary-color)]/60"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openNewsModal(article)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openNewsModal(article); } }}
                   >
                     <div className="h-40 overflow-hidden relative">
                       <img
@@ -808,7 +840,8 @@ function News() {
                       <button
                         type="button"
                         className="mt-4 flex items-center text-[var(--secondary-color)] text-sm font-bold"
-                        onClick={() => openNewsModal(article)}
+                        onClick={(e) => { e.stopPropagation(); openNewsModal(article); }}
+                        tabIndex={-1}
                       >
                         Leer más <ChevronRight size={16} />
                       </button>
@@ -836,7 +869,7 @@ function News() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
 
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeNewsModal} />
-          <div className="relative w-full md:w-[96vw] xl:w-[92vw] max-w-[1700px] h-[90vh] md:h-[88vh] mt-[-65px] overflow-y-auto md:overflow-hidden tdt-scrollbar modal-main">
+          <div className="relative w-full md:w-[96vw] xl:w-[92vw] max-w-[1700px] h-[90vh] md:h-[88vh] overflow-y-auto md:overflow-hidden tdt-scrollbar modal-main">
             {isEditingSelected ? (
               <div className="h-full flex flex-col md:grid md:grid-cols-12 md:min-h-0 md:overflow-hidden">
                 <div
@@ -1041,6 +1074,7 @@ function News() {
                         rows={3}
                         value={commentText}
                         onChange={(event) => setCommentText(event.target.value)}
+                        onKeyDown={handleCommentKeyDown}
                         placeholder="Escribe tu comentario..."
                         className="w-full px-4 py-3 pr-14 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
                         maxLength={1000}
@@ -1138,7 +1172,7 @@ function News() {
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeCreateModal} />
           <form
             onSubmit={handleCreateNews}
-            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] mt-[-65px] overflow-hidden flex flex-col md:grid md:grid-cols-12 modal-main"
+            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] overflow-hidden flex flex-col md:grid md:grid-cols-12 modal-main"
           >
             <div
               className="relative h-56 md:h-full md:col-span-4 w-full cursor-pointer overflow-hidden"

@@ -20,6 +20,8 @@ export default function Button({
       "bg-[var(--secondary-color)] text-white hover:bg-[var(--hover-secondary)]",
     secondary:
       "bg-[var(--primary-color)] text-white hover:bg-[var(--hover-primary)]",
+    warning:
+      "bg-[var(--warning-color)] text-white hover:bg-[var(--hover-warning)]",
     cancel:
       "bg-[var(--cancel-color)] text-white hover:bg-[var(--hover-cancel)]",
     outline:

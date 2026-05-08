@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Lock, MessageCircle, MessageSquareWarning, Search, Send, ShieldAlert, User, X, XCircle } from "lucide-react";
+import { CheckCircle2, Lock, MessageCircle, MessageSquareWarning, RefreshCw, Search, Send, ShieldAlert, User, X, XCircle } from "lucide-react";
 
 import api from "../../api/axios";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
@@ -16,6 +16,34 @@ const STATUS_STYLE = {
 
 const statusStyle = (key) => STATUS_STYLE[key] ?? STATUS_STYLE.CERRADO;
 
+const copyTpCommandToClipboard = async (x, y, z) => {
+  const command = `/tp ${x} ${y} ${z}`;
+
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(command);
+      return true;
+    }
+  } catch {
+    // Intenta con fallback legacy cuando Clipboard API no este disponible.
+  }
+
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = command;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "absolute";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return Boolean(ok);
+  } catch {
+    return false;
+  }
+};
+
 function Reports() {
   const currentUser = {
     role: localStorage.getItem("role") || "ADMIN",
@@ -24,6 +52,9 @@ function Reports() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showClosed, setShowClosed] = useState(false);
   const [showRejected, setShowRejected] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
+  const searchInputRef = useRef(null);
 
   const [ticketTypes, setTicketTypes] = useState([]);
   const [priorityOptions, setPriorityOptions] = useState([]);
@@ -34,20 +65,53 @@ function Reports() {
   const [chatTicket, setChatTicket] = useState(null);
   const [chatData, setChatData] = useState(null);
   const [chatLoading, setChatLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
     type: "info",
     title: "Aviso",
     message: "",
+    reload: false,
   });
 
-  const openAlert = ({ type = "info", title = "Aviso", message = "" }) => {
-    setAlertConfig({ isOpen: true, type, title, message });
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    type: "warning",
+    title: "",
+    message: "",
+    confirmText: "Confirmar",
+  });
+  const pendingConfirmRef = useRef(null);
+
+  const openAlert = ({ type = "info", title = "Aviso", message = "", reload = false }) => {
+    setAlertConfig({ isOpen: true, type, title, message, reload });
   };
 
   const closeAlert = () => {
-    setAlertConfig((prev) => ({ ...prev, isOpen: false }));
+    const shouldReload = Boolean(alertConfig.reload);
+    setAlertConfig((prev) => ({ ...prev, isOpen: false, reload: false }));
+
+    if (shouldReload) {
+      window.location.reload();
+    }
+  };
+
+  const openConfirm = ({ type = "warning", title, message, confirmText = "Confirmar", onConfirm }) => {
+    pendingConfirmRef.current = onConfirm;
+    setConfirmConfig({ isOpen: true, type, title, message, confirmText });
+  };
+
+  const closeConfirm = () => {
+    pendingConfirmRef.current = null;
+    setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const handleConfirmed = () => {
+    const action = pendingConfirmRef.current;
+    pendingConfirmRef.current = null;
+    setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
+    action?.();
   };
 
   useEffect(() => {
@@ -78,9 +142,12 @@ function Reports() {
 
       setTickets(Array.isArray(data?.tickets) ? data.tickets : []);
       setCanCloseTicket(Boolean(data?.canCloseTicket));
+      setLastUpdatedAt(new Date());
+      setLoadError(false);
     } catch {
       setTickets([]);
       setCanCloseTicket(false);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -93,6 +160,41 @@ function Reports() {
 
     return () => clearTimeout(timer);
   }, [searchTerm, showClosed, showRejected, loadTickets]);
+
+  const refreshTickets = useCallback(async () => {
+    try {
+      setIsRefreshing(true);
+      await loadTickets(searchTerm.trim(), showClosed, showRejected);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [loadTickets, searchTerm, showClosed, showRejected]);
+
+  useEffect(() => {
+    // Refresco operativo: mantiene la bandeja sincronizada mientras el modal esta cerrado.
+    if (chatTicket) return undefined;
+    const intervalId = setInterval(() => {
+      loadTickets(searchTerm.trim(), showClosed, showRejected);
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [chatTicket, loadTickets, searchTerm, showClosed, showRejected]);
+
+  useEffect(() => {
+    const onSlashFocusSearch = (event) => {
+      if (event.key !== "/") return;
+
+      const tagName = String(event.target?.tagName || "").toLowerCase();
+      const isTypingElement = tagName === "input" || tagName === "textarea" || event.target?.isContentEditable;
+      if (isTypingElement) return;
+
+      event.preventDefault();
+      searchInputRef.current?.focus();
+    };
+
+    window.addEventListener("keydown", onSlashFocusSearch);
+    return () => window.removeEventListener("keydown", onSlashFocusSearch);
+  }, []);
 
   const priorityMap = useMemo(
     () => new Map(priorityOptions.map((p) => [p.key, p])),
@@ -140,6 +242,18 @@ function Reports() {
         title={alertConfig.title}
         message={alertConfig.message}
         onClose={closeAlert}
+        confirmText="Aceptar"
+        cancelText=""
+      />
+      <AlertModal
+        isOpen={confirmConfig.isOpen}
+        type={confirmConfig.type}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText="Cancelar"
+        onClose={closeConfirm}
+        onConfirm={handleConfirmed}
       />
       <div className="w-full max-w-7xl px-0 mx-0 text-[var(--ins-text-white)]">
 
@@ -158,6 +272,7 @@ function Reports() {
             <div className="relative w-full md:w-[360px]">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50" />
               <input
+                ref={searchInputRef}
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -167,17 +282,34 @@ function Reports() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 justify-start md:justify-end mt-5">
-            <Switch
-              label="Ver cerrados"
-              checked={showClosed}
-              onChange={setShowClosed}
-            />
-            <Switch
-              label="Ver rechazados"
-              checked={showRejected}
-              onChange={setShowRejected}
-            />
+          <div className="flex flex-wrap items-center justify-between gap-4 mt-5">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={refreshTickets}
+                disabled={loading || isRefreshing}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/8 text-xs font-bold uppercase tracking-wider text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] hover:bg-white/12 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                title="Actualizar tickets ahora"
+              >
+                <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+                {isRefreshing ? "Actualizando..." : "Actualizar"}
+              </button>
+              <span className="text-[11px] text-[var(--ins-text-dark)]">
+                {lastUpdatedAt ? `Actualizado: ${lastUpdatedAt.toLocaleTimeString("es-MX")}` : "Sin sincronizar"}
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Switch
+                label="Ver cerrados"
+                checked={showClosed}
+                onChange={setShowClosed}
+              />
+              <Switch
+                label="Ver rechazados"
+                checked={showRejected}
+                onChange={setShowRejected}
+              />
+            </div>
           </div>
         </div>
 
@@ -185,12 +317,31 @@ function Reports() {
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <MessageSquareWarning size={18} className="text-[var(--secondary-color)]" />
             Tickets pendientes
+            {!loading && tickets.length > 0 && (
+              <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-[var(--secondary-color)]/15 text-[var(--secondary-color)]">
+                {tickets.length}
+              </span>
+            )}
           </h2>
 
           {loading ? (
             <div className="box-main py-10 px-4 text-center text-[var(--ins-text-gray)]">Cargando tickets...</div>
+          ) : loadError ? (
+            <div className="box-main py-10 px-4 text-center">
+              <p className="text-red-300 font-bold mb-2">No se pudo cargar la bandeja</p>
+              <p className="text-[var(--ins-text-gray)] text-sm mb-4">Revisa tu conexión e intenta de nuevo.</p>
+              <button
+                type="button"
+                onClick={refreshTickets}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/8 text-sm font-bold text-[var(--ins-text-gray)] hover:text-white hover:bg-white/12 transition-colors"
+              >
+                <RefreshCw size={14} /> Reintentar
+              </button>
+            </div>
           ) : tickets.length === 0 ? (
-            <div className="box-main py-10 px-4 text-center text-[var(--ins-text-gray)]">No hay tickets con los filtros actuales.</div>
+            <div className="box-main py-10 px-4 text-center text-[var(--ins-text-gray)]">
+              {searchTerm.trim() ? `Sin resultados para "${searchTerm.trim()}".` : "No hay tickets pendientes por atender."}
+            </div>
           ) : (
             <div className="space-y-3 max-h-[70vh] overflow-y-auto tdt-scrollbar pr-1">
               {tickets.map((ticket) => (
@@ -222,6 +373,8 @@ function Reports() {
             setChatData((prev) => prev ? { ...prev, ticket: { ...prev.ticket, ...updatedTicket } } : prev);
           }}
           onAlert={openAlert}
+          onRequestRefresh={refreshTickets}
+          onRequestConfirm={openConfirm}
         />
       )}
     </section>
@@ -232,11 +385,25 @@ function AdminTicketCard({ ticket, typeMap, priorityMap, onDoubleClick }) {
   const st = statusStyle(ticket.statusKey);
   const priority = priorityMap.get(ticket.priorityKey);
 
+  const handleCopyTp = useCallback(async (event) => {
+    event.stopPropagation();
+    const copied = await copyTpCommandToClipboard(ticket.coordX, ticket.coordY, ticket.coordZ);
+    if (copied) {
+      window.dispatchEvent(new CustomEvent("tdt:toast", {
+        detail: {
+          type: "success",
+          title: "Comando copiado",
+          message: `/tp ${ticket.coordX} ${ticket.coordY} ${ticket.coordZ}`,
+        },
+      }));
+    }
+  }, [ticket.coordX, ticket.coordY, ticket.coordZ]);
+
   return (
     <article
       className="rounded-2xl bg-black/30 p-4 cursor-pointer hover:bg-black/40 transition-colors select-none"
-      onDoubleClick={() => onDoubleClick(ticket)}
-      title="Doble click para abrir conversación"
+      onClick={() => onDoubleClick(ticket)}
+      title="Click para abrir conversación"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -266,7 +433,13 @@ function AdminTicketCard({ ticket, typeMap, priorityMap, onDoubleClick }) {
           </span>
           {ticket.involvedPlayer ? <BadgeSky>Jugador: {ticket.involvedPlayer}</BadgeSky> : null}
           {ticket.coordX !== null && ticket.coordY !== null && ticket.coordZ !== null ? (
-            <BadgeSecondary>XYZ: {ticket.coordX}, {ticket.coordY}, {ticket.coordZ}</BadgeSecondary>
+            <BadgeSecondary
+              onClick={handleCopyTp}
+              onDoubleClick={(event) => event.stopPropagation()}
+              title="Click para copiar /tp"
+            >
+              XYZ: {ticket.coordX}, {ticket.coordY}, {ticket.coordZ}
+            </BadgeSecondary>
           ) : null}
         </div>
         <div className="relative inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/8 text-[var(--ins-text-gray)] flex-shrink-0">
@@ -285,12 +458,12 @@ function AdminTicketCard({ ticket, typeMap, priorityMap, onDoubleClick }) {
         </a>
       )}
 
-      <p className="text-xs text-[var(--ins-text-dark)] mt-3 italic">Doble click para abrir conversación</p>
+      <p className="text-xs text-[var(--ins-text-dark)] mt-3 italic">Click para abrir conversación</p>
     </article>
   );
 }
 
-function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, priorityMap, typeMap, onClose, onMessageSent, onTicketClosed, onAlert }) {
+function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, priorityMap, typeMap, onClose, onMessageSent, onTicketClosed, onAlert, onRequestRefresh, onRequestConfirm }) {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -313,6 +486,14 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  useEffect(() => {
+    const onEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [onClose]);
 
   const handleSend = async () => {
     const text = newMessage.trim();
@@ -337,13 +518,24 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
     }
   };
 
-  const handleRejectTicket = async () => {
+  const confirmAndReject = () => {
+    onRequestConfirm?.({
+      type: "warning",
+      title: "¿Rechazar este ticket?",
+      message: "El usuario será notificado y el ticket quedará marcado como rechazado. Esta acción no se puede deshacer.",
+      confirmText: "Sí, rechazar",
+      onConfirm: doRejectTicket,
+    });
+  };
+
+  const doRejectTicket = async () => {
     if (!ticket || ticket.statusKey !== "ABIERTO") return;
     try {
       setRejecting(true);
       const { data } = await api.patch(`/admin/reports/tickets/${ticket.id}/reject`);
       onTicketClosed?.(data.ticket);
-      onAlert?.({ type: "info", title: "Ticket rechazado", message: "El ticket se rechazó correctamente." });
+      onAlert?.({ type: "success", title: "Ticket rechazado", message: "El ticket se rechazó correctamente.", reload: true });
+      await onRequestRefresh?.();
     } catch (err) {
       onAlert?.({ type: "error", title: "No se pudo rechazar", message: err.response?.data?.message || "No se pudo rechazar el ticket." });
     } finally {
@@ -351,13 +543,24 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
     }
   };
 
-  const handleCloseTicket = async () => {
+  const confirmAndClose = () => {
+    onRequestConfirm?.({
+      type: "warning",
+      title: "¿Cerrar este ticket?",
+      message: "Se marcará como resuelto. El usuario podrá ver el cierre desde su panel.",
+      confirmText: "Sí, cerrar",
+      onConfirm: doCloseTicket,
+    });
+  };
+
+  const doCloseTicket = async () => {
     if (!ticket || ticket.statusKey !== "ABIERTO") return;
     try {
       setClosing(true);
       const { data } = await api.patch(`/admin/reports/tickets/${ticket.id}/close`);
       onTicketClosed?.(data.ticket);
-      onAlert?.({ type: "success", title: "Ticket cerrado", message: "El ticket se cerró correctamente." });
+      onAlert?.({ type: "success", title: "Ticket cerrado", message: "El ticket se cerró correctamente.", reload: true });
+      await onRequestRefresh?.();
     } catch (err) {
       onAlert?.({ type: "error", title: "No se pudo cerrar", message: err.response?.data?.message || "No se pudo cerrar el ticket." });
     } finally {
@@ -367,6 +570,24 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
 
   const st = ticket ? statusStyle(ticket.statusKey) : { text: "", border: "", bg: "" };
   const priority = ticket ? priorityMap.get(ticket.priorityKey) : null;
+
+  const handleCopyTp = useCallback(async () => {
+    if (!ticket || ticket.coordX === null || ticket.coordY === null || ticket.coordZ === null) return;
+    const copied = await copyTpCommandToClipboard(ticket.coordX, ticket.coordY, ticket.coordZ);
+    if (copied) {
+      onAlert?.({
+        type: "success",
+        title: "Comando copiado",
+        message: `/tp ${ticket.coordX} ${ticket.coordY} ${ticket.coordZ}`,
+      });
+    } else {
+      onAlert?.({
+        type: "error",
+        title: "No se pudo copiar",
+        message: "El navegador no pudo copiar el comando al portapapeles.",
+      });
+    }
+  }, [onAlert, ticket]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center md:p-4">
@@ -389,17 +610,17 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
                       <Button
                         type="button"
                         variant="primary"
-                        className="text-xs bg-rose-600/80 hover:bg-rose-600 text-white flex items-center gap-1 px-3 py-2 flex-shrink-0"
-                        onClick={handleCloseTicket}
+                        className="text-xs"
+                        onClick={confirmAndClose}
                         disabled={closing || rejecting}
                       >
                         <CheckCircle2 size={14} /> {closing ? "Cerrando..." : "Cerrar"}
                       </Button>
                       <Button
                         type="button"
-                        variant="cancel"
-                        className="text-xs flex items-center gap-1 px-3 py-2 flex-shrink-0"
-                        onClick={handleRejectTicket}
+                        variant="warning"
+                        className="text-xs"
+                        onClick={confirmAndReject}
                         disabled={closing || rejecting}
                       >
                         <XCircle size={14} /> {rejecting ? "Rechazando..." : "Rechazar"}
@@ -411,7 +632,9 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
                   <Badge>{typeMap.get(ticket.typeKey)?.name || ticket.typeKey}</Badge>
                   {ticket.involvedPlayer ? <BadgeSky>Jugador: {ticket.involvedPlayer}</BadgeSky> : null}
                   {ticket.coordX !== null && ticket.coordY !== null && ticket.coordZ !== null ? (
-                    <BadgeSecondary>XYZ: {ticket.coordX}, {ticket.coordY}, {ticket.coordZ}</BadgeSecondary>
+                    <BadgeSecondary onClick={handleCopyTp} title="Click para copiar /tp">
+                      XYZ: {ticket.coordX}, {ticket.coordY}, {ticket.coordZ}
+                    </BadgeSecondary>
                   ) : null}
                 </div>
               </>
@@ -499,8 +722,26 @@ const BadgeSky = ({ children }) => (
   <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-sky-500/15 text-sky-300 tracking-wider">{children}</span>
 );
 
-const BadgeSecondary = ({ children }) => (
-  <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[var(--secondary-color)]/15 text-[var(--secondary-color)] tracking-wider">{children}</span>
-);
+const BadgeSecondary = ({ children, onClick, onDoubleClick, title }) => {
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className="text-[10px] font-bold px-2 py-1 rounded-full bg-[var(--secondary-color)]/15 text-[var(--secondary-color)] tracking-wider hover:bg-[var(--secondary-color)]/25 transition-colors cursor-copy"
+        onClick={onClick}
+        onDoubleClick={onDoubleClick}
+        title={title}
+      >
+        {children}
+      </button>
+    );
+  }
+
+  return (
+    <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[var(--secondary-color)]/15 text-[var(--secondary-color)] tracking-wider" title={title}>
+      {children}
+    </span>
+  );
+};
 
 export default Reports;

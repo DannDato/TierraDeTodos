@@ -28,7 +28,7 @@ export default function CommunityCard({ community }) {
     <div className="w-full max-w-[370px] lg:max-w-[420px] group transition-all duration-300 hover:-translate-y-2">
       {/* Contenedor Principal con Borde Doble y Sombra */}
       <div
-        className="relative p-1 rounded-[2.5rem] bg-[var(--ins-background)]/50 backdrop-blur-md border border-white/5 overflow-hidden min-w-[280px] h-[480px]"
+        className="relative p-1 rounded-[2.5rem] bg-[var(--ins-background)]/50 backdrop-blur-md border border-white/5 overflow-hidden w-full h-[480px]"
 
       >
         {/* Listón Decorativo de dos colores (Esquina Superior) */}

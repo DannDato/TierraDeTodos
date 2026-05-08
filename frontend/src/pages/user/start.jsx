@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Play,
   Download,
@@ -48,6 +48,7 @@ const mockAlerts = [
 function Start() {
   const navigate = useNavigate();
   const currentUsername = localStorage.getItem("username") || "Jugador";
+  const downloadIntervalRef = useRef(null);
 
   // Base local para evolucionar a progreso real desde API sin rehacer la UI.
   const [playerSummary] = useState({
@@ -136,14 +137,31 @@ function Start() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
 
+  useEffect(() => {
+    return () => {
+      if (downloadIntervalRef.current) {
+        clearInterval(downloadIntervalRef.current);
+      }
+    };
+  }, []);
+
   const handlePlayClick = () => {
+    if (isDownloading) return;
+
+    if (downloadIntervalRef.current) {
+      clearInterval(downloadIntervalRef.current);
+    }
+
     setIsDownloading(true);
     setDownloadProgress(0);
 
-    const interval = setInterval(() => {
+    downloadIntervalRef.current = setInterval(() => {
       setDownloadProgress(prev => {
         if (prev >= 100) {
-          clearInterval(interval);
+          if (downloadIntervalRef.current) {
+            clearInterval(downloadIntervalRef.current);
+            downloadIntervalRef.current = null;
+          }
           setTimeout(() => setIsDownloading(false), 1000);
           return 100;
         }
@@ -354,9 +372,16 @@ function Start() {
             </h2>
             {featuredNews && (
               <div
-                className="relative h-80 w-full rounded-3xl overflow-hidden cursor-pointer box-main"
+                className="relative h-80 w-full rounded-3xl overflow-hidden cursor-pointer box-main group focus:outline-none focus:ring-2 focus:ring-[var(--secondary-color)]/60"
                 onClick={() => goToNewsDetail(featuredNews.id)}
-                onDoubleClick={() => goToNewsDetail(featuredNews.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    goToNewsDetail(featuredNews.id);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
                 <img
                   src={featuredNews.image}
@@ -378,10 +403,15 @@ function Start() {
                 </div>
               </div>
             )}
+            {!featuredNews && (
+              <div className="h-80 w-full rounded-3xl border border-white/10 bg-black/15 flex items-center justify-center text-sm text-[var(--ins-text-gray)]">
+                No hay noticias destacadas por ahora.
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="box-main cursor-pointer  p-6 h-80 flex flex-col items-center relative overflow-hidden gap-5 h-120  ">
+            <div className="box-main cursor-pointer p-6 min-h-[30rem] flex flex-col items-center relative overflow-hidden gap-5">
               <div className="w-full relative z-10">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
                   <Play size={24} style={{ color: "var(--secondary-color)" }}/>

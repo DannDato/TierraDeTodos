@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { LogOut, PencilIcon, Monitor, ShieldAlert, User, Info } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { LogOut, PencilIcon, Monitor, ShieldAlert, User, Info, X } from "lucide-react";
 
 import Button from "../../elements/Button";
 import Input from "../../elements/Input";
@@ -119,9 +119,9 @@ function Profile() {
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
   const [isSavingAvatarPosition, setIsSavingAvatarPosition] = useState(false);
   const [showDeleteAvatarAlert, setShowDeleteAvatarAlert] = useState(false);
-  const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [logoutMode, setLogoutMode] = useState("current");
+  const [revokingDeviceId, setRevokingDeviceId] = useState(null);
   const [avatarDraft, setAvatarDraft] = useState({ posX: 50, posY: 50, zoom: 1 });
   const [streamerForm, setStreamerForm] = useState({
     link: "",
@@ -165,8 +165,7 @@ function Profile() {
           err.message ||
           "No se pudo cargar la información del perfil";
 
-        setError(message);
-        setShowAlert(true);
+        openInfoModal({ type: "error", title: "Error al cargar perfil", message });
 
         if (err.response?.status === 401) {
           localStorage.removeItem("token");
@@ -191,10 +190,45 @@ function Profile() {
     }
   };
 
-  const showAlertLogout = (mode = "current") => {
+  const showAlertLogout = useCallback((mode = "current") => {
     setLogoutMode(mode);
     setShowAlert(true);
+  }, []);
+
+  const handleRevokeDevice = async (device) => {
+    if (revokingDeviceId) return;
+    setRevokingDeviceId(device.id);
+    try {
+      const { data } = await api.delete(`/user/profile/devices/${device.id}`);
+      if (data?.redirectToLogin) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return;
+      }
+      setUser((prev) => ({
+        ...prev,
+        devices: (prev.devices || []).filter((d) => d.id !== device.id),
+      }));
+    } catch (err) {
+      openInfoModal({
+        type: "error",
+        title: "Error al cerrar sesión",
+        message: err.response?.data?.message || "No se pudo cerrar la sesión en ese dispositivo.",
+      });
+    } finally {
+      setRevokingDeviceId(null);
+    }
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== "Escape") return;
+      if (isAvatarEditorOpen) { setIsAvatarEditorOpen(false); return; }
+      if (isAvatarMenuOpen) { setIsAvatarMenuOpen(false); }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isAvatarEditorOpen, isAvatarMenuOpen]);
 
   const triggerAvatarPicker = () => {
     if (isUploadingAvatar) return;
@@ -462,8 +496,8 @@ function Profile() {
     <section className="min-h-screen py-15 flex items-start justify-center pb-24 min-h-screen h-screen">
 
       <LoadingOverlay
-        isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer || isLoadingPassword}
-        message={isLoadingPassword ? "Enviando correo de recuperación..." : (!user ? "Cargando cuenta..." : "Guardando cambios...")}
+        isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer || isLoadingPassword || isSavingProfile}
+        message={isLoadingPassword ? "Enviando correo de recuperación..." : isSavingProfile ? "Guardando perfil..." : (!user ? "Cargando cuenta..." : "Guardando cambios...")}
       />
 
 
@@ -750,7 +784,7 @@ function Profile() {
             </div>
 
             {isStreamerRole && (
-              <form className="bg-black/20 rounded-3xl p-6 backdrop-blur-sm space-y-4" onSubmit={handleStreamerSubmit}>
+              <form className="box-main p-6 space-y-4" onSubmit={handleStreamerSubmit}>
                 <h2 className="text-xl font-bold">Perfil de Streamer</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -860,6 +894,17 @@ function Profile() {
                           </p>
                         </div>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs flex items-center gap-1 shrink-0 ml-2"
+                        onClick={() => handleRevokeDevice(device)}
+                        disabled={revokingDeviceId === device.id}
+                        title={device.isCurrent ? "Cerrar sesión actual" : "Cerrar sesión en este dispositivo"}
+                      >
+                        <LogOut size={13} />
+                        {revokingDeviceId === device.id ? "..." : "Cerrar"}
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -899,7 +944,17 @@ function Profile() {
       {user && isAvatarEditorOpen && avatarPreview && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-3xl bg-[#151515] p-5 space-y-4">
-            <h3 className="text-lg font-bold text-white">Ajustar avatar</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white">Ajustar avatar</h3>
+              <button
+                type="button"
+                onClick={() => setIsAvatarEditorOpen(false)}
+                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                aria-label="Cerrar"
+              >
+                <X size={16} />
+              </button>
+            </div>
 
             <div className="mx-auto w-40 h-48 minecraft-mugshot rounded overflow-hidden p-1.5">
               <img
