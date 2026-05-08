@@ -1,4 +1,5 @@
 import { db } from '../../models/index.js';
+import { getEquippedEmblemsByUsers } from '../../helpers/getEquippedEmblems.js';
 
 class PlayersController {
   getRandomOrderClause = () => {
@@ -71,7 +72,7 @@ class PlayersController {
               LIMIT 1
             ) AS avatarZoom,
             u.account AS status,
-            (SELECT us.color FROM user_statuses us WHERE us.status = u.account AND us.active = 'YES' LIMIT 1) AS statusColor
+            (SELECT us.color FROM system_statuses us WHERE us.status = u.account AND us.active = 'YES' LIMIT 1) AS statusColor
           FROM Users u
           WHERE u.account <> 'INACTIVE'
             AND EXISTS (
@@ -85,6 +86,21 @@ class PlayersController {
         `,
         { type: db.QueryTypes.SELECT }
       );
+
+      const equippedEmblemsByUserId = await getEquippedEmblemsByUsers(players.map((player) => player.id));
+
+      for (const player of players) {
+        player.equippedEmblems = equippedEmblemsByUserId.get(Number(player.id)) || [];
+      }
+
+      await req.logAction({
+        accion: 'Listado de jugadores consultado',
+        apartado: 'Players',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `players=${players.length}`,
+        type: 'info'
+      });
 
       return res.json({ players });
     } catch (error) {
@@ -104,3 +120,4 @@ class PlayersController {
 
 const ctrlPlayers = new PlayersController();
 export { ctrlPlayers };
+

@@ -10,16 +10,25 @@ class TicketCatalogsController {
   getCatalogs = async (req, res) => {
     try {
       const [types, priorities] = await Promise.all([
-        models.ticket_types.findAll({ order: [['name', 'ASC'], ['id', 'ASC']] }),
-        models.tickets_prioritys.findAll({ order: [['name', 'ASC'], ['id', 'ASC']] })
+        models.catalog.findAll({ where: { category: 'ticket_type' }, order: [['sortOrder', 'ASC'], ['name', 'ASC']] }),
+        models.catalog.findAll({ where: { category: 'ticket_priority' }, order: [['sortOrder', 'ASC'], ['name', 'ASC']] })
       ]);
+
+      await req.logAction({
+        accion: 'Catalogos de tickets consultados en gestion',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `types=${types.length}; priorities=${priorities.length}`,
+        type: 'info'
+      });
 
       return res.status(200).json({
         types,
         priorities
       });
     } catch (error) {
-      handleError(res, req, error, 'Error al cargar catálogos de tickets');
+      handleError(res, req, error, 'Error al cargar catÃ¡logos de tickets');
     }
   };
 
@@ -36,15 +45,24 @@ class TicketCatalogsController {
       }
 
       if (!ACTIVE_VALUES.includes(active)) {
-        return res.status(400).json({ message: 'active inválido' });
+        return res.status(400).json({ message: 'active invÃ¡lido' });
       }
 
-      const exists = await models.ticket_types.findOne({ where: { key } });
+      const exists = await models.catalog.findOne({ where: { category: 'ticket_type', key } });
       if (exists) {
         return res.status(409).json({ message: 'Ya existe un tipo con esa clave' });
       }
 
-      const created = await models.ticket_types.create({ key, name, detail: detail || null, color, active });
+      const created = await models.catalog.create({ category: 'ticket_type', key, name, detail: detail || null, color, active });
+
+      await req.logAction({
+        accion: 'Tipo de ticket creado',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `typeId=${created.id}; key=${key}`,
+        type: 'info'
+      });
 
       return res.status(201).json(created);
     } catch (error) {
@@ -55,9 +73,9 @@ class TicketCatalogsController {
   updateType = async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!id) return res.status(400).json({ message: 'ID inválido' });
+      if (!id) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
-      const type = await models.ticket_types.findByPk(id);
+      const type = await models.catalog.findOne({ where: { id, category: 'ticket_type' } });
       if (!type) return res.status(404).json({ message: 'Tipo no encontrado' });
 
       if (type.immutable) {
@@ -75,10 +93,10 @@ class TicketCatalogsController {
       }
 
       if (!ACTIVE_VALUES.includes(nextActive)) {
-        return res.status(400).json({ message: 'active inválido' });
+        return res.status(400).json({ message: 'active invÃ¡lido' });
       }
 
-      const duplicate = await models.ticket_types.findOne({ where: { key: nextKey } });
+      const duplicate = await models.catalog.findOne({ where: { category: 'ticket_type', key: nextKey } });
       if (duplicate && duplicate.id !== type.id) {
         return res.status(409).json({ message: 'Ya existe un tipo con esa clave' });
       }
@@ -90,6 +108,15 @@ class TicketCatalogsController {
       type.active = nextActive;
       await type.save();
 
+      await req.logAction({
+        accion: 'Tipo de ticket actualizado',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `typeId=${type.id}; key=${nextKey}`,
+        type: 'info'
+      });
+
       return res.status(200).json(type);
     } catch (error) {
       handleError(res, req, error, 'Error al actualizar tipo de ticket');
@@ -99,9 +126,9 @@ class TicketCatalogsController {
   deleteType = async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!id) return res.status(400).json({ message: 'ID inválido' });
+      if (!id) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
-      const type = await models.ticket_types.findByPk(id);
+      const type = await models.catalog.findOne({ where: { id, category: 'ticket_type' } });
       if (!type) return res.status(404).json({ message: 'Tipo no encontrado' });
 
       if (type.immutable) {
@@ -109,6 +136,14 @@ class TicketCatalogsController {
       }
 
       await type.destroy();
+      await req.logAction({
+        accion: 'Tipo de ticket eliminado',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `typeId=${type.id}; key=${type.key}`,
+        type: 'info'
+      });
       return res.status(200).json({ message: 'Tipo eliminado correctamente' });
     } catch (error) {
       handleError(res, req, error, 'Error al eliminar tipo de ticket');
@@ -128,15 +163,24 @@ class TicketCatalogsController {
       }
 
       if (!ACTIVE_VALUES.includes(active)) {
-        return res.status(400).json({ message: 'active inválido' });
+        return res.status(400).json({ message: 'active invÃ¡lido' });
       }
 
-      const exists = await models.tickets_prioritys.findOne({ where: { key } });
+      const exists = await models.catalog.findOne({ where: { category: 'ticket_priority', key } });
       if (exists) {
         return res.status(409).json({ message: 'Ya existe una prioridad con esa clave' });
       }
 
-      const created = await models.tickets_prioritys.create({ key, name, detail: detail || null, color, active });
+      const created = await models.catalog.create({ category: 'ticket_priority', key, name, detail: detail || null, color, active });
+
+      await req.logAction({
+        accion: 'Prioridad de ticket creada',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `priorityId=${created.id}; key=${key}`,
+        type: 'info'
+      });
 
       return res.status(201).json(created);
     } catch (error) {
@@ -147,9 +191,9 @@ class TicketCatalogsController {
   updatePriority = async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!id) return res.status(400).json({ message: 'ID inválido' });
+      if (!id) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
-      const priority = await models.tickets_prioritys.findByPk(id);
+      const priority = await models.catalog.findOne({ where: { id, category: 'ticket_priority' } });
       if (!priority) return res.status(404).json({ message: 'Prioridad no encontrada' });
 
       if (priority.immutable) {
@@ -167,10 +211,10 @@ class TicketCatalogsController {
       }
 
       if (!ACTIVE_VALUES.includes(nextActive)) {
-        return res.status(400).json({ message: 'active inválido' });
+        return res.status(400).json({ message: 'active invÃ¡lido' });
       }
 
-      const duplicate = await models.tickets_prioritys.findOne({ where: { key: nextKey } });
+      const duplicate = await models.catalog.findOne({ where: { category: 'ticket_priority', key: nextKey } });
       if (duplicate && duplicate.id !== priority.id) {
         return res.status(409).json({ message: 'Ya existe una prioridad con esa clave' });
       }
@@ -182,6 +226,15 @@ class TicketCatalogsController {
       priority.active = nextActive;
       await priority.save();
 
+      await req.logAction({
+        accion: 'Prioridad de ticket actualizada',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `priorityId=${priority.id}; key=${nextKey}`,
+        type: 'info'
+      });
+
       return res.status(200).json(priority);
     } catch (error) {
       handleError(res, req, error, 'Error al actualizar prioridad de ticket');
@@ -191,9 +244,9 @@ class TicketCatalogsController {
   deletePriority = async (req, res) => {
     try {
       const id = Number(req.params.id);
-      if (!id) return res.status(400).json({ message: 'ID inválido' });
+      if (!id) return res.status(400).json({ message: 'ID invÃ¡lido' });
 
-      const priority = await models.tickets_prioritys.findByPk(id);
+      const priority = await models.catalog.findOne({ where: { id, category: 'ticket_priority' } });
       if (!priority) return res.status(404).json({ message: 'Prioridad no encontrada' });
 
       if (priority.immutable) {
@@ -201,6 +254,14 @@ class TicketCatalogsController {
       }
 
       await priority.destroy();
+      await req.logAction({
+        accion: 'Prioridad de ticket eliminada',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `priorityId=${priority.id}; key=${priority.key}`,
+        type: 'info'
+      });
       return res.status(200).json({ message: 'Prioridad eliminada correctamente' });
     } catch (error) {
       handleError(res, req, error, 'Error al eliminar prioridad de ticket');
@@ -210,3 +271,4 @@ class TicketCatalogsController {
 
 const ctrlTicketCatalogs = new TicketCatalogsController();
 export { ctrlTicketCatalogs };
+

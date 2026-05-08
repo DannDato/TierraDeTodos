@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Plus, UserRound, X } from "lucide-react";
+import { ChevronRight, Heart, Newspaper, Pencil, Plus, Save, Send, Trash2, UserRound, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
 import Button from "../../elements/Button";
-import Input from "../../elements/Input";
 import Select from "../../elements/Select";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import AlertModal from "../../elements/AlertModal";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import tdtNewsImage from "../../img/tdtnews.png";
+import bgPaperImage from "../../img/bg-paper.png";
 
 const createInitialNewsForm = () => ({
   title: "",
   type: "NOTICIA",
   fecha: new Date().toISOString().slice(0, 10),
-  description: "",
+  // description: "",
   note: "",
 });
 
@@ -43,32 +44,56 @@ function News() {
   const [commentText, setCommentText] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsSubmitting, setCommentsSubmitting] = useState(false);
+  const [commentLikesMap, setCommentLikesMap] = useState({});
+  const pendingNewsLikes = useRef(new Set());
+  const pendingCommentLikes = useRef(new Set());
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "info",
+    title: "Aviso",
+    message: "",
+    onConfirm: null,
+    confirmText: "Aceptar",
+    cancelText: "Cancelar",
+  });
   const createImageInputRef = useRef(null);
   const editImageInputRef = useRef(null);
+
+  const closeAlert = useCallback(() => {
+    setAlertConfig((prev) => ({ ...prev, isOpen: false, onConfirm: null }));
+  }, []);
+
+  const openAlert = useCallback(({ type = "info", title = "Aviso", message = "", onConfirm = null, confirmText = "Aceptar", cancelText = "Cancelar" }) => {
+    setAlertConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onConfirm,
+      confirmText,
+      cancelText,
+    });
+  }, []);
+
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
 
-        const [newsResult, typesResult, menuResult] = await Promise.allSettled([
+        const [newsResult, menuResult] = await Promise.allSettled([
           api.get("/user/news"),
-          api.get("/user/news/types"),
           api.get("/system/menu"),
         ]);
 
         if (newsResult.status === "fulfilled") {
           const payload = newsResult.value?.data;
           const candidates = Array.isArray(payload) ? payload : payload?.news;
-          setNews(Array.isArray(candidates) ? candidates : []);
-        } else {
-          setNews([]);
-        }
+          const typeCandidates = Array.isArray(payload) ? [] : payload?.types;
 
-        if (typesResult.status === "fulfilled") {
-          const typesPayload = typesResult.value?.data;
-          const candidates = Array.isArray(typesPayload) ? typesPayload : typesPayload?.types;
-          const parsedTypes = Array.isArray(candidates) ? candidates : [];
+          setNews(Array.isArray(candidates) ? candidates : []);
+
+          const parsedTypes = Array.isArray(typeCandidates) ? typeCandidates : [];
           setNewsTypes(parsedTypes);
           if (parsedTypes.length > 0) {
             setFormData((prev) => ({
@@ -77,6 +102,7 @@ function News() {
             }));
           }
         } else {
+          setNews([]);
           setNewsTypes([]);
         }
 
@@ -121,6 +147,7 @@ function News() {
         note: item.note || "",
         Reporter: item.Reporter || item.reporter || "Sistema",
         featured: Boolean(item.featured),
+        likesCount: Math.max(0, Number(item.likesCount || item.likes || 0)),
       };
     });
   }, [news]);
@@ -175,6 +202,71 @@ function News() {
     return "#f59e0b";
   };
 
+
+  const isNewsLiked = useCallback((newsId) => {
+    const found = news.find((item) => String(item.id) === String(newsId));
+    return Boolean(found?.likedByCurrentUser);
+  }, [news]);
+
+  const handleToggleLike = async (event, article) => {
+    event.stopPropagation();
+
+    const articleId = Number(article?.id);
+    if (!articleId) return;
+    if (pendingNewsLikes.current.has(articleId)) return;
+
+    const currentArticle = news.find((item) => Number(item.id) === articleId) || article;
+    const previousState = {
+      likesCount: Math.max(0, Number(currentArticle?.likesCount || 0)),
+      likedByCurrentUser: Boolean(currentArticle?.likedByCurrentUser),
+    };
+    const optimisticState = {
+      likesCount: Math.max(0, previousState.likesCount + (previousState.likedByCurrentUser ? -1 : 1)),
+      likedByCurrentUser: !previousState.likedByCurrentUser,
+    };
+
+    pendingNewsLikes.current.add(articleId);
+
+    setNews((prev) => {
+      return prev.map((item) => {
+        if (Number(item.id) !== articleId) return item;
+        return {
+          ...item,
+          likesCount: optimisticState.likesCount,
+          likedByCurrentUser: optimisticState.likedByCurrentUser,
+        };
+      });
+    });
+
+    try {
+      const { data } = await api.post(`/user/news/${articleId}/likes`, {});
+      setNews((prev) => prev.map((item) => {
+        if (Number(item.id) !== articleId) return item;
+        return {
+          ...item,
+          likesCount: Number.isFinite(data?.likesCount) ? Math.max(0, data.likesCount) : item.likesCount,
+          likedByCurrentUser: !!data?.liked,
+        };
+      }));
+    } catch (error) {
+      setNews((prev) => prev.map((item) => {
+        if (Number(item.id) !== articleId) return item;
+        return {
+          ...item,
+          likesCount: previousState.likesCount,
+          likedByCurrentUser: previousState.likedByCurrentUser,
+        };
+      }));
+      openAlert({
+        type: "error",
+        title: "No se pudo actualizar el like",
+        message: error.response?.data?.message || "Intenta de nuevo en un momento.",
+      });
+    } finally {
+      pendingNewsLikes.current.delete(articleId);
+    }
+  };
+
   const openNewsModal = useCallback((article) => {
     setSelectedNews(article);
     setIsEditingSelected(false);
@@ -190,12 +282,24 @@ function News() {
     setCommentText("");
   }, []);
 
-  const closeNewsModal = () => {
+  const closeNewsModal = useCallback(() => {
     setSelectedNews(null);
     setIsEditingSelected(false);
     setComments([]);
     setCommentText("");
-  };
+    setCommentLikesMap({});
+    pendingCommentLikes.current.clear();
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== "Escape") return;
+      if (isCreateModalOpen) { setIsCreateModalOpen(false); return; }
+      if (selectedNews) closeNewsModal();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isCreateModalOpen, selectedNews, closeNewsModal]);
 
   useEffect(() => {
     const loadComments = async () => {
@@ -208,9 +312,19 @@ function News() {
         setCommentsLoading(true);
         const { data } = await api.get(`/user/news/${selectedNews.id}/comments`);
         const payload = Array.isArray(data) ? data : data?.comments;
-        setComments(Array.isArray(payload) ? payload : []);
-      } catch (_error) {
+        const list = Array.isArray(payload) ? payload : [];
+        setComments(list);
+        const likesInit = {};
+        for (const c of list) {
+          likesInit[c.id] = {
+            likesCount: Number(c.likesCount || 0),
+            likedByCurrentUser: Boolean(c.likedByCurrentUser),
+          };
+        }
+        setCommentLikesMap(likesInit);
+      } catch {
         setComments([]);
+        setCommentLikesMap({});
       } finally {
         setCommentsLoading(false);
       }
@@ -252,6 +366,17 @@ function News() {
     setIsCreateModalOpen(false);
   };
 
+  useEffect(() => {
+    return () => {
+      if (selectedImagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(selectedImagePreview);
+      }
+      if (editImagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(editImagePreview);
+      }
+    };
+  }, [selectedImagePreview, editImagePreview]);
+
   const handleImageChange = (event, mode = "create") => {
     const file = event.target.files?.[0] || null;
 
@@ -267,13 +392,21 @@ function News() {
     }
 
     if (!file.type?.startsWith("image/")) {
-      window.alert("Solo se permiten imágenes.");
+      openAlert({
+        type: "warning",
+        title: "Archivo no valido",
+        message: "Solo se permiten imágenes.",
+      });
       event.target.value = "";
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      window.alert("La imagen no debe superar 5MB.");
+      openAlert({
+        type: "warning",
+        title: "Archivo demasiado grande",
+        message: "La imagen no debe superar 5MB.",
+      });
       event.target.value = "";
       return;
     }
@@ -292,6 +425,15 @@ function News() {
     if (!selectedNews) return false;
     return hasEditPermission && String(selectedNews.Reporter || "") === String(currentUser.username || "");
   }, [selectedNews, hasEditPermission, currentUser.username]);
+
+  const sortedComments = useMemo(() => {
+    return [...comments].sort((a, b) => {
+      const timeA = new Date(a?.createdAt || 0).getTime();
+      const timeB = new Date(b?.createdAt || 0).getTime();
+      if (timeA !== timeB) return timeB - timeA;
+      return Number(b?.id || 0) - Number(a?.id || 0);
+    });
+  }, [comments]);
 
   const startEditSelected = () => {
     if (!selectedNews || !canEditSelected) return;
@@ -326,7 +468,11 @@ function News() {
     };
 
     if (!payload.title || !payload.fecha || !payload.description) {
-      window.alert("Título, fecha y descripción son obligatorios.");
+      openAlert({
+        type: "warning",
+        title: "Campos obligatorios",
+        message: "Título, fecha y descripción son obligatorios.",
+      });
       return;
     }
 
@@ -351,7 +497,11 @@ function News() {
 
       setIsCreateModalOpen(false);
     } catch (error) {
-      window.alert(error.response?.data?.message || "No se pudo crear la noticia.");
+      openAlert({
+        type: "error",
+        title: "No se pudo crear",
+        message: error.response?.data?.message || "No se pudo crear la noticia.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -369,7 +519,11 @@ function News() {
     };
 
     if (!payload.title || !payload.fecha || !payload.description) {
-      window.alert("Título, fecha y descripción son obligatorios.");
+      openAlert({
+        type: "warning",
+        title: "Campos obligatorios",
+        message: "Título, fecha y descripción son obligatorios.",
+      });
       return;
     }
 
@@ -403,7 +557,11 @@ function News() {
       setEditImageFile(null);
       setEditImagePreview("");
     } catch (error) {
-      window.alert(error.response?.data?.message || "No se pudo editar la noticia.");
+      openAlert({
+        type: "error",
+        title: "No se pudo editar",
+        message: error.response?.data?.message || "No se pudo editar la noticia.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -417,7 +575,11 @@ function News() {
     };
 
     if (!payload.comment) {
-      window.alert("Escribe un comentario antes de publicar.");
+      openAlert({
+        type: "warning",
+        title: "Comentario vacio",
+        message: "Escribe un comentario antes de publicar.",
+      });
       return;
     }
 
@@ -427,20 +589,36 @@ function News() {
       const createdComment = data?.comment;
       if (createdComment) {
         setComments((prev) => [...prev, createdComment]);
+        setCommentLikesMap((prev) => ({
+          ...prev,
+          [createdComment.id]: { likesCount: 0, likedByCurrentUser: false },
+        }));
       }
       setCommentText("");
     } catch (error) {
-      window.alert(error.response?.data?.message || "No se pudo publicar el comentario.");
+      openAlert({
+        type: "error",
+        title: "No se pudo comentar",
+        message: error.response?.data?.message || "No se pudo publicar el comentario.",
+      });
     } finally {
       setCommentsSubmitting(false);
     }
   };
 
-  const handleDeleteSelected = async () => {
+  const handleCommentKeyDown = (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      if (!commentsSubmitting) {
+        handleSendComment();
+      }
+    }
+  };
+
+  const performDeleteSelected = async () => {
     if (!selectedNews?.id || !hasDeletePermission) return;
 
-    const ok = window.confirm("Esta accion eliminara la noticia de forma permanente. Deseas continuar?");
-    if (!ok) return;
+    closeAlert();
 
     try {
       setSubmitting(true);
@@ -448,19 +626,86 @@ function News() {
       setNews((prev) => (Array.isArray(prev) ? prev.filter((item) => item.id !== selectedNews.id) : []));
       closeNewsModal();
     } catch (error) {
-      window.alert(error.response?.data?.message || "No se pudo eliminar la noticia.");
+      openAlert({
+        type: "error",
+        title: "No se pudo eliminar",
+        message: error.response?.data?.message || "No se pudo eliminar la noticia.",
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
-      <LoadingOverlay isVisible={loading || submitting} message={submitting ? "Publicando noticia..." : "Cargando noticias"} />
+  const handleToggleCommentLike = async (commentId) => {
+    if (!selectedNews?.id || !commentId) return;
+    if (pendingCommentLikes.current.has(commentId)) return;
 
-      <div className="w-full max-w-7xl px-4 md:mx-10 mx-0">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
-          <div>
+    const current = commentLikesMap[commentId] || { likesCount: 0, likedByCurrentUser: false };
+    const willLike = !current.likedByCurrentUser;
+
+    // Optimistic update
+    pendingCommentLikes.current.add(commentId);
+    setCommentLikesMap((prev) => ({
+      ...prev,
+      [commentId]: {
+        likesCount: Math.max(0, current.likesCount + (willLike ? 1 : -1)),
+        likedByCurrentUser: willLike,
+      },
+    }));
+
+    try {
+      const { data } = await api.post(
+        `/user/news/${selectedNews.id}/comments/${commentId}/likes`,
+        {}
+      );
+      setCommentLikesMap((prev) => ({
+        ...prev,
+        [commentId]: {
+          likesCount: Number.isFinite(data?.likesCount) ? Math.max(0, data.likesCount) : prev[commentId]?.likesCount ?? 0,
+          likedByCurrentUser: !!data?.liked,
+        },
+      }));
+    } catch {
+      // Rollback
+      setCommentLikesMap((prev) => ({
+        ...prev,
+        [commentId]: current,
+      }));
+    } finally {
+      pendingCommentLikes.current.delete(commentId);
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (!selectedNews?.id || !hasDeletePermission) return;
+
+    openAlert({
+      type: "warning",
+      title: "Eliminar noticia",
+      message: "Esta accion eliminara la noticia de forma permanente. Deseas continuar?",
+      onConfirm: performDeleteSelected,
+      confirmText: "Eliminar",
+      cancelText: "Cancelar",
+    });
+  };
+
+  return (
+    <div className="min-h-screen h-screen py-15 flex items-start justify-center pb-2 text-[var(--white-color)] z-[1]">
+      <LoadingOverlay isVisible={loading || submitting} message={submitting ? "Publicando noticia..." : "Cargando noticias"} />
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={closeAlert}
+        onConfirm={alertConfig.onConfirm}
+        confirmText={alertConfig.confirmText}
+        cancelText={alertConfig.cancelText}
+      />
+
+      <div className="w-full mx-0">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 ">
+          <div className="px-2">
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
               <span>{currentUser.role}</span>
               <span>/</span>
@@ -475,12 +720,23 @@ function News() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-            <div className="w-full sm:w-[340px]">
-              <Input
-                placeholder="Buscar noticia por título, tipo, fecha o reportero..."
+            <div className="relative w-full sm:w-[340px]">
+              <input
+                type="text"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar noticia por título, tipo, fecha o reportero..."
+                className="w-full bg-[var(--black-color)]/30 border border-[var(--white-color)]/10 rounded-xl px-4 py-2.5 text-sm text-[var(--ins-text-white)] placeholder:text-[var(--ins-text-gray)] focus:outline-none focus:border-[var(--secondary-color)]/50 transition-colors"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)] hover:text-[var(--ins-text-white)] transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
 
             {hasCreatePermission && (
@@ -496,170 +752,186 @@ function News() {
         </div>
 
         {sortedNews.length === 0 ? (
-          <div className="rounded-3xl border border-white/10 bg-black/10 py-14 text-center text-[var(--ins-text-gray)]">
-            No hay noticias para mostrar.
+          <div className="box-main p-6 text-center text-[var(--ins-text-gray)] mb-6">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
+              <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
+              mmmm... no hay noticias por aquí
+            </h2>
           </div>
         ) : (
+          <div className="box-main p-6">
           <>
             {featuredNews && (
-              <div
-                className="relative h-80 w-full rounded-3xl overflow-hidden shadow-md group cursor-pointer mb-4"
-                onDoubleClick={() => openNewsModal(featuredNews)}
-                onClick={() => openNewsModal(featuredNews)}
-              >
-                <img
-                  src={featuredNews.image}
-                  alt={featuredNews.title}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+              <div>
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
+                  <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
+                  Ultima noticia destacada
+                </h2>
+                <div
+                  className="relative h-80 w-full overflow-hidden cursor-pointer mb-4 box-main group"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openNewsModal(featuredNews)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openNewsModal(featuredNews); } }}
+                >
+                  <img
+                    src={featuredNews.image}
+                    alt={featuredNews.title}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
-                <div className="absolute bottom-0 left-0 p-8 w-full">
-                  <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(featuredNews.type) }}>
-                    {featuredNews.type}
-                  </span>
-                  <h2 className="text-3xl font-extrabold text-white mb-2 drop-shadow-lg leading-tight">{featuredNews.title}</h2>
-                  <p className="text-gray-200 text-sm max-w-xl drop-shadow-md line-clamp-2">{featuredNews.description}</p>
+                  <div className="absolute bottom-0 left-0 p-8 w-full">
+                    <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(featuredNews.type) }}>
+                      {featuredNews.type}
+                    </span>
+                    <div className="flex items-center justify-between gap-4 mb-2">
+                      <h2 className="text-3xl font-extrabold text-white drop-shadow-lg leading-tight">{featuredNews.title}</h2>
+                      <button
+                        type="button"
+                        className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-black/30 hover:bg-black/45 border border-white/20 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        onClick={(event) => handleToggleLike(event, featuredNews)}
+                        disabled={pendingNewsLikes.current.has(Number(featuredNews.id))}
+                        aria-label={isNewsLiked(featuredNews.id) ? "Quitar like" : "Dar like"}
+                      >
+                        <Heart size={16} className={isNewsLiked(featuredNews.id) ? "text-red-500 fill-red-500" : "text-white"} />
+                        <span className="text-xs font-bold text-white">{Number(featuredNews.likesCount || 0)}</span>
+                      </button>
+                    </div>
+                    <p className="text-gray-200 text-sm max-w-xl drop-shadow-md line-clamp-2">{featuredNews.description}</p>
+                  </div>
                 </div>
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-              {regularNews.map((article) => (
-                <div
-                  key={article.id}
-                  className="bg-black/10 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group flex flex-col"
-                  onDoubleClick={() => openNewsModal(article)}
-                >
-                  <div className="h-40 overflow-hidden relative">
-                    <img
-                      src={article.image}
-                      alt={article.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  </div>
-                  <div className="p-6 flex flex-col flex-1">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded-md" style={{ backgroundColor: getBadgeColor(article.type) }}>
-                        {article.type}
-                      </span>
-                      <span className="text-xs text-[var(--white-color)] font-medium">{article.dateLabel}</span>
+            <div>
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] mt-20">
+                <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
+                Noticias anteriores
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                {regularNews.map((article) => (
+                  <div
+                    key={article.id}
+                    className="overflow-hidden cursor-pointer group flex flex-col modal-main focus:outline-none focus:ring-2 focus:ring-[var(--secondary-color)]/60"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openNewsModal(article)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openNewsModal(article); } }}
+                  >
+                    <div className="h-40 overflow-hidden relative">
+                      <img
+                        src={article.image}
+                        alt={article.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
                     </div>
-                    <h3 className="text-lg font-bold text-[var(--ins-text-white)] mb-2 leading-tight group-hover:text-[var(--secondary-color)] transition-colors">
-                      {article.title}
-                    </h3>
-                    <p className="text-sm text-[var(--gray-color)] flex-1 line-clamp-3">{article.description}</p>
-                    <button
-                      type="button"
-                      className="mt-4 flex items-center text-[var(--secondary-color)] text-sm font-bold"
-                      onClick={() => openNewsModal(article)}
-                    >
-                      Leer más <ChevronRight size={16} />
-                    </button>
+                    <div className="p-6 flex flex-col flex-1 relative pb-16">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded-md" style={{ backgroundColor: getBadgeColor(article.type) }}>
+                          {article.type}
+                        </span>
+                        <span className="text-xs text-[var(--white-color)] font-medium">{article.dateLabel}</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-[var(--ins-text-white)] mb-2 leading-tight group-hover:text-[var(--secondary-color)] transition-colors">
+                        {article.title}
+                      </h3>
+                      <p className="text-sm text-[var(--gray-color)] flex-1 line-clamp-3">{article.description}</p>
+                      <button
+                        type="button"
+                        className="mt-4 flex items-center text-[var(--secondary-color)] text-sm font-bold"
+                        onClick={(e) => { e.stopPropagation(); openNewsModal(article); }}
+                        tabIndex={-1}
+                      >
+                        Leer más <ChevronRight size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 bg-black/25 hover:bg-black/40 border border-white/15 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        onClick={(event) => handleToggleLike(event, article)}
+                        disabled={pendingNewsLikes.current.has(Number(article.id))}
+                        aria-label={isNewsLiked(article.id) ? "Quitar like" : "Dar like"}
+                      >
+                        <Heart size={15} className={isNewsLiked(article.id) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-white)]"} />
+                        <span className="text-xs font-semibold text-[var(--ins-text-white)]">{Number(article.likesCount || 0)}</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </>
+          </div>
         )}
       </div>
 
       {selectedNews && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeNewsModal} />
-          <div className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[95vh] rounded-3xl bg-[var(--ins-background)] shadow-2xl overflow-hidden flex flex-col">
-            <div
-              className={`relative h-56 md:h-72 w-full ${isEditingSelected ? "cursor-pointer" : ""}`}
-              onClick={() => {
-                if (isEditingSelected) editImageInputRef.current?.click();
-              }}
-            >
-              <img src={editImagePreview || selectedNews.image} alt={selectedNews.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
-              {isEditingSelected && (
-                <div className="absolute inset-0 flex items-center justify-center text-white/90 text-sm font-bold tracking-wider uppercase bg-black/25">
-                  Click para cambiar imagen
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  closeNewsModal();
-                }}
-                className="absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors"
-              >
-                <X size={18} />
-              </button>
-              <input
-                ref={editImageInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(event) => handleImageChange(event, "edit")}
-              />
-              <div
-                className="absolute bottom-0 left-0 p-6 w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(isEditingSelected ? editFormData.type : selectedNews.type) }}>
-                  {isEditingSelected ? editFormData.type : selectedNews.type}
-                </span>
-                <div className="flex items-end justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    {isEditingSelected ? (
-                      <input
-                        type="text"
-                        value={editFormData.title}
-                        onChange={(e) => setEditFormData((prev) => ({ ...prev, title: e.target.value }))}
-                        className="w-full bg-transparent border-b border-white/50 text-2xl md:text-3xl font-extrabold text-white leading-tight outline-none focus:border-white"
-                      />
-                    ) : (
-                      <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-tight">{selectedNews.title}</h2>
-                    )}
-                  </div>
 
-                  {!isEditingSelected && canEditSelected && (
-                    <div className="flex items-center gap-2">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeNewsModal} />
+          <div className="relative w-full md:w-[96vw] xl:w-[92vw] max-w-[1700px] h-[90vh] md:h-[88vh] overflow-y-auto md:overflow-hidden tdt-scrollbar modal-main">
+            {isEditingSelected ? (
+              <div className="h-full flex flex-col md:grid md:grid-cols-12 md:min-h-0 md:overflow-hidden">
+                <div
+                  className="relative h-56 md:h-full md:col-span-4 w-full cursor-pointer overflow-hidden"
+                  onClick={() => {
+                    editImageInputRef.current?.click();
+                  }}
+                >
+                  <img src={editImagePreview || selectedNews.image} alt={selectedNews.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+                  <div className="absolute inset-0 flex items-center justify-center text-white/90 text-sm font-bold tracking-wider uppercase bg-black/25">
+                    Click para cambiar imagen
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeNewsModal();
+                    }}
+                    className="absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                  <input
+                    ref={editImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => handleImageChange(event, "edit")}
+                  />
+                  <div
+                    className="absolute bottom-0 left-0 p-6 w-full"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(editFormData.type) }}>
+                      {editFormData.type}
+                    </span>
+                    <input
+                      type="text"
+                      value={editFormData.title}
+                      onChange={(e) => setEditFormData((prev) => ({ ...prev, title: e.target.value }))}
+                      className="w-full bg-transparent border-b border-white/50 text-2xl md:text-3xl font-extrabold text-white leading-tight outline-none focus:border-white"
+                    />
+                    <div className="mt-3 flex items-center gap-2">
                       <Button
                         type="button"
                         variant="primary"
-                        className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
-                        onClick={startEditSelected}
+                        className="inline-flex items-center justify-center p-2 rounded-xl bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSaveEditedNews();
+                        }}
+                        disabled={submitting}
+                        aria-label="Guardar cambios"
                       >
-                        Editar noticia
+                        <Save size={16} />
                       </Button>
-
-                      {hasDeletePermission && (
-                        <Button
-                          type="button"
-                          variant="cancel"
-                          className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white"
-                          onClick={handleDeleteSelected}
-                        >
-                          Eliminar
-                        </Button>
-                      )}
                     </div>
-                  )}
-
-                  {!isEditingSelected && !canEditSelected && hasDeletePermission && (
-                    <Button
-                      type="button"
-                      variant="cancel"
-                      className="bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white"
-                      onClick={handleDeleteSelected}
-                    >
-                      Eliminar
-                    </Button>
-                  )}
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="p-6 overflow-y-auto tdt-scrollbar space-y-4">
-              {isEditingSelected ? (
-                <>
+                <div className="p-6 space-y-4 md:col-span-8 md:h-full md:min-h-0 md:overflow-y-auto md:tdt-scrollbar md:flex md:flex-col">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Tipo</span>
@@ -681,13 +953,13 @@ function News() {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="md:flex-1 md:min-h-0 md:flex md:flex-col">
                     <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Descripción</span>
                     <textarea
                       rows={6}
                       value={editFormData.description}
                       onChange={(e) => setEditFormData((prev) => ({ ...prev, description: e.target.value }))}
-                      className="w-full bg-transparent border-b border-white/30 text-lg text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none"
+                      className="w-full md:flex-1 md:min-h-0 bg-transparent border-b border-white/30 text-lg text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none"
                       style={{ fontFamily: '"Times New Roman", Times, serif' }}
                     />
                   </div>
@@ -702,123 +974,193 @@ function News() {
                       style={{ fontFamily: '"Times New Roman", Times, serif' }}
                     />
                   </div>
-                </>
-              ) : (
-                <>
-                  <div
-                    className="-mx-6 -mt-6 px-6 py-6 bg-white"
-                    style={{
-                      backgroundImage:
-                        "radial-gradient(rgba(0,0,0,0.06) 0.45px, transparent 0.45px), linear-gradient(0deg, rgba(0,0,0,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px)",
-                      backgroundSize: "3px 3px, 14px 14px, 18px 18px",
-                      backgroundPosition: "0 0, 0 0, 0 0",
-                    }}
-                  >
-                    <div className="flex flex-wrap gap-4 text-xs text-black/65 uppercase tracking-wider font-semibold mb-4">
-                      <span>Fecha: {selectedNews.dateLabel}</span>
-                      <span>Reportero: {selectedNews.Reporter}</span>
-                    </div>
 
-                    <p className="text-2xl text-black text-justify whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-                      {selectedNews.description}
-                    </p>
-
-                    {selectedNews.note ? (
-                      <p className="mt-4 text-base text-black/75 whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-                        Nota: {selectedNews.note}
-                      </p>
-                    ) : null}
-                  </div>
-                </>
-              )}
-
-              <div className="pt-4 border-t border-white/10">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--ins-text-white)] mb-3">
-                  Comentarios
-                </h3>
-
-                <div className="space-y-3 max-h-72 overflow-y-auto pr-1 tdt-scrollbar">
-                  {commentsLoading ? (
-                    <p className="text-sm text-[var(--ins-text-gray)]">Cargando comentarios...</p>
-                  ) : comments.length === 0 ? (
-                    <p className="text-sm text-[var(--ins-text-gray)]">Aun no hay comentarios. Se la primera persona en comentar.</p>
-                  ) : (
-                    comments.map((entry) => (
-                      <div key={entry.id} className="rounded-2xl bg-black/15 p-3 border border-white/5">
-                        <div className="flex items-start gap-3">
-                          <Link
-                            to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
-                            className="w-9 h-9 rounded-full bg-black/35 border border-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center hover:border-[var(--secondary-color)] transition-colors"
-                            title={`Ver jugador ${entry.username || "Usuario"}`}
-                          >
-                            {entry.avatarUrl ? (
-                              <img src={entry.avatarUrl} alt={entry.username || "Usuario"} className="w-full h-full object-cover" />
-                            ) : (
-                              <UserRound size={16} className="text-[var(--ins-text-gray)]" />
-                            )}
-                          </Link>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                              <Link
-                                to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
-                                className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] truncate transition-colors"
-                                title={`Ver jugador ${entry.username || "Usuario"}`}
-                              >
-                                {entry.username || "Usuario"}
-                              </Link>
-                              <span className="text-[11px] text-[var(--ins-text-gray)] whitespace-nowrap">
-                                {entry.createdAt
-                                  ? new Date(entry.createdAt).toLocaleString("es-MX", {
-                                    day: "2-digit",
-                                    month: "short",
-                                    year: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })
-                                  : ""}
-                              </span>
-                            </div>
-                            <p className="text-sm text-[var(--ins-text-white)] whitespace-pre-wrap break-words">
-                              {entry.comment}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="mt-3 flex flex-col gap-2">
-                  <textarea
-                    rows={3}
-                    value={commentText}
-                    onChange={(event) => setCommentText(event.target.value)}
-                    placeholder="Escribe tu comentario..."
-                    className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
-                    maxLength={1000}
-                  />
-                  <div className="flex items-center justify-end">
-                    <Button
-                      type="button"
-                      variant="primary"
-                      className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
-                      onClick={handleSendComment}
-                      disabled={commentsSubmitting || !String(commentText || "").trim()}
-                    >
-                      Comentar
-                    </Button>
+                  <div className="pt-4 border-t border-white/10 flex items-center justify-end">
+                    <Button type="button" variant="ghost" className="text-white" onClick={cancelEditSelected} disabled={submitting}>Cancelar</Button>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col md:grid md:grid-cols-12 md:h-full md:min-h-0 md:overflow-hidden">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); closeNewsModal(); }}
+                  className="hidden md:inline-flex absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors z-[500]"
+                >
+                  <X size={18} />
+                </button>
 
-            {isEditingSelected && (
-              <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3 bg-black/10">
-                <Button type="button" variant="ghost" className="text-white" onClick={cancelEditSelected} disabled={submitting}>Cancelar</Button>
-                <Button type="button" variant="primary" className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white" onClick={handleSaveEditedNews} disabled={submitting}>
-                  Guardar cambios
-                </Button>
+                <div className="relative h-56 md:h-full md:min-h-0 md:col-span-4 border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
+                  <img src={selectedNews.image} alt={selectedNews.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-b from-black/80 via-black/35 to-transparent" />
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); closeNewsModal(); }}
+                    className="absolute top-4 right-4 md:hidden p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors z-[500]"
+                  >
+                    <X size={18} />
+                  </button>
+                  <div className="absolute bottom-0 md:bottom-auto md:top-0 left-0 p-5 md:p-6 w-full">
+                    <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(selectedNews.type) }}>
+                      {selectedNews.type}
+                    </span>
+                    <div className="flex flex-col gap-3">
+                      <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-tight">
+                        {selectedNews.title}
+                      </h2>
+
+                      {(canEditSelected || hasDeletePermission) && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          {canEditSelected && (
+                            <Button
+                              type="button"
+                              variant="primary"
+                              className="inline-flex items-center justify-center p-2 rounded-xl bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white"
+                              onClick={startEditSelected}
+                              aria-label="Editar noticia"
+                            >
+                              <Pencil size={16} />
+                            </Button>
+                          )}
+                          {hasDeletePermission && (
+                            <Button
+                              type="button"
+                              variant="cancel"
+                              className="inline-flex items-center justify-center p-2 rounded-xl bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white"
+                              onClick={handleDeleteSelected}
+                              aria-label="Eliminar noticia"
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className="px-5 py-5 md:px-6 md:py-6 md:col-span-4 border-b md:border-b-0 md:border-r border-white/10 md:overflow-hidden bg-white h-full flex flex-col"
+                  style={{
+                    backgroundImage: `url(${bgPaperImage})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                  }}
+                >
+                  <div className="flex flex-row gap-4 text-xs text-black uppercase tracking-wider font-semibold mb-8 justify-between">
+                    <span>Fecha: {selectedNews.dateLabel}</span>
+                    <span>Reportero: {selectedNews.Reporter}</span>
+                  </div>
+                  <p className="text-lg md:text-xl text-black text-justify whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                    {selectedNews.description}
+                  </p>
+
+                  {selectedNews.note ? (
+                    <p className="mt-auto pt-6 text-base text-black/75 whitespace-pre-wrap" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                      Nota: {selectedNews.note}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="px-5 py-5 md:px-6 md:py-6 md:col-span-4 md:h-full md:min-h-0 md:overflow-hidden md:flex md:flex-col">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--ins-text-white)] mb-3">
+                    Comentarios
+                  </h3>
+
+                  <div className="mb-4 flex flex-col gap-2">
+                    <div className="relative">
+                      <textarea
+                        rows={3}
+                        value={commentText}
+                        onChange={(event) => setCommentText(event.target.value)}
+                        onKeyDown={handleCommentKeyDown}
+                        placeholder="Escribe tu comentario..."
+                        className="w-full px-4 py-3 pr-14 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
+                        maxLength={1000}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="absolute bottom-2 right-2 p-2 text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] bg-black/30 hover:bg-black/45 rounded-lg"
+                        onClick={handleSendComment}
+                        disabled={commentsSubmitting || !String(commentText || "").trim()}
+                        aria-label="Enviar comentario"
+                      >
+                        <Send size={16} />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 md:flex-1 md:min-h-0 md:overflow-y-auto md:pr-1 md:tdt-scrollbar">
+                    {commentsLoading ? (
+                      <p className="text-sm text-[var(--ins-text-gray)]">Cargando comentarios...</p>
+                    ) : sortedComments.length === 0 ? (
+                      <p className="text-sm text-[var(--ins-text-gray)]">Aun no hay comentarios. Se la primera persona en comentar.</p>
+                    ) : (
+                      sortedComments.map((entry) => (
+                        <div key={entry.id} className="rounded-2xl bg-black/15 p-3 border border-white/5">
+                          <div className="flex items-start gap-3">
+                            <Link
+                              to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
+                              className="w-9 h-9 rounded-full bg-black/35 border border-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center hover:border-[var(--secondary-color)] transition-colors"
+                              title={`Ver jugador ${entry.username || "Usuario"}`}
+                            >
+                              {entry.avatarUrl ? (
+                                <img src={entry.avatarUrl} alt={entry.username || "Usuario"} className="w-full h-full object-cover" />
+                              ) : (
+                                <UserRound size={16} className="text-[var(--ins-text-gray)]" />
+                              )}
+                            </Link>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <Link
+                                  to={`/players?search=${encodeURIComponent(String(entry.username || ""))}`}
+                                  className="text-sm font-semibold text-[var(--secondary-color)] hover:text-[var(--hover-secondary)] truncate transition-colors"
+                                  title={`Ver jugador ${entry.username || "Usuario"}`}
+                                >
+                                  {entry.username || "Usuario"}
+                                </Link>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <span className="text-[11px] text-[var(--ins-text-gray)] whitespace-nowrap">
+                                    {entry.createdAt
+                                      ? new Date(entry.createdAt).toLocaleString("es-MX", {
+                                        day: "2-digit",
+                                        month: "short",
+                                        year: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
+                                      : ""}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 bg-black/20 hover:bg-black/35 border border-white/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                    onClick={() => handleToggleCommentLike(entry.id)}
+                                    disabled={pendingCommentLikes.current.has(entry.id)}
+                                    aria-label={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "Quitar like" : "Dar like"}
+                                  >
+                                    <Heart
+                                      size={12}
+                                      className={(commentLikesMap[entry.id]?.likedByCurrentUser) ? "text-red-500 fill-red-500" : "text-[var(--ins-text-gray)]"}
+                                    />
+                                    <span className="text-[11px] font-semibold text-[var(--ins-text-gray)]">
+                                      {commentLikesMap[entry.id]?.likesCount ?? 0}
+                                    </span>
+                                  </button>
+                                </div>
+                              </div>
+                              <p className="text-sm text-[var(--ins-text-white)] whitespace-pre-wrap break-words">
+                                {entry.comment}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -830,10 +1172,10 @@ function News() {
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeCreateModal} />
           <form
             onSubmit={handleCreateNews}
-            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[95vh] rounded-3xl bg-[var(--ins-background)] shadow-2xl overflow-hidden flex flex-col"
+            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] overflow-hidden flex flex-col md:grid md:grid-cols-12 modal-main"
           >
             <div
-              className="relative h-56 md:h-72 w-full cursor-pointer"
+              className="relative h-56 md:h-full md:col-span-4 w-full cursor-pointer overflow-hidden"
               onClick={() => createImageInputRef.current?.click()}
             >
               <img
@@ -879,7 +1221,7 @@ function News() {
               </div>
             </div>
 
-            <div className="p-6 overflow-y-auto tdt-scrollbar space-y-4">
+            <div className="p-6 overflow-y-auto tdt-scrollbar space-y-4 md:col-span-8 md:min-h-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Tipo</span>
@@ -927,7 +1269,7 @@ function News() {
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-white/10 flex justify-end gap-3 bg-black/10">
+            <div className="px-6 py-4 flex justify-end gap-3 md:col-span-8">
               <Button type="button" variant="ghost" className="text-white" onClick={closeCreateModal}>
                 Cancelar
               </Button>
@@ -938,7 +1280,7 @@ function News() {
           </form>
         </div>
       )}
-    </section>
+    </div>
   );
 }
 

@@ -8,3 +8,4 @@ const router = express.Router();
 router.get('/credential', verifyToken, ctrlCredential.credential);
 
 export default router;
+

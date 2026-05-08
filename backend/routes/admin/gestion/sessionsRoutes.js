@@ -6,7 +6,8 @@ import { checkPermissions } from "../../../middlewares/checkPermissions.js";
 
 const router = express.Router();
 
-router.get("/sessions", verifyToken, checkPermissions(["menu.userscontrol", "menu.users"]), ctrlSessions.getGlobalSessions);
-router.patch("/sessions/:id/revoke", verifyToken, checkPermissions(["menu.userscontrol", "menu.users"]), ctrlSessions.revokeSession);
+router.get('/sessions', verifyToken, checkPermissions(['sessions.view']), ctrlSessions.getGlobalSessions);
+router.patch('/sessions/:id/revoke', verifyToken, checkPermissions(['sessions.edit']), ctrlSessions.revokeSession);
 
 export default router;
+

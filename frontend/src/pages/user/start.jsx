@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Play,
   Download,
@@ -9,12 +9,20 @@ import {
   Clock,
   Trophy,
   Coins,
-  Swords
+  Swords,
+  Users,
+  CircleDashed,
+  Newspaper,
+  Zap,
+  LogOut,
+  Code
 } from "lucide-react";
 import Button from "../../elements/Button";
 import api from "../../api/axios";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import tdtNewsImage from "../../img/tdtnews.png";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import { useNavigate } from "react-router-dom";
+import Runas from "../../img/runas.png";
 
 // ==========================================
 // MOCK DATA: Alertas Globales
@@ -40,6 +48,7 @@ const mockAlerts = [
 function Start() {
   const navigate = useNavigate();
   const currentUsername = localStorage.getItem("username") || "Jugador";
+  const downloadIntervalRef = useRef(null);
 
   // Base local para evolucionar a progreso real desde API sin rehacer la UI.
   const [playerSummary] = useState({
@@ -54,24 +63,48 @@ function Start() {
 
   const [news, setNews] = useState([]);
   const [loadingNews, setLoadingNews] = useState(true);
+  const [progressSummary, setProgressSummary] = useState({
+    totalEmblems: 0,
+    equippedEmblems: 0,
+    totalGoals: 0,
+    completedGoals: 0,
+  });
   const [alerts] = useState(mockAlerts); // Estado para las alertas
 
   useEffect(() => {
-    const loadNews = async () => {
+    const loadStartData = async () => {
       try {
         setLoadingNews(true);
-        const { data } = await api.get("/user/news");
-        const payload = Array.isArray(data) ? data : data?.news;
+        const [newsResponse, progressResponse] = await Promise.allSettled([
+          api.get("/user/news"),
+          api.get("/user/progress/emblems"),
+        ]);
+
+        const newsData = newsResponse.status === "fulfilled" ? newsResponse.value?.data : null;
+        const payload = Array.isArray(newsData) ? newsData : newsData?.news;
         setNews(Array.isArray(payload) ? payload : []);
+
+        if (progressResponse.status === "fulfilled") {
+          const stats = progressResponse.value?.data?.stats || {};
+          setProgressSummary({
+            totalEmblems: Number(stats.totalEmblems) || 0,
+            equippedEmblems: Number(stats.equippedEmblems) || 0,
+            totalGoals: Number(stats.totalGoals) || 0,
+            completedGoals: Number(stats.completedGoals) || 0,
+          });
+        } else {
+          setProgressSummary({ totalEmblems: 0, equippedEmblems: 0, totalGoals: 0, completedGoals: 0 });
+        }
       } catch (error) {
         console.error("Start news load error:", error);
         setNews([]);
+        setProgressSummary({ totalEmblems: 0, equippedEmblems: 0, totalGoals: 0, completedGoals: 0 });
       } finally {
         setLoadingNews(false);
       }
     };
 
-    loadNews();
+    loadStartData();
   }, []);
 
   const normalizedNews = news
@@ -88,7 +121,7 @@ function Start() {
         title: item?.title || "Sin titulo",
         date: dateLabel,
         excerpt: item?.description || item?.excerpt || "",
-        image: item?.image || item?.cover || "https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/key-art/MCV_HOL25Drop_MoM_DotNet_Homepage_2560x932.jpg",
+        image: item?.image || item?.cover || tdtNewsImage,
         fechaRaw: item?.fecha || item?.createdAt || null,
       };
     })
@@ -104,14 +137,31 @@ function Start() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
 
+  useEffect(() => {
+    return () => {
+      if (downloadIntervalRef.current) {
+        clearInterval(downloadIntervalRef.current);
+      }
+    };
+  }, []);
+
   const handlePlayClick = () => {
+    if (isDownloading) return;
+
+    if (downloadIntervalRef.current) {
+      clearInterval(downloadIntervalRef.current);
+    }
+
     setIsDownloading(true);
     setDownloadProgress(0);
 
-    const interval = setInterval(() => {
+    downloadIntervalRef.current = setInterval(() => {
       setDownloadProgress(prev => {
         if (prev >= 100) {
-          clearInterval(interval);
+          if (downloadIntervalRef.current) {
+            clearInterval(downloadIntervalRef.current);
+            downloadIntervalRef.current = null;
+          }
           setTimeout(() => setIsDownloading(false), 1000);
           return 100;
         }
@@ -147,9 +197,9 @@ function Start() {
   };
 
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
+    <div className="min-h-screen h-screen py-15 flex items-start justify-center pb-2 text-[var(--white-color)] z-[1]">
       <LoadingOverlay isVisible={loadingNews} message="Cargando noticias" />
-      <div className="flex-row w-full max-w-7xl px-4 md:mx-10 mx-0">
+      <div className="flex-row w-full  px-0 mx-0 min-h-screen h-screen">
 
         {/* ENCABEZADO */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
@@ -173,7 +223,7 @@ function Start() {
             {alerts.map((alert) => {
               const style = getAlertStyle(alert.level);
               return (
-                <div key={alert.id} className={`flex items-center gap-4 p-4 rounded-2xl ${style.wrapper} transition-all`}>
+                <div key={alert.id} className={`flex items-center gap-4 p-4 rounded-3xl ${style.wrapper} transition-all`}>
                   <div className="flex-shrink-0">
                     {style.icon}
                   </div>
@@ -188,52 +238,126 @@ function Start() {
         {/* ========================================================= */}
         {/* ESTADISTICAS DEL JUGADOR */}
         {/* ========================================================= */}
-        <div className="bg-black/10 rounded-3xl p-6 shadow-md flex flex-col relative overflow-hidden pb-8">
+        <div
+          className="box-main cursor-pointer  p-6 flex flex-col relative overflow-hidden pb-8 "
+          onClick={() => navigate('/progress')}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              navigate('/progress');
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          title="Abrir pagina de progreso"
+        >
 
           <div className="flex items-center justify-between mb-4 relative z-10">
-            <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-widest">Tu Progreso</span>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
+                <CircleDashed size={24} style={{ color: "var(--secondary-color)" }}/>
+                Tu progreso actual
+            </h2>
             <span className="text-[10px] font-bold bg-[var(--secondary-color)]/10 text-[var(--secondary-color)] px-2 py-1 rounded-md">
               TDT
             </span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10">
-            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
-                <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Insignias</p>
-              <div className="p-2 bg-purple-500/10 rounded-xl text-yellow-600">
-                <Trophy size={18} />
-              </div>
-              <div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 ">
+            {/* Card de Insignias */}
+            <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5 ">
+              {/* Capa de Runas (Fondo interno) */}
+              <div
+                className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
+                style={{
+                  backgroundImage: `url(${Runas})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
+                  maskImage: 'linear-gradient(to left, black, transparent)',
+                  // -----------------------
+                  zIndex: 0
+                }}
+              ></div>
+
+              {/* Contenido (Encima de las runas) */}
+              <div className="relative z-10 w-full">
+                <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider">Insignias</p>
+
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="p-2 bg-purple-500/20 rounded-xl text-yellow-500 ">
+                    <Trophy size={18} />
+                  </div>
+                  <span className="text-sm font-bold text-white">{progressSummary.totalEmblems}</span>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
+            <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5">
+              <div
+                className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
+                style={{
+                  backgroundImage: `url(${Runas})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
+                  maskImage: 'linear-gradient(to left, black, transparent)',
+                  // -----------------------
+                  zIndex: 0
+                }}
+              ></div>
               <div>
-                <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Tiempo Jugado</p>
-              </div>
-              <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 flex-row items-center gap-4 flex">
-                <Clock size={18} />
-                <p className="text-sm font-extrabold text-[var(--ins-text-white)]">142h 30m</p>
+                <div>
+                  <p className="text-[10px] font-bold  uppercase">Tiempo Jugado</p>
+                </div>
+                <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 flex-row items-center gap-4 flex">
+                  <Clock size={18} />
+                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.equippedEmblems}</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
-              <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Monedas</p>
-              <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-600 flex-row items-center gap-4 flex">
-                <Coins size={18} />
-                <p className="text-sm font-extrabold text-[var(--ins-text-white)]">$15,420</p>
-              </div>
+            <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5">
+              <div
+                className="absolute inset-0 opacity-10 group-hover:opacity-5 transition-opacity duration-500 "
+                style={{
+                  backgroundImage: `url(${Runas})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
+                  maskImage: 'linear-gradient(to left, black, transparent)',
+                  // -----------------------
+                  zIndex: 0
+                }}
+              ></div>
+
               <div>
+                <p className="text-[10px] font-bold  uppercase">Logros</p>
+                <div className="p-2 bg-emerald-500/10 rounded-3xl text-emerald-600 flex-row items-center gap-4 flex">
+                  <Coins size={18} />
+                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.totalGoals}</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white/5 p-3 rounded-2xl flex flex-col items-start gap-2">
-              <p className="text-[10px] font-bold text-[var(--ins-text-gray)] uppercase">Kills / Muertes</p>
-              <div className="p-2 bg-red-500/10 rounded-xl text-red-300 flex-row items-center gap-4 flex">
-                <Swords size={18} />
-                <p className="text-sm font-extrabold text-[var(--ins-text-white)]">34 / 12</p>
-              </div>
+            <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5">
+              <div
+                className="absolute inset-0 opacity-10 group-hover:opacity-5 transition-opacity duration-500 "
+                style={{
+                  backgroundImage: `url(${Runas})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
+                  maskImage: 'linear-gradient(to left, black, transparent)',
+                  // -----------------------
+                  zIndex: 0
+                }}
+              ></div>
               <div>
+                <p className="text-[10px] font-bold  uppercase">Completados</p>
+                <div className="p-2 bg-red-500/10 rounded-3xl text-red-300 flex-row items-center gap-4 flex">
+                  <Swords size={18} />
+                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.completedGoals}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -241,12 +365,23 @@ function Start() {
         </div>
         {/* CONTENIDO PRINCIPAL*/}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-          <div className="col-span-2 flex flex-col gap-6">
+          <div className="col-span-2 flex flex-col gap-6 p-8 max-h-120 box-main cursor-pointer   ">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
+              <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
+              Ultima noticia destacada
+            </h2>
             {featuredNews && (
               <div
-                className="relative h-80 w-full rounded-3xl overflow-hidden shadow-md group cursor-pointer"
+                className="relative h-80 w-full rounded-3xl overflow-hidden cursor-pointer box-main group focus:outline-none focus:ring-2 focus:ring-[var(--secondary-color)]/60"
                 onClick={() => goToNewsDetail(featuredNews.id)}
-                onDoubleClick={() => goToNewsDetail(featuredNews.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    goToNewsDetail(featuredNews.id);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
                 <img
                   src={featuredNews.image}
@@ -256,7 +391,7 @@ function Start() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
                 <div className="absolute bottom-0 left-0 p-8 w-full">
-                  <span className={`inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3 ${getBadgeColor(featuredNews.type)}`}>
+                  <span className={`inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-3xl mb-3 ${getBadgeColor(featuredNews.type)}`}>
                     {featuredNews.type}
                   </span>
                   <h2 className="text-3xl font-extrabold text-white mb-2 drop-shadow-lg leading-tight">
@@ -268,14 +403,20 @@ function Start() {
                 </div>
               </div>
             )}
+            {!featuredNews && (
+              <div className="h-80 w-full rounded-3xl border border-white/10 bg-black/15 flex items-center justify-center text-sm text-[var(--ins-text-gray)]">
+                No hay noticias destacadas por ahora.
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="bg-black/10 rounded-3xl p-6 shadow-md h-80 flex flex-col items-center text-center relative overflow-hidden gap-5">
-              <div className="absolute -top-24 -right-24 w-48 h-48 bg-black/10 rounded-full blur-2xl"></div>
-
-              <div className="w-full mb-3 relative z-10">
-                <span className="text-xs font-bold text-[var(--white-color)] uppercase tracking-widest">¿Aún no lo instalas?</span>
+            <div className="box-main cursor-pointer p-6 min-h-[30rem] flex flex-col items-center relative overflow-hidden gap-5">
+              <div className="w-full relative z-10">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
+                  <Play size={24} style={{ color: "var(--secondary-color)" }}/>
+                  ¿Aun no lo instalas?
+                </h2>
               </div>
 
               <div className="w-full relative z-10">
@@ -299,7 +440,7 @@ function Start() {
                     variant="primary"
                     size="lg"
                     fullWidth
-                    className="py-5 text-xl tracking-wide shadow-lg shadow-[var(--secondary-color)]/30 hover:shadow-[var(--secondary-color)]/50"
+                    // className="py-5 text-xl tracking-wide shadow-lg shadow-[var(--secondary-color)]/30 hover:shadow-[var(--secondary-color)]/50"
                     onClick={handlePlayClick}
                   >
                     <Play size={24} fill="currentColor" /> Descargar
@@ -312,20 +453,78 @@ function Start() {
                 size="lg"
                 target={"_blank"}
                 fullWidth
-                className="py-5 text-xl tracking-wide shadow-lg shadow-[var(--secondary-color)]/30 hover:shadow-[var(--secondary-color)]/50"
+                // className="py-5 text-xl tracking-wide shadow-lg shadow-[var(--secondary-color)]/30 hover:shadow-[var(--secondary-color)]/50"
                 href="https://discord.gg/tdt3"
               >
                 Únete a Discord
               </Button>
 
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-[var(--white-color)]">
-                <Server size={14} /> Servidor en línea • 124 Jugadores
+              <div className="mt-0  flex items-center justify-center gap-2 text-xs font-bold text-[var(--white-color)]">
+                {/* <Server size={14} /> Servidor en línea • 124 Jugadores */}
+              </div>
+              <div className="w-full relative z-10">
+                <h2 className="text-xl font-bold  flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
+                  <Zap size={24} style={{ color: "var(--secondary-color)" }}/>
+                  Acceso rápido
+                </h2>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-align-center mt-4 relative z-10">
+                <button
+                  onClick={() => navigate('/commands')}
+                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-blue-500/20 hover:bg-amber-500/30 transition-colors shadow-md"
+                  type="button"
+                >
+                  <Code size={28} className="text-blue-500" />
+                  {/* <span className="text-xs font-bold text-amber-500 uppercase">Tickets</span> */}
+                </button>
+                <button
+                  onClick={() => navigate('/community')}
+                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-[var(--white-color)]/20 hover:bg-[var(--secondary-color)]/30 transition-colors shadow-md"
+                  type="button"
+                >
+                  <Users size={28} className="text-[var(--white-color)]" />
+                  {/* <span className="text-xs font-bold text-[var(--secondary-color)] uppercase">Comunidades</span> */}
+                </button>
+                <button
+                  onClick={() => navigate('/tickets')}
+                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 transition-colors shadow-md"
+                  type="button"
+                >
+                  <AlertTriangle size={28} className="text-amber-500" />
+                  {/* <span className="text-xs font-bold text-amber-500 uppercase">Tickets</span> */}
+                </button>
+                <button
+                  onClick={() => navigate('/logout')}
+                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-red-500/20 hover:bg-red-500/30 transition-colors shadow-md"
+                  type="button"
+                >
+                  <LogOut size={28} className="text-red-500" />
+                  {/* <span className="text-xs font-bold text-red-500 uppercase">Cerrar sesión</span> */}
+                </button>
               </div>
             </div>
           </div>
+
         </div>
+        {/* ========================================================= */}
+        {/* ACCESOS DIRECTOS RÁPIDOS */}
+        {/* ========================================================= */}
+        {/* <div className="flex gap-4 mt-8 mb-8 w-full justify-center w-full box-main p-6 shadow-md relative overflow-hidden ">
+          <div
+            className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
+            style={{
+              backgroundImage: `url(${Runas})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
+              maskImage: 'linear-gradient(to left, black, transparent)',
+              // -----------------------
+              zIndex: 0
+            }}
+          ></div>
+        </div> */}
       </div>
-    </section>
+    </div>
   );
 }
 

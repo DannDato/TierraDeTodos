@@ -1,26 +1,127 @@
-import { useState, useEffect, useRef } from "react";
-import { LogOut, PencilIcon, Monitor, ShieldAlert } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { LogOut, PencilIcon, Monitor, ShieldAlert, User, Info, X } from "lucide-react";
+
 import Button from "../../elements/Button";
 import Input from "../../elements/Input";
 import FilePickerButton from "../../elements/FilePickerButton";
 import AlertModal from "../../elements/AlertModal";
 import api from "../../api/axios";
-import Credencial from "../../components/Credencial";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import Credencial from "../../components/user/Credencial";
+import InfoRow from "../../elements/InfoRow";
+
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 
 function Profile() {
+    // User state must be declared first
+    const [user, setUser] = useState(null);
+
+    // Inline edit state for profile info
+    const [editProfileMode, setEditProfileMode] = useState(false);
+    const [editUsername, setEditUsername] = useState("");
+    const [editEmail, setEditEmail] = useState("");
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const [profileError, setProfileError] = useState("");
+    const [profileSuccess, setProfileSuccess] = useState("");
+    const [showEmailVerification, setShowEmailVerification] = useState(false);
+    const [emailVerificationCode, setEmailVerificationCode] = useState("");
+    const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+
+    // Keep edit fields in sync with user data
+    useEffect(() => {
+      if (user && !editProfileMode) {
+        setEditUsername(user.username || "");
+        setEditEmail(user.email || "");
+      }
+    }, [user, editProfileMode]);
+
+    const handleCancelEdit = () => {
+      setEditProfileMode(false);
+      setEditUsername(user?.username || "");
+      setEditEmail(user?.email || "");
+      setProfileError("");
+      setProfileSuccess("");
+    };
+
+    const handleSaveProfile = async () => {
+      setProfileError("");
+      setProfileSuccess("");
+      setIsSavingProfile(true);
+      let changed = false;
+      try {
+        // Save username if changed
+        if (editUsername !== user.username) {
+          await api.patch("/user/profile/username", { newUsername: editUsername });
+          setUser((prev) => ({ ...prev, username: editUsername }));
+          changed = true;
+        }
+        // Save email if changed
+        if (editEmail !== user.email) {
+          await api.patch("/user/profile/email", { newEmail: editEmail });
+          setShowEmailVerification(true);
+          setEditProfileMode(false);
+          setIsSavingProfile(false);
+          setProfileSuccess("Se envió un código de verificación al nuevo correo. Ingresa el código para confirmar el cambio.");
+          return;
+        }
+        if (changed) {
+          setProfileSuccess("Datos actualizados correctamente.");
+        }
+        setEditProfileMode(false);
+      } catch (err) {
+        setProfileError(err.response?.data?.message || err.message || "No se pudo actualizar el perfil");
+      } finally {
+        setIsSavingProfile(false);
+      }
+    };
+
+    const handleVerifyEmailCode = async () => {
+      setIsVerifyingEmail(true);
+      setProfileError("");
+      setProfileSuccess("");
+      try {
+        await api.post("/user/profile/verify-change", {
+          code: emailVerificationCode,
+          email: editEmail,
+        });
+        setUser((prev) => ({ ...prev, email: editEmail }));
+        setShowEmailVerification(false);
+        setProfileSuccess("Correo verificado y actualizado correctamente.");
+      } catch (err) {
+        setProfileError(err.response?.data?.message || err.message || "No se pudo verificar el código");
+      } finally {
+        setIsVerifyingEmail(false);
+      }
+    };
   const currentUser = { username:localStorage.getItem("username"), role: localStorage.getItem("role") };
 
-  const [isFlipped, setIsFlipped] = useState(false);
+  // Cambiar contraseña (deben estar dentro del componente)
+  const [showPasswordAlert, setShowPasswordAlert] = useState(false);
+  const [showPasswordSuccess, setShowPasswordSuccess] = useState(false);
+  const [showPasswordError, setShowPasswordError] = useState(false);
+  const [isLoadingPassword, setIsLoadingPassword] = useState(false);
+
+
+  const handleChangePassword = async () => {
+    setShowPasswordAlert(false);
+    setIsLoadingPassword(true);
+    try {
+      await api.post("/auth/request-password-recovery", { email: user.email });
+      setShowPasswordSuccess(true);
+    } catch (err) {
+      setShowPasswordError(true);
+    } finally {
+      setIsLoadingPassword(false);
+    }
+  };
+
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
   const [isSavingAvatarPosition, setIsSavingAvatarPosition] = useState(false);
   const [showDeleteAvatarAlert, setShowDeleteAvatarAlert] = useState(false);
-  const [user, setUser] = useState(null);
-  const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [logoutMode, setLogoutMode] = useState("current");
+  const [revokingDeviceId, setRevokingDeviceId] = useState(null);
   const [avatarDraft, setAvatarDraft] = useState({ posX: 50, posY: 50, zoom: 1 });
   const [streamerForm, setStreamerForm] = useState({
     link: "",
@@ -31,7 +132,16 @@ function Profile() {
   const [isLoadingStreamer, setIsLoadingStreamer] = useState(false);
   const [isSavingStreamer, setIsSavingStreamer] = useState(false);
   const [streamerNotice, setStreamerNotice] = useState("");
+  const [infoModal, setInfoModal] = useState({ isOpen: false, type: "info", title: "Aviso", message: "" });
   const avatarInputRef = useRef(null);
+
+  const openInfoModal = ({ type = "info", title = "Aviso", message = "" }) => {
+    setInfoModal({ isOpen: true, type, title, message });
+  };
+
+  const closeInfoModal = () => {
+    setInfoModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -55,8 +165,7 @@ function Profile() {
           err.message ||
           "No se pudo cargar la información del perfil";
 
-        setError(message);
-        setShowAlert(true);
+        openInfoModal({ type: "error", title: "Error al cargar perfil", message });
 
         if (err.response?.status === 401) {
           localStorage.removeItem("token");
@@ -81,10 +190,45 @@ function Profile() {
     }
   };
 
-  const showAlertLogout = (mode = "current") => {
+  const showAlertLogout = useCallback((mode = "current") => {
     setLogoutMode(mode);
     setShowAlert(true);
+  }, []);
+
+  const handleRevokeDevice = async (device) => {
+    if (revokingDeviceId) return;
+    setRevokingDeviceId(device.id);
+    try {
+      const { data } = await api.delete(`/user/profile/devices/${device.id}`);
+      if (data?.redirectToLogin) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return;
+      }
+      setUser((prev) => ({
+        ...prev,
+        devices: (prev.devices || []).filter((d) => d.id !== device.id),
+      }));
+    } catch (err) {
+      openInfoModal({
+        type: "error",
+        title: "Error al cerrar sesión",
+        message: err.response?.data?.message || "No se pudo cerrar la sesión en ese dispositivo.",
+      });
+    } finally {
+      setRevokingDeviceId(null);
+    }
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== "Escape") return;
+      if (isAvatarEditorOpen) { setIsAvatarEditorOpen(false); return; }
+      if (isAvatarMenuOpen) { setIsAvatarMenuOpen(false); }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isAvatarEditorOpen, isAvatarMenuOpen]);
 
   const triggerAvatarPicker = () => {
     if (isUploadingAvatar) return;
@@ -135,7 +279,7 @@ function Profile() {
       setIsAvatarEditorOpen(false);
     } catch (err) {
       const message = err.response?.data?.message || err.message || "No se pudo eliminar el avatar";
-      window.alert(message);
+      openInfoModal({ type: "error", title: "Error al eliminar avatar", message });
     }
   };
 
@@ -160,7 +304,7 @@ function Profile() {
       setIsAvatarEditorOpen(false);
     } catch (err) {
       const message = err.response?.data?.message || err.message || "No se pudo guardar el encuadre";
-      window.alert(message);
+      openInfoModal({ type: "error", title: "Error al guardar encuadre", message });
     } finally {
       setIsSavingAvatarPosition(false);
     }
@@ -173,12 +317,12 @@ function Profile() {
     if (!file) return;
 
     if (!file.type?.startsWith("image/")) {
-      window.alert("Solo se permiten imágenes");
+      openInfoModal({ type: "warning", title: "Archivo no válido", message: "Solo se permiten imágenes" });
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      window.alert("La imagen no debe superar 5MB");
+      openInfoModal({ type: "warning", title: "Archivo demasiado grande", message: "La imagen no debe superar 5MB" });
       return;
     }
 
@@ -209,7 +353,7 @@ function Profile() {
       }
     } catch (err) {
       const message = err.response?.data?.message || err.message || "No se pudo subir el avatar";
-      window.alert(message);
+      openInfoModal({ type: "error", title: "Error al subir avatar", message });
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -287,12 +431,12 @@ function Profile() {
     }
 
     if (!file.type?.startsWith("image/")) {
-      window.alert("Solo se permiten imágenes");
+      openInfoModal({ type: "warning", title: "Archivo no válido", message: "Solo se permiten imágenes" });
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      window.alert("La imagen no debe superar 5MB");
+      openInfoModal({ type: "warning", title: "Archivo demasiado grande", message: "La imagen no debe superar 5MB" });
       return;
     }
 
@@ -349,11 +493,13 @@ function Profile() {
   };
 
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
+    <section className="min-h-screen py-15 flex items-start justify-center pb-24 min-h-screen h-screen">
+
       <LoadingOverlay
-        isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer}
-        message={!user ? "Cargando cuenta..." : "Guardando cambios..."}
+        isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer || isLoadingPassword || isSavingProfile}
+        message={isLoadingPassword ? "Enviando correo de recuperación..." : isSavingProfile ? "Guardando perfil..." : (!user ? "Cargando cuenta..." : "Guardando cambios...")}
       />
+
 
       <AlertModal
         isOpen={showAlert}
@@ -362,6 +508,40 @@ function Profile() {
         message={logoutMode === "all" ? "Estas a punto de cerrar sesión en todos los dispositivos." : "Estas a punto de cerrar sesión."}
         onClose={() => setShowAlert(false)}
         onConfirm={handleLogout}
+      />
+
+      {/* Cambiar contraseña: alerta de confirmación */}
+      <AlertModal
+        isOpen={showPasswordAlert}
+        type="warning"
+        title="Cambiar contraseña"
+        message="Se enviará un correo a tu cuenta para que puedas restablecer tu contraseña. ¿Deseas continuar?"
+        onClose={() => setShowPasswordAlert(false)}
+        onConfirm={handleChangePassword}
+        cancelText="Cancelar"
+        confirmText="Aceptar"
+      />
+
+      {/* Cambiar contraseña: éxito */}
+      <AlertModal
+        isOpen={showPasswordSuccess}
+        type="success"
+        title="Correo enviado"
+        message="Revisa tu correo y sigue los pasos para cambiar tu contraseña."
+        onClose={() => setShowPasswordSuccess(false)}
+        confirmText="Cerrar"
+        cancelText=""
+      />
+
+      {/* Cambiar contraseña: error */}
+      <AlertModal
+        isOpen={showPasswordError}
+        type="error"
+        title="Error al enviar correo"
+        message="No se pudo enviar el correo de recuperación. Intenta más tarde."
+        onClose={() => setShowPasswordError(false)}
+        confirmText="Cerrar"
+        cancelText=""
       />
 
       <AlertModal
@@ -373,17 +553,27 @@ function Profile() {
         onConfirm={handleDeleteAvatar}
       />
 
+      <AlertModal
+        isOpen={infoModal.isOpen}
+        type={infoModal.type}
+        title={infoModal.title}
+        message={infoModal.message}
+        onClose={closeInfoModal}
+        onConfirm={closeInfoModal}
+        cancelText=""
+      />
+
       {user && (
-      <div className="w-full max-w-7xl px-4 md:px-8 text-[var(--ins-text-white)]">
+      <div className="w-full  px-0 mx-0 text-[var(--ins-text-white)]">
 
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
 
-          <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+          <div className="px-2">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-2">
               <span>{currentUser.role}</span>
               <span>/</span>
-              <span className="text-[var(--secondary-color)]">Credencial</span>
+              <span className="text-[var(--secondary-color)]">Perfil</span>
             </div>
 
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
@@ -395,52 +585,157 @@ function Profile() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="primary" size="sm" className="flex items-center gap-2 shadow-sm">
-              <PencilIcon size={16} /> Editar Perfil
-            </Button>
-
-            <Button
-              variant="cancel"
-              size="sm"
-              className="flex items-center gap-2 shadow-sm"
-              onClick={() => showAlertLogout("current")}
-            >
-              <LogOut size={16} /> Cerrar Sesión
-            </Button>
-          </div>
-
         </div>
 
         {/* MAIN CONTENT - CREDENTIAL + INFO */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="flex flex-col lg:flex-row gap-8 items-start ">
 
           {/* LEFT: CREDENTIAL */}
-          <Credencial
-            user={user}
-            currentStatus={currentStatus}
-            isInactiveStatus={isInactiveStatus}
-            isCancelledStatus={isCancelledStatus}
-            isFlipped={isFlipped}
-            onToggleFlip={() => setIsFlipped(!isFlipped)}
-            avatarInputRef={avatarInputRef}
-            onAvatarInputChange={handleAvatarInputChange}
-            onAvatarClick={handleAvatarClick}
-            isUploadingAvatar={isUploadingAvatar}
-            isSavingAvatarPosition={isSavingAvatarPosition}
-            avatarPreview={avatarPreview}
-            avatarImageStyle={avatarImageStyle}
-            isAvatarMenuOpen={isAvatarMenuOpen}
-            onOpenAvatarEditor={openAvatarEditor}
-            onTriggerAvatarPicker={triggerAvatarPicker}
-            onRequestDeleteAvatar={requestDeleteAvatar}
-          />
+          <div className="w-full lg:w-auto flex flex-col items-center gap-3">
+            <Credencial
+              user={user}
+              currentStatus={currentStatus}
+              isInactiveStatus={isInactiveStatus}
+              isCancelledStatus={isCancelledStatus}
+              avatarInputRef={avatarInputRef}
+              onAvatarInputChange={handleAvatarInputChange}
+              onAvatarClick={handleAvatarClick}
+              isUploadingAvatar={isUploadingAvatar}
+              isSavingAvatarPosition={isSavingAvatarPosition}
+              avatarPreview={avatarPreview}
+              avatarImageStyle={avatarImageStyle}
+              isAvatarMenuOpen={isAvatarMenuOpen}
+              onOpenAvatarEditor={openAvatarEditor}
+              onTriggerAvatarPicker={triggerAvatarPicker}
+              onRequestDeleteAvatar={requestDeleteAvatar}
+            />
+          </div>
 
           {/* RIGHT: ADDITIONAL INFO - SIN CAMBIOS */}
           <div className="w-full lg:flex-1 min-w-0 space-y-6">
+            {/* INFORMACION */}
+            <div className="box-main p-6">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <User size={24} className="text-[var(--secondary-color)]" />
+                Tu información
+              </h2>
+
+              {/* Inline Edit State */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <div>
+                  <InfoRow
+                    icon={<Monitor size={16} />}
+                    label="Nombre de usuario"
+                    value={editProfileMode ? (
+                      <Input
+                        value={editUsername}
+                        onChange={e => setEditUsername(e.target.value)}
+                        disabled={isSavingProfile}
+                        className="text-lg font-bold mt-1"
+                      />
+                    ) : (
+                      user.username
+                    )}
+                  />
+                </div>
+                <div>
+                  <InfoRow
+                    icon={<ShieldAlert size={16} />}
+                    label="Correo electrónico"
+                    value={editProfileMode ? (
+                      <Input
+                        value={editEmail}
+                        onChange={e => setEditEmail(e.target.value)}
+                        disabled={isSavingProfile}
+                        className="text-lg font-bold mt-1"
+                      />
+                    ) : (
+                      user.email
+                    )}
+                  />
+                </div>
+                <div className="flex md:justify-end mt-2 md:mt-0 gap-2">
+                  {editProfileMode ? (
+                    <>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleSaveProfile}
+                        disabled={isSavingProfile || (!editUsername || !editEmail) || (editUsername === user.username && editEmail === user.email)}
+                      >
+                        Guardar
+                      </Button>
+                      <Button
+                        variant="cancel"
+                        size="sm"
+                        onClick={handleCancelEdit}
+                        disabled={isSavingProfile}
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="flex items-center gap-2 shadow-sm"
+                      onClick={() => {
+                        setEditProfileMode(true);
+                        setEditUsername(user.username);
+                        setEditEmail(user.email);
+                        setProfileError("");
+                      }}
+                    >
+                      <PencilIcon size={16} /> Editar Perfil
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Verification code input for email change */}
+              {showEmailVerification && (
+                <div className="mt-4">
+                  <p className="text-xs text-[var(--ins-text-gray)] mb-2">Código de verificación enviado al nuevo correo</p>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={emailVerificationCode}
+                      onChange={e => setEmailVerificationCode(e.target.value)}
+                      disabled={isVerifyingEmail}
+                      placeholder="Ingresa el código"
+                      className="max-w-[180px]"
+                    />
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleVerifyEmailCode}
+                      disabled={isVerifyingEmail || !emailVerificationCode}
+                    >
+                      Verificar
+                    </Button>
+                    <Button
+                      variant="cancel"
+                      size="sm"
+                      onClick={() => setShowEmailVerification(false)}
+                      disabled={isVerifyingEmail}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+
+              {profileError && (
+                <div className="mt-2 text-[var(--danger-color)] text-sm font-semibold">{profileError}</div>
+              )}
+              {profileSuccess && (
+                <div className="mt-2 text-emerald-400 text-sm font-semibold">{profileSuccess}</div>
+              )}
+            </div>
+
 
             {/* STATUS */}
-            <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm">
+            <div className="box-main p-6">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-full"
@@ -449,28 +744,29 @@ function Profile() {
                 Estatus Actual
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="bg-white/5 p-4 rounded-lg">
-                  <span className="text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-wider block">
-                    Estado
-                  </span>
-                  <span className="text-lg font-bold" style={{ color: currentStatus.color }}>
-                    {currentStatus.label}
-                  </span>
-                </div>
-
-                <div>
-                  <span className="text-[var(--ins-text-gray)] text-xs uppercase font-bold block mb-1">Motivo</span>
-                  <p className="font-semibold text-sm leading-relaxed break-words">{statusReason}</p>
-                </div>
-
-                <div>
-                  <span className="text-[var(--ins-text-gray)] text-xs uppercase font-bold block mb-1">Actualizado por</span>
-                  <p className="font-semibold text-sm">{user.status_changed_by || "Sistema"}</p>
-                  <p className="text-xs text-[var(--ins-text-gray)] mt-1">
-                    {user.status_changed_at ? new Date(user.status_changed_at).toLocaleDateString() : "N/A"}
-                  </p>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 h-20 ">
+                <InfoRow
+                  icon={<Monitor size={16} />}
+                  label="Estatus"
+                  value={<span className="text-lg font-bold" style={{ color: currentStatus.color }}>{currentStatus.label}</span>}
+                />
+                <InfoRow
+                  icon={<Info size={16} />}
+                  label="Motivo"
+                  value={<p className="font-semibold text-sm leading-relaxed break-words">{statusReason}</p>}
+                />
+                <InfoRow
+                  icon={<Info size={16} />}
+                  label="Actualizado por"
+                  value={
+                    <>
+                      <p className="font-semibold text-sm">{user.status_changed_by || "Sistema"}</p>
+                      <p className="text-xs text-[var(--ins-text-gray)] mt-1">
+                        {user.status_changed_at ? new Date(user.status_changed_at).toLocaleDateString() : "N/A"}
+                      </p>
+                    </>
+                  }
+                />
               </div>
 
               {isCancelledStatus && (
@@ -488,7 +784,7 @@ function Profile() {
             </div>
 
             {isStreamerRole && (
-              <form className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm space-y-4" onSubmit={handleStreamerSubmit}>
+              <form className="box-main p-6 space-y-4" onSubmit={handleStreamerSubmit}>
                 <h2 className="text-xl font-bold">Perfil de Streamer</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -544,12 +840,31 @@ function Profile() {
             )}
 
             {/* SECURITY */}
-            <div className="bg-black/20 rounded-2xl p-6 backdrop-blur-sm">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <ShieldAlert size={20} className="text-[var(--secondary-color)]" />
-                Seguridad
-              </h2>
-
+            <div className="box-main p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <ShieldAlert size={20} className="text-[var(--secondary-color)]" />
+                  Seguridad
+                </h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full md:w-auto "
+                    onClick={() => setShowPasswordAlert(true)}
+                  >
+                    Cambiar contraseña
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center "
+                    onClick={() => showAlertLogout("current")}
+                  >
+                    <LogOut size={16} /> Cerrar Sesión
+                  </Button>
+                </div>
+              </div>
               <div className="space-y-3 max-h-64 overflow-y-auto pr-2 tdt-scrollbar">
                 {user.devices?.map((device) => (
                   <div
@@ -579,6 +894,17 @@ function Profile() {
                           </p>
                         </div>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs flex items-center gap-1 shrink-0 ml-2"
+                        onClick={() => handleRevokeDevice(device)}
+                        disabled={revokingDeviceId === device.id}
+                        title={device.isCurrent ? "Cerrar sesión actual" : "Cerrar sesión en este dispositivo"}
+                      >
+                        <LogOut size={13} />
+                        {revokingDeviceId === device.id ? "..." : "Cerrar"}
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -617,8 +943,18 @@ function Profile() {
 
       {user && isAvatarEditorOpen && avatarPreview && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl bg-[#151515] p-5 space-y-4">
-            <h3 className="text-lg font-bold text-white">Ajustar avatar</h3>
+          <div className="w-full max-w-md rounded-3xl bg-[#151515] p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white">Ajustar avatar</h3>
+              <button
+                type="button"
+                onClick={() => setIsAvatarEditorOpen(false)}
+                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                aria-label="Cerrar"
+              >
+                <X size={16} />
+              </button>
+            </div>
 
             <div className="mx-auto w-40 h-48 minecraft-mugshot rounded overflow-hidden p-1.5">
               <img

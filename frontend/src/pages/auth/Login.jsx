@@ -5,9 +5,10 @@ import { useState } from "react";
 import Input from "../../elements/Input";
 import Button from "../../elements/Button";
 import Banner from "../../elements/Banner";
-import Footer from "../../components/Footer";
-import LoadingOverlay from "../../components/LoadingOverlay";
-import SocialsAuth from "../../components/SocialsAuth";
+import Footer from "../../components/home/Footer";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
+import SocialsAuth from "../../components/auth/SocialsAuth";
+import { setPendingVerifyAccessUser, setVerifyAccessResendAvailableAt } from "../../utils/verifyAccessStorage";
 
 import { ArrowLeft, Pencil } from "lucide-react";
 
@@ -39,8 +40,8 @@ function Login() {
 
       // nvo dispositivo
       if (data.type === "new_device") {
-        // return navigate("/verifyAccess", { state: { usuario } });
-        localStorage.setItem("tempUser", usuario);
+        setPendingVerifyAccessUser(usuario);
+        setVerifyAccessResendAvailableAt(Date.now() + 60_000);
         return navigate("/verifyAccess");
       }
 
@@ -99,7 +100,7 @@ function Login() {
               />
 
               <div className="flex justify-end">
-                <a href="/forgot-password"
+                <a href="/password-recovery"
                    className="text-xs font-semibold text-[var(--ins-text-dark)] hover:text-[var(--secondary-color)] transition-colors">
                   ¿Olvidaste tu contraseña?
                 </a>

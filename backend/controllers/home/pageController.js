@@ -1,8 +1,9 @@
 import { models } from '../../models/index.js';
 import { Op } from 'sequelize';
+import handleError from '../../handlers/handleError.js';
 
 class PageController {
-	getLatestNews = async (_req, res) => {
+	getLatestNews = async (req, res) => {
 		try {
 			const minDate = new Date();
 			minDate.setMonth(minDate.getMonth() - 4);
@@ -18,17 +19,24 @@ class PageController {
 				attributes: ['id', 'type', 'title', 'fecha', 'description', 'image', 'Reporter']
 			});
 
+			await req.logAction({
+				accion: 'Noticias publicas consultadas',
+				apartado: 'Home',
+				userId: req.user?.id,
+				username: req.user?.username,
+				valor: `news=${newsRows.length}`,
+				type: 'info'
+			});
+
 			return res.status(200).json({
 				news: newsRows
 			});
-		} catch (_error) {
-			return res.status(500).json({
-				message: 'Error interno del servidor'
-			});
+		} catch (error) {
+			return handleError(res, req, error, 'Error al obtener noticias publicas');
 		}
 	};
 
-	getActiveEditionRules = async (_req, res) => {
+	getActiveEditionRules = async (req, res) => {
 		try {
 			const activeEdition = await models.Edition.findOne({
 				where: { status: 'ACTIVE' },
@@ -52,18 +60,25 @@ class PageController {
 				order: [['sortOrder', 'ASC'], ['id', 'ASC']]
 			});
 
+			await req.logAction({
+				accion: 'Reglas de edicion activa consultadas',
+				apartado: 'Home',
+				userId: req.user?.id,
+				username: req.user?.username,
+				valor: `editionId=${activeEdition.id}; rules=${ruleRows.length}`,
+				type: 'info'
+			});
+
 			return res.status(200).json({
 				edition: activeEdition,
 				rules: ruleRows
 			});
 		} catch (error) {
-			return res.status(500).json({
-				message: 'Error interno del servidor'
-			});
+			return handleError(res, req, error, 'Error al obtener reglas de edicion activa');
 		}
 	};
 
-	getActiveEditionTimeline = async (_req, res) => {
+	getActiveEditionTimeline = async (req, res) => {
 		try {
 			const activeEdition = await models.Edition.findOne({
 				where: { status: 'ACTIVE' },
@@ -87,17 +102,25 @@ class PageController {
 				order: [['date', 'ASC'], ['id', 'ASC']]
 			});
 
+			await req.logAction({
+				accion: 'Timeline de edicion activa consultado',
+				apartado: 'Home',
+				userId: req.user?.id,
+				username: req.user?.username,
+				valor: `editionId=${activeEdition.id}; timeline=${timelineRows.length}`,
+				type: 'info'
+			});
+
 			return res.status(200).json({
 				edition: activeEdition,
 				timeline: timelineRows
 			});
 		} catch (error) {
-			return res.status(500).json({
-				message: 'Error interno del servidor'
-			});
+			return handleError(res, req, error, 'Error al obtener timeline de edicion activa');
 		}
 	};
 }
 
 const ctrlPage = new PageController();
 export { ctrlPage };
+

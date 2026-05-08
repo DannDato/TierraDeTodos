@@ -17,30 +17,57 @@ const sanitizeLinks = (value) => {
 };
 
 class SystemAdminController {
-  getSettings = async (_req, res) => {
+  getSettings = async (req, res) => {
     try {
       const settings = await models.system.findAll({
         order: [['category', 'ASC'], ['key', 'ASC']]
       });
 
+      await req.logAction({
+        accion: 'Configuraciones administrativas consultadas',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `settings=${settings.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ settings });
-    } catch (_error) {
-      return res.status(500).json({ message: 'Error interno del servidor' });
+    } catch (error) {
+      return req.logAction({
+        accion: 'Error al cargar configuraciones administrativas',
+        apartado: 'Gestion',
+        valor: error.message,
+        type: 'error'
+      }).finally(() => res.status(500).json({ message: 'Error interno del servidor' }));
     }
   };
 
-  getLinks = async (_req, res) => {
+  getLinks = async (req, res) => {
     try {
       const row = await models.system.findOne({ where: { key: 'links.social' } });
       const fallback = sanitizeLinks({});
       const links = sanitizeLinks(row?.value || fallback);
 
+      await req.logAction({
+        accion: 'Links administrativos consultados',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        type: 'info'
+      });
+
       return res.status(200).json({
         key: row?.key || 'links.social',
         links,
       });
-    } catch (_error) {
-      return res.status(500).json({ message: 'Error interno del servidor' });
+    } catch (error) {
+      return req.logAction({
+        accion: 'Error al cargar links administrativos',
+        apartado: 'Gestion',
+        valor: error.message,
+        type: 'error'
+      }).finally(() => res.status(500).json({ message: 'Error interno del servidor' }));
     }
   };
 
@@ -70,12 +97,25 @@ class SystemAdminController {
       row.active = true;
       await row.save();
 
+      await req.logAction({
+        accion: 'Links del sistema actualizados',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        type: 'info'
+      });
+
       return res.status(200).json({
         message: 'Links del sistema actualizados correctamente.',
         links,
       });
-    } catch (_error) {
-      return res.status(500).json({ message: 'Error interno del servidor' });
+    } catch (error) {
+      return req.logAction({
+        accion: 'Error al actualizar links del sistema',
+        apartado: 'Gestion',
+        valor: error.message,
+        type: 'error'
+      }).finally(() => res.status(500).json({ message: 'Error interno del servidor' }));
     }
   };
 
@@ -132,15 +172,30 @@ class SystemAdminController {
       row.active = active;
       await row.save();
 
+      await req.logAction({
+        accion: 'Configuracion administrativa guardada',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `key=${key}; valueType=${valueType}; visibility=${visibility}`,
+        type: 'info'
+      });
+
       return res.status(200).json({
         message: 'Configuracion guardada correctamente.',
         setting: row,
       });
-    } catch (_error) {
-      return res.status(500).json({ message: 'Error interno del servidor' });
+    } catch (error) {
+      return req.logAction({
+        accion: 'Error al guardar configuracion administrativa',
+        apartado: 'Gestion',
+        valor: error.message,
+        type: 'error'
+      }).finally(() => res.status(500).json({ message: 'Error interno del servidor' }));
     }
   };
 }
 
 const ctrlSystemAdmin = new SystemAdminController();
 export { ctrlSystemAdmin };
+

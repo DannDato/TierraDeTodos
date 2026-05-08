@@ -4,18 +4,29 @@ import DailyRotateFile from "winston-daily-rotate-file";
 import fs from "fs";
 
 const logDir = "logs";
+const isDevelopment = process.env.NODE_ENV === "development";
 
 // crear carpeta logs si no existe
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
 }
 
+const consoleOnlyAllowedLevels = winston.format((info) => {
+  if (isDevelopment) {
+    return info;
+  }
+
+  return info.level === "error" ? false : info;
+});
+
 const logger = winston.createLogger({
   level: "info",
   transports: [
     // consola
     new winston.transports.Console({
-      format: winston.format.printf(({ level, message, username, ip }) => {
+      format: winston.format.combine(
+        consoleOnlyAllowedLevels(),
+        winston.format.printf(({ level, message, username, ip }) => {
         const levelStyled =
           level === 'error'  ? chalk.bold.red(level.toUpperCase()) :
           level === 'warn'   ? chalk.bold.yellow(level.toUpperCase()) :
@@ -29,7 +40,8 @@ const logger = winston.createLogger({
         const messageStyled = chalk.gray(message);
         const ipStyled = chalk.blue(ip || 'N/A');
         return `[${levelStyled}] [${ipStyled}] ${messageStyled}`;
-      })
+        })
+      )
     }),
 
     // logs generales

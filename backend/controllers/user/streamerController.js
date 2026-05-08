@@ -65,6 +65,14 @@ class StreamerController {
       if (!userID) return res.status(401).json({ message: 'Usuario no autenticado' });
 
       const streamer = await models.streamer.findOne({ where: { userID } });
+      await req.logAction({
+        accion: 'Perfil de streamer consultado',
+        apartado: 'Streamer',
+        userId: userID,
+        username: req.user?.username,
+        valor: `hasProfile=${Boolean(streamer)}`,
+        type: 'info'
+      });
       return res.status(200).json({ streamer });
     } catch (error) {
       return handleError(res, req, error, 'Error al cargar perfil de streamer');
@@ -107,6 +115,15 @@ class StreamerController {
           communityName,
         });
 
+        await req.logAction({
+          accion: 'Perfil de streamer creado',
+          apartado: 'Streamer',
+          userId: userID,
+          username: req.user?.username,
+          valor: `streamerId=${current.id}; communityName=${communityName}`,
+          type: 'info'
+        });
+
         return res.status(201).json({ message: 'Perfil de streamer creado correctamente.', streamer: current });
       }
 
@@ -116,6 +133,15 @@ class StreamerController {
         username: null,
         image,
         communityName,
+      });
+
+      await req.logAction({
+        accion: 'Perfil de streamer actualizado',
+        apartado: 'Streamer',
+        userId: userID,
+        username: req.user?.username,
+        valor: `streamerId=${current.id}; communityName=${communityName}`,
+        type: 'info'
       });
 
       return res.status(200).json({ message: 'Perfil de streamer actualizado correctamente.', streamer: current });

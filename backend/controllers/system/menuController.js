@@ -20,28 +20,23 @@ const normalizePermissions = (requiredPermissions) => {
 class MenuController {
   getUserMenu = async (req, res) => {
   try {
-    const userPermissionsRows = await models.UserPermissions.findAll({
-      where: { userId: req.user.id },
-      include: [
-        {
-          model: models.Permissions,
-          as: 'permissionRef',
-          where: { active: true },
-          attributes: ['key'],
-          required: true
-        }
-      ]
-    });
+    const userPermissions = req.user && req.user.permissions ? req.user.permissions : [];
+    const isActive = req.user.account != 'INACTIVE' && req.user.account != 'BANNED';
 
-    const userPermissions = userPermissionsRows
-      .map((row) => row.permissionRef?.key)
-      .filter(Boolean);
-
-    const menuRows = await models.Menu.findAll({
-      where: { active: true },
-      order: [['orderIndex', 'ASC'], ['id', 'ASC']],
-      attributes: ['id', 'name', 'icon', 'path', 'target', 'shortAccess', 'required_permissions', 'menuGroup']
-    });
+    let menuRows = [];
+    if(isActive){
+      menuRows = await models.Menu.findAll({
+        where: { active: true },
+        order: [['orderIndex', 'ASC'], ['id', 'ASC']],
+        attributes: ['id', 'name', 'icon', 'path', 'target', 'shortAccess', 'required_permissions', 'menuGroup']
+      });
+    } else {
+      menuRows = await models.Menu.findAll({
+        where: { active: true, basic: 'TRUE' },
+        order: [['orderIndex', 'ASC'], ['id', 'ASC']],
+        attributes: ['id', 'name', 'icon', 'path', 'target', 'shortAccess', 'required_permissions', 'menuGroup']
+      });
+    }
 
     const menuItems = menuRows
       .map((row) => {
@@ -69,6 +64,15 @@ class MenuController {
       })
       .filter(Boolean);
 
+    // await req.logAction({
+    //   accion: 'Menu dinamico consultado',
+    //   apartado: 'Menu',
+    //   userId: req.user?.id,
+    //   username: req.user?.username,
+    //   valor: `items=${menuItems.length}; activeAccount=${isActive}`,
+    //   type: 'info'
+    // });
+
     return res.status(200).json({
       menuItems,
       permissions: userPermissions
@@ -92,3 +96,4 @@ class MenuController {
 
 const ctrlMenu = new MenuController();
 export { ctrlMenu };
+

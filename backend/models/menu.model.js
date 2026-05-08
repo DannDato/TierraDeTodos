@@ -44,6 +44,12 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0
     },
+    basic:{
+      type: DataTypes.ENUM('TRUE', 'FALSE'),
+      allowNull: false,
+      defaultValue: 'FALSE',
+      field: 'basic'
+    },
 
     menuGroup: {
       type: DataTypes.ENUM('user', 'admin'),
@@ -95,6 +101,19 @@ export default (sequelize, DataTypes) => {
         active: true
       },
       {
+        id: 13,
+        key: 'menu.progress',
+        name: 'Progreso',
+        icon: 'TrendingUp',
+        path: '/progress',
+        target: '_self',
+        shortAccess: false,
+        orderIndex: 2,
+        required_permissions: ['menu.progress'],
+        menuGroup: 'user',
+        active: true
+      },
+      {
         id: 8,
         key: 'menu.news',
         name: 'Noticias',
@@ -102,7 +121,7 @@ export default (sequelize, DataTypes) => {
         path: '/news',
         target: '_self',
         shortAccess: true,
-        orderIndex: 2,
+        orderIndex: 3,
         required_permissions: ['menu.news'],
         menuGroup: 'user',
         active: true
@@ -115,7 +134,7 @@ export default (sequelize, DataTypes) => {
         path: '/players',
         target: '_self',
         shortAccess: true,
-        orderIndex: 3,
+        orderIndex: 4,
         required_permissions: ['menu.players'],
         menuGroup: 'user',
         active: true
@@ -127,8 +146,8 @@ export default (sequelize, DataTypes) => {
         icon: 'ClipboardList',
         path: '/tickets',
         target: '_self',
-        shortAccess: true,
-        orderIndex: 4,
+        shortAccess: false,
+        orderIndex: 5,
         required_permissions: ['menu.tickets'],
         menuGroup: 'user',
         active: true
@@ -154,8 +173,34 @@ export default (sequelize, DataTypes) => {
         path: '/profile',
         target: '_self',
         shortAccess: true,
-        orderIndex: 6,
+        orderIndex: 7,
         required_permissions: ['menu.profile'],
+        menuGroup: 'user',
+        active: true
+      },
+      {
+        id: 6,
+        key: 'menu.community',
+        name: 'Comunidad',
+        icon: 'Users',
+        path: '/community',
+        target: '_self',
+        shortAccess: false,
+        orderIndex: 6,
+        required_permissions: ['menu.community'],
+        menuGroup: 'user',
+        active: true
+      },
+      {
+        id: 14,
+        key: 'menu.commands',
+        name: 'Commands',
+        icon: 'Code',
+        path: '/commands',
+        target: '_self',
+        shortAccess: false,
+        orderIndex: 7,
+        required_permissions: ['menu.commands'],
         menuGroup: 'user',
         active: true
       },
@@ -167,7 +212,7 @@ export default (sequelize, DataTypes) => {
         path: '/users',
         target: '_self',
         shortAccess: false,
-        orderIndex: 7,
+        orderIndex: 8,
         required_permissions: ['menu.userscontrol'],
         menuGroup: 'admin',
         active: true
@@ -177,16 +222,29 @@ export default (sequelize, DataTypes) => {
         key: 'menu.aboutapp',
         name: 'Acerca de',
         icon: 'Info',
-        path: '/aboutapp',
+        path: '/',
         target: '_self',
         shortAccess: false,
         orderIndex: 9,
-        required_permissions: ['menu.aboutapp'],
+        required_permissions: [],
         menuGroup: 'user',
         active: true
       },
       {
         id: 11,
+        key: 'menu.emblems',
+        name: 'Emblemas',
+        icon: 'Award',
+        path: '/emblems-admin',
+        target: '_self',
+        shortAccess: false,
+        orderIndex: 11,
+        required_permissions: ['emblems.give'],
+        menuGroup: 'admin',
+        active: true
+      },
+      {
+        id: 12,
         key: 'menu.gestion',
         name: 'Gestión',
         icon: 'MonitorCog',
@@ -197,7 +255,7 @@ export default (sequelize, DataTypes) => {
         required_permissions: ['menu.gestion'],
         menuGroup: 'admin',
         active: true
-      }
+      },
     ];
 
     const allowedKeys = seedMenu.map((item) => item.key);
@@ -232,3 +290,4 @@ export default (sequelize, DataTypes) => {
 
   return Menu;
 };
+

@@ -13,20 +13,22 @@ export default function Button({
   ...props
 }) {
   const baseStyles =
-    "flex items-center justify-center rounded-3xl font-medium hover:scale-105 shadow-md transition-all duration-300 focus:outline-none gap-2";
+    "flex items-center justify-center rounded-xl font-medium hover:scale-105 shadow-md transition-all duration-300 focus:outline-none gap-2";
     "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4";
   const variants = {
     primary:
       "bg-[var(--secondary-color)] text-white hover:bg-[var(--hover-secondary)]",
     secondary:
       "bg-[var(--primary-color)] text-white hover:bg-[var(--hover-primary)]",
+    warning:
+      "bg-[var(--warning-color)] text-white hover:bg-[var(--hover-warning)]",
     cancel:
       "bg-[var(--cancel-color)] text-white hover:bg-[var(--hover-cancel)]",
     outline:
       "border border-[var(--secondary-color)] text-[var(--secondary-color)] hover:bg-[var(--secondary-color)] hover:text-[var(--white-color)]",
     ghost:
       "bg-transparent text-[var(--white-color)] hover:text-[var(--gray-color)]",
-      
+
     discord:
       "bg-[var(--discord-color)] text-white hover:bg-[var(--discord-hover)]",
   };

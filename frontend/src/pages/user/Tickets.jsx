@@ -8,12 +8,11 @@ import {
   MessageSquareWarning,
   Send,
   ShieldAlert,
-  UserSearch,
   X,
 } from "lucide-react";
 
 import api from "../../api/axios";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import AlertModal from "../../elements/AlertModal";
 import Button from "../../elements/Button";
 import Input from "../../elements/Input";
@@ -25,7 +24,6 @@ const createInitialForm = (types = [], priorities = []) => ({
   type: String(types[0]?.key || ""),
   priority: String(priorities[0]?.key || ""),
   subject: "",
-  involvedPlayer: "",
   coordX: "",
   coordY: "",
   coordZ: "",
@@ -60,8 +58,6 @@ function Tickets() {
   // formulario
   const [formData,          setFormData]          = useState(createInitialForm());
   const [submitting,        setSubmitting]         = useState(false);
-  const [playersCatalog,    setPlayersCatalog]    = useState([]);
-  const [showPlayerOptions, setShowPlayerOptions] = useState(false);
 
   // modal de chat
   const [chatTicket,  setChatTicket]  = useState(null);
@@ -102,16 +98,6 @@ function Tickets() {
       }
     };
 
-    const loadPlayers = async () => {
-      try {
-        const { data } = await api.get("/user/players");
-        const users = Array.isArray(data?.players) ? data.players : [];
-        setPlayersCatalog([...new Set(users.map((u) => String(u?.username || "").trim()).filter(Boolean))]);
-      } catch {
-        setPlayersCatalog([]);
-      }
-    };
-
     const loadMyTickets = async () => {
       try {
         setTicketsLoading(true);
@@ -125,7 +111,6 @@ function Tickets() {
     };
 
     loadCatalogs();
-    loadPlayers();
     loadMyTickets();
   }, []);
 
@@ -161,10 +146,6 @@ function Tickets() {
 
   const maxReached = summary.abiertos >= 2;
 
-  const filteredPlayers = useMemo(() => {
-    const q = String(formData.involvedPlayer || "").trim().toLowerCase();
-    return playersCatalog.filter((u) => !q || u.toLowerCase().includes(q)).slice(0, 8);
-  }, [playersCatalog, formData.involvedPlayer]);
 
   // ── handlers formulario ────────────────────────────────────────────────────
   const handleChange = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
@@ -181,7 +162,6 @@ function Tickets() {
     }
 
     const subject        = formData.subject.trim();
-    const involvedPlayer = formData.involvedPlayer.trim();
     const description    = formData.description.trim();
     const coordX = formData.coordX === "" ? null : Number(formData.coordX);
     const coordY = formData.coordY === "" ? null : Number(formData.coordY);
@@ -203,7 +183,6 @@ function Tickets() {
       const { data } = await api.post("/user/tickets", {
         typeKey: formData.type, priorityKey: formData.priority,
         subject,
-        involvedPlayer: involvedPlayer || null,
         coordX,
         coordY,
         coordZ,
@@ -245,7 +224,7 @@ function Tickets() {
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
-    <section className="min-h-screen py-10 flex items-start justify-center bg-[var(--ins-background)] pb-24">
+    <section className="min-h-screen py-15 flex items-start justify-center pb-24 min-h-screen h-screen">
       <LoadingOverlay
         isVisible={catalogLoading || ticketsLoading || submitting}
         message={submitting ? "Enviando ticket..." : "Cargando datos..."}
@@ -257,10 +236,10 @@ function Tickets() {
         message={alertConfig.message}
         onClose={closeAlert}
       />
-      <div className="w-full max-w-7xl px-4 md:px-8 text-[var(--ins-text-white)]">
+      <div className="w-full px-0 mx-0 text-[var(--ins-text-white)]">
 
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 px-2">
           <div className="flex items-center gap-2 text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-widest mb-2">
             <span>{currentUser.role}</span><span>/</span>
             <span className="text-[var(--secondary-color)]">Tickets</span>
@@ -282,7 +261,7 @@ function Tickets() {
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
 
           {/* ── Formulario ── */}
-          <form onSubmit={handleSubmit} className="xl:col-span-2 bg-black/20 rounded-3xl p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="xl:col-span-2 box-main p-6 space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <LifeBuoy size={18} className="text-[var(--secondary-color)]" />
               Nuevo ticket
@@ -312,27 +291,7 @@ function Tickets() {
 
             <Input label="Asunto" value={formData.subject} onChange={(e) => handleChange("subject", e.target.value)} placeholder="Ej. Me robaron cofres en X Y Z" disabled={maxReached} />
 
-            <div className="relative">
-              <Input
-                label="Jugador involucrado"
-                value={formData.involvedPlayer}
-                onChange={(e) => { handleChange("involvedPlayer", e.target.value); setShowPlayerOptions(true); }}
-                onFocus={() => setShowPlayerOptions(true)}
-                onBlur={() => setTimeout(() => setShowPlayerOptions(false), 120)}
-                placeholder="Escribe para filtrar jugadores..."
-                disabled={maxReached}
-              />
-              <UserSearch size={16} className="absolute right-2 top-[40px] text-[var(--ins-text-gray)] pointer-events-none" />
-              {showPlayerOptions && filteredPlayers.length > 0 && (
-                <div className="absolute z-40 mt-2 w-full max-h-48 overflow-y-auto tdt-scrollbar rounded-xl bg-[var(--ins-background)]/95 shadow-lg">
-                  {filteredPlayers.map((u) => (
-                    <button key={u} type="button" onMouseDown={() => { handleChange("involvedPlayer", u); setShowPlayerOptions(false); }} className="w-full text-left px-3 py-2 text-sm text-[var(--ins-text-white)] hover:bg-white/10 transition-colors">{u}</button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-xl bg-black/15 p-4">
+            <div className="p-4">
               <div className="flex items-center gap-2 mb-3 text-[var(--ins-text-gray)] text-sm font-semibold">
                 <MapPinned size={16} className="text-[var(--secondary-color)]" /> Coordenadas del incidente (opcionales)
               </div>
@@ -354,20 +313,20 @@ function Tickets() {
           </form>
 
           {/* ── Lista de tickets ── */}
-          <div className="xl:col-span-3 bg-black/20 rounded-3xl p-6">
+          <div className="xl:col-span-3 box-main p-6">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <MessageSquareWarning size={18} className="text-[var(--secondary-color)]" />
               Mis tickets
             </h2>
 
             {ticketsLoading ? (
-              <div className="rounded-2xl bg-black/10 py-10 px-4 text-center text-[var(--ins-text-gray)]">Cargando tickets...</div>
+              <div className="box-main py-10 px-4 text-center text-[var(--ins-text-gray)]">Cargando tickets...</div>
             ) : tickets.length === 0 ? (
-              <div className="rounded-2xl bg-black/10 py-10 px-4 text-center text-[var(--ins-text-gray)]">Aún no has creado ningún ticket.</div>
+              <div className="box-main py-10 px-4 text-center text-[var(--ins-text-gray)]">Aún no has creado ningún ticket.</div>
             ) : (
               <div className="space-y-3 max-h-[620px] overflow-y-auto tdt-scrollbar pr-1">
                 {tickets.map((ticket) => (
-                  <TicketCard key={ticket.id} ticket={ticket} typeMap={typeMap} priorityMap={priorityMap} onDoubleClick={openChat} />
+                  <TicketCard key={ticket.id} ticket={ticket} typeMap={typeMap} priorityMap={priorityMap} onOpen={openChat} />
                 ))}
               </div>
             )}
@@ -395,7 +354,7 @@ function Tickets() {
 // ─── SummaryCard ─────────────────────────────────────────────────────────────
 function SummaryCard({ label, value, color = "text-[var(--ins-text-white)]" }) {
   return (
-    <div className="bg-black/20 rounded-2xl p-4">
+    <div className="box-main p-6">
       <p className="text-xs uppercase tracking-widest text-[var(--ins-text-gray)] font-bold">{label}</p>
       <p className={`text-2xl font-extrabold mt-2 ${color}`}>{value}</p>
     </div>
@@ -403,13 +362,21 @@ function SummaryCard({ label, value, color = "text-[var(--ins-text-white)]" }) {
 }
 
 // ─── TicketCard ───────────────────────────────────────────────────────────────
-function TicketCard({ ticket, typeMap, priorityMap, onDoubleClick }) {
+function TicketCard({ ticket, typeMap, priorityMap, onOpen }) {
   const st = statusStyle(ticket.statusKey);
   return (
     <article
-      className="rounded-2xl bg-black/30 p-4 cursor-pointer hover:bg-black/40 transition-colors select-none"
-      onDoubleClick={() => onDoubleClick(ticket)}
-      title="Doble click para abrir historial"
+      className="rounded-2xl bg-black/10 p-4 border border-white/10 cursor-pointer hover:bg-black/20 transition-colors select-none focus:outline-none focus:ring-2 focus:ring-[var(--secondary-color)]/60"
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(ticket)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen(ticket);
+        }
+      }}
+      title="Click para abrir historial"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -428,7 +395,6 @@ function TicketCard({ ticket, typeMap, priorityMap, onDoubleClick }) {
         <div className="flex flex-wrap gap-2">
           <Badge>{typeMap.get(ticket.typeKey)?.name || ticket.typeKey}</Badge>
           <BadgeAmber>{priorityMap.get(ticket.priorityKey)?.name || ticket.priorityKey}</BadgeAmber>
-          {ticket.involvedPlayer ? <BadgeSky>Jugador: {ticket.involvedPlayer}</BadgeSky> : null}
           {ticket.coordX !== null && ticket.coordY !== null && ticket.coordZ !== null ? (
             <BadgeSecondary>XYZ: {ticket.coordX}, {ticket.coordY}, {ticket.coordZ}</BadgeSecondary>
           ) : null}
@@ -447,7 +413,7 @@ function TicketCard({ ticket, typeMap, priorityMap, onDoubleClick }) {
           <ShieldAlert size={12} /> Ver evidencia
         </a>
       )}
-      <p className="text-xs text-[var(--ins-text-dark)] mt-3 italic">Doble click para abrir historial</p>
+      <p className="text-xs text-[var(--ins-text-dark)] mt-3 italic">Click para abrir historial</p>
     </article>
   );
 }
@@ -460,7 +426,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
 
   const ticket   = chatData?.ticket;
   const messages = chatData?.messages ?? [];
-  const isOpen   = ticket?.statusKey === "ABIERTO";
+  const isOpen   = loading || ticket?.statusKey === "ABIERTO";
 
   const orderedMessages = useMemo(() => {
     return [...messages].sort((a, b) => {
@@ -474,6 +440,14 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  useEffect(() => {
+    const onEscape = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    document.addEventListener("keydown", onEscape);
+    return () => document.removeEventListener("keydown", onEscape);
+  }, [onClose]);
 
   const handleSend = async () => {
     const text = newMessage.trim();
@@ -499,10 +473,10 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl rounded-3xl bg-[var(--ins-background)] shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] bg-[var(--ins-background)]/50 backdrop-blur-lg border border-white/10">
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 py-5 bg-black/10">
+        <div className="flex items-start justify-between gap-4 px-6 py-5 bg-black/10 ">
           <div className="flex-1 min-w-0">
             {ticket ? (
               <>
@@ -514,7 +488,6 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
                 <div className="flex flex-wrap gap-2 mt-2">
                   <Badge>{typeMap.get(ticket.typeKey)?.name || ticket.typeKey}</Badge>
                   <BadgeAmber>{priorityMap.get(ticket.priorityKey)?.name || ticket.priorityKey}</BadgeAmber>
-                  {ticket.involvedPlayer ? <BadgeSky>Jugador: {ticket.involvedPlayer}</BadgeSky> : null}
                   {ticket.coordX !== null && ticket.coordY !== null && ticket.coordZ !== null ? (
                     <BadgeSecondary>XYZ: {ticket.coordX}, {ticket.coordY}, {ticket.coordZ}</BadgeSecondary>
                   ) : null}
@@ -568,7 +541,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
         </div>
 
         {/* Área de respuesta */}
-        <div className="px-6 py-4 bg-black/10">
+        <div className="px-6 py-4 bg-black/10 border-t border-white/10">
           {isOpen ? (
             <div className="flex items-end gap-3">
               <div className="flex-1">
@@ -579,7 +552,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 rounded-xl bg-white/7 px-4 py-3 text-[var(--ins-text-gray)] text-sm">
+            <div className="flex items-center gap-2 rounded-xl bg-white/7 px-4 py-3 text-[var(--ins-text-gray)] text-sm border border-white/10">
               <Lock size={16} className="flex-shrink-0" />
               Este ticket está {ticket?.statusKey?.toLowerCase() || "cerrado"}. No se pueden agregar más mensajes.
             </div>
@@ -593,7 +566,6 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
 // ─── Badges utilitarios ──────────────────────────────────────────────────────
 const Badge          = ({ children }) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white/10 text-[var(--ins-text-gray)] uppercase tracking-wider">{children}</span>;
 const BadgeAmber     = ({ children }) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 uppercase tracking-wider">{children}</span>;
-const BadgeSky       = ({ children }) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-sky-500/15 text-sky-300 tracking-wider">{children}</span>;
 const BadgeSecondary = ({ children }) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[var(--secondary-color)]/15 text-[var(--secondary-color)] tracking-wider">{children}</span>;
 
 export default Tickets;

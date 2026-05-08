@@ -40,6 +40,26 @@ class RegisterController {
             return res.status(400).json({ message: 'Datos incompletos' });
         }
 
+        const emailStr = String(email).trim();
+        const usernameStr = String(username).trim();
+        const passwordStr = String(password);
+
+        const emailRegex = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,63}$/;
+        if (!emailRegex.test(emailStr)) {
+            return res.status(400).json({ message: 'Formato de email inválido' });
+        }
+
+        if (usernameStr.length < 3 || usernameStr.length > 30) {
+            return res.status(400).json({ message: 'El nombre de usuario debe tener entre 3 y 30 caracteres' });
+        }
+        if (!/^[a-zA-Z0-9_.-]+$/.test(usernameStr)) {
+            return res.status(400).json({ message: 'El nombre de usuario solo puede contener letras, números, guiones bajos, puntos y guiones' });
+        }
+
+        if (passwordStr.length < 8 || passwordStr.length > 128) {
+            return res.status(400).json({ message: 'La contraseña debe tener entre 8 y 128 caracteres' });
+        }
+
         transaction = await db.transaction();
 
         const existingUser = await models.Users.findOne({
@@ -94,6 +114,13 @@ class RegisterController {
 
         await transaction.commit();
         transaction = null;
+
+        await req.logAction({
+            accion: 'Usuario registrado correctamente',
+            apartado: 'Register',
+            valor: `userId=${newUser.id}; username=${newUser.username}; editionId=${actualEdition.id}`,
+            type: 'info'
+        });
 
         return res.status(201).json({
             type: "new_device",

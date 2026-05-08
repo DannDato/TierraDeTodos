@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
   const news_comments = sequelize.define('news_comments', {
     id: {
       type: DataTypes.INTEGER,
@@ -38,13 +38,22 @@ export default (sequelize, DataTypes) => {
     news_comments.belongsTo(models.news, {
       foreignKey: 'newsId',
       as: 'news',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
     });
 
     news_comments.belongsTo(models.Users, {
       foreignKey: 'userId',
       as: 'user',
-      onDelete: 'CASCADE'
+      onDelete: 'CASCADE',
+      constraints: false
+    });
+
+    news_comments.hasMany(models.likes, {
+      foreignKey: 'targetId',
+      as: 'likes',
+      constraints: false,
+      scope: { targetType: 'news_comment' }
     });
   };
 

@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { models } from "../models/index.js";
+import { db, models } from "../models/index.js";
 import { Op } from "sequelize";
 
 export const verifyToken = async (req, res, next) => {
@@ -44,9 +44,14 @@ export const verifyToken = async (req, res, next) => {
       });
       return res.status(401).json({ message: "Sesión inválida o revocada" });
     }
+    const permissions = await db.models.UserPermissions.findAll({
+      attributes: ['permission'],
+      where: { userId: user.id },
+    });
 
     req.user = user;
     req.session = session;
+    req.user.permissions = permissions.map(p => p.permission);
 
     next();
 

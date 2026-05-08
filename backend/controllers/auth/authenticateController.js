@@ -101,8 +101,8 @@ class AuthenticateController {
 
         
         if (!user) {
-            // evitar timing attack
-            await bcrypt.compare(password, '$2b$10$invalidinvalidinvalidinvalidinv');
+            // Hash válido (bcrypt cost 10) para mantener tiempo de respuesta constante y no revelar si el usuario existe
+            await bcrypt.compare(password, '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36DRcra6');
             await models.Attempts.create({
                 user: null,
                 action_type: 'LOGIN',
@@ -280,3 +280,4 @@ class AuthenticateController {
 
 const ctrlAuthenticate = new AuthenticateController();
 export { ctrlAuthenticate };
+

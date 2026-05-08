@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
   const streamer = sequelize.define('streamer', {
     id: {
       type: DataTypes.INTEGER,
@@ -8,12 +8,6 @@ export default (sequelize, DataTypes) => {
     userID: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'Users',
-        key: 'id',
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
     },
     platform: {
       type: DataTypes.STRING,
@@ -31,10 +25,6 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    communityName: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
   }, {
     tableName: 'streamer',
     timestamps: true,
@@ -51,6 +41,12 @@ export default (sequelize, DataTypes) => {
     streamer.belongsTo(models.Users, {
       foreignKey: 'userID',
       as: 'user',
+      constraints: false
+    });
+    models.Users.hasOne(streamer, {
+      foreignKey: 'userID',
+      as: 'streamer',
+      constraints: false
     });
   };
 

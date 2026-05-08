@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
 
   const Users = sequelize.define('Users', {
     id:{
@@ -63,39 +63,104 @@ export default (sequelize, DataTypes) => {
   });
 
   Users.associate = (models) => {
+    Users.belongsTo(models.Roles, {
+      foreignKey: 'role',
+      targetKey: 'role',
+      as: 'roleRef',
+      constraints: false
+    });
+
     Users.belongsToMany(models.Permissions, {
       through: models.UserPermissions,
       foreignKey: 'userId',
       otherKey: 'permission',
       targetKey: 'key',
-      as: 'permissions'
+      as: 'permissions',
+      constraints: false
     });
 
     Users.hasMany(models.user_profile_images, {
       foreignKey: 'userId',
-      as: 'profileImages'
+      as: 'profileImages',
+      constraints: false
     });
 
     Users.hasMany(models.UserEdition, {
       foreignKey: 'userID',
-      as: 'editions'
+      as: 'editions',
+      constraints: false
     });
 
     Users.belongsToMany(models.Edition, {
       through: models.UserEdition,
       foreignKey: 'userID',
       otherKey: 'editionId',
-      as: 'editionsList'
+      as: 'editionsList',
+      constraints: false
     });
 
     Users.hasMany(models.news_comments, {
       foreignKey: 'userId',
-      as: 'newsComments'
+      as: 'newsComments',
+      constraints: false
     });
 
     Users.hasOne(models.streamer, {
       foreignKey: 'userID',
-      as: 'streamerProfile'
+      as: 'streamerProfile',
+      constraints: false
+    });
+
+    Users.hasMany(models.user_goals, {
+      foreignKey: 'userId',
+      as: 'user_goal_entries',
+      constraints: false
+    });
+
+    Users.hasMany(models.user_emblems, {
+      foreignKey: 'userId',
+      as: 'user_emblem_entries',
+      constraints: false
+    });
+
+    Users.belongsToMany(models.goals, {
+      through: models.user_goals,
+      foreignKey: 'userId',
+      otherKey: 'goalId',
+      as: 'goals',
+      constraints: false
+    });
+
+    Users.belongsToMany(models.emblems, {
+      through: models.user_emblems,
+      foreignKey: 'userId',
+      otherKey: 'emblemId',
+      as: 'emblems',
+      constraints: false
+    });
+
+    Users.hasMany(models.AccessCodes, {
+      foreignKey: 'user',
+      as: 'accessCodes',
+      constraints: false
+    });
+
+    Users.hasMany(models.Attempts, {
+      foreignKey: 'user',
+      as: 'attempts',
+      constraints: false
+    });
+
+    Users.hasMany(models.user_status_history, {
+      foreignKey: 'user',
+      as: 'statusHistory',
+      constraints: false
+    });
+
+    Users.hasMany(models.user_status_history, {
+      foreignKey: 'changed_by',
+      as: 'statusChangesApplied',
+      constraints: false
     });
   };
 

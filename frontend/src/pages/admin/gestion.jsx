@@ -6,19 +6,24 @@ import {
   Settings,
   Database,
   Smartphone,
+  Award,
   Menu,
   X,
 } from "lucide-react";
-import RolesManagerView from "../../components/gestion/RolesManagerView";
-import PermissionsManagerView from "../../components/gestion/PermissionsManagerView";
-import StatusManagerView from "../../components/gestion/StatusManagerView";
-import SessionsManagerView from "../../components/gestion/SessionsManagerView";
-import DevicesManagerView from "../../components/gestion/DevicesManagerView";
-import EditionsManagerView from "../../components/gestion/EditionsManagerView";
-import TicketCatalogManagerView from "../../components/gestion/TicketCatalogManagerView";
-import NewsTypesManagerView from "../../components/gestion/NewsTypesManagerView";
-import SystemPreferencesView from "../../components/gestion/SystemPreferencesView";
-import LoadingOverlay from "../../components/LoadingOverlay";
+import RolesManagerView from "../../components/admin/gestion/RolesManagerView";
+import PermissionsManagerView from "../../components/admin/gestion/PermissionsManagerView";
+import StatusManagerView from "../../components/admin/gestion/StatusManagerView";
+import SessionsManagerView from "../../components/admin/gestion/SessionsManagerView";
+import DevicesManagerView from "../../components/admin/gestion/DevicesManagerView";
+import EditionsManagerView from "../../components/admin/gestion/EditionsManagerView";
+import TicketCatalogManagerView from "../../components/admin/gestion/TicketCatalogManagerView";
+import NewsTypesManagerView from "../../components/admin/gestion/NewsTypesManagerView";
+import CommandsManager from "../../components/admin/gestion/CommandsManager";
+import CommunitiesManagerView from "../../components/admin/gestion/CommunitiesManagerView";
+import SystemPreferencesView from "../../components/admin/gestion/SystemPreferencesView";
+import AchievementsManagerView from "../../components/admin/gestion/AchievementsManagerView";
+import LoadingOverlay from "../../components/shared/LoadingOverlay";
+import api from "../../api/axios";
 
 
 function Gestion() {
@@ -26,11 +31,25 @@ function Gestion() {
   const [activeSection, setActiveSection] = useState("editions");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sectionLoading, setSectionLoading] = useState(true);
+  const [permissions, setPermissions] = useState([]);
   const sidebarRef = useRef(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setSectionLoading(false), 220);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const loadPermissions = async () => {
+      try {
+        const { data } = await api.get("/system/menu");
+        setPermissions(Array.isArray(data?.permissions) ? data.permissions : []);
+      } catch (_error) {
+        setPermissions([]);
+      }
+    };
+
+    loadPermissions();
   }, []);
 
   useEffect(() => {
@@ -52,13 +71,19 @@ function Gestion() {
     setSidebarOpen(false);
   };
 
+  const canManageCommands = permissions.includes("Commands.manage") || permissions.includes("commands.manage");
+  const canAdminCommunities = permissions.includes("Communities.admin");
+
   const menuCategories = [
     {
       title: "Base",
       items: [
         { id: "editions", label: "Control de ediciones", icon: <ShieldCheck size={18} /> },
+        { id: "achievements", label: "Insignias y Logros", icon: <Award size={18} /> },
         { id: "ticketCatalogs", label: "Catálogos de Tickets", icon: <Database size={18} /> },
         { id: "newsTypes", label: "Tipos de Noticias",   icon: <Activity size={18} /> },
+        ...(canManageCommands ? [{ id: "commands", label: "Comandos del Juego", icon: <Database size={18} /> }] : []),
+        ...(canAdminCommunities ? [{ id: "communities", label: "Comunidades", icon: <ShieldCheck size={18} /> }] : []),
       ]
     },
     {
@@ -85,10 +110,10 @@ function Gestion() {
   ];
 
   return (
-    <section className="h-screen py-6 flex items-start justify-center bg-[var(--ins-background)] overflow-hidden pb-24">
+    <section className="min-h-screen h-screen py-15 flex items-start justify-center pb-24">
       <LoadingOverlay isVisible={sectionLoading} message="Cargando gestión..." />
 
-      <div className="flex flex-col h-full animate-[fadeIn_0.3s_ease-out] p-8 max-w-[1400px] mx-auto w-full bg-[var(--ins-background)]">
+      <div className="flex flex-col min-h-full animate-[fadeIn_0.3s_ease-out] p-8 w-full">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
             <span>{currentUser.role}</span>
@@ -118,7 +143,7 @@ function Gestion() {
           </div>
         </div>
 
-        <div className="flex flex-1 gap-8 min-h-0 overflow-hidden mt-10">
+        <div className="flex flex-col lg:flex-row gap-8 mt-10">
 
             {/* OVERLAY — solo en < lg */}
             {sidebarOpen && (
@@ -132,7 +157,7 @@ function Gestion() {
                 fixed lg:static z-50 lg:z-auto top-0 left-0 h-full lg:h-auto
                 w-72 lg:w-64
                 flex flex-col gap-8 pb-8
-                bg-[var(--ins-background)] lg:bg-transparent
+                lg:bg-transparent
                 px-6 pt-8 lg:px-0 lg:pt-0
                 flex-shrink-0 self-start
                 transition-transform duration-300
@@ -181,11 +206,14 @@ function Gestion() {
             </div>
 
             {/* ÁREA DE CONTENIDO DINÁMICO */}
-            <div className="flex-1 min-h-0 bg-[var(--black-color)]/20 rounded-[2rem] overflow-hidden flex flex-col relative">
-            <div className="flex-1 overflow-y-auto p-8 tdt-scrollbar">
+            <div className="flex-1 bg-black/10 border border-white/10 rounded-[2rem] flex flex-col relative min-w-0">
+            <div className="p-8">
               {activeSection === "editions" && <EditionsManagerView />}
+                {activeSection === "achievements" && <AchievementsManagerView />}
                 {activeSection === "ticketCatalogs" && <TicketCatalogManagerView />}
                 {activeSection === "newsTypes" && <NewsTypesManagerView />}
+                {activeSection === "commands" && canManageCommands && <CommandsManager />}
+                {activeSection === "communities" && canAdminCommunities && <CommunitiesManagerView />}
                 {activeSection === "roles" && <RolesManagerView />}
                 {activeSection === "status" && <StatusManagerView />}
                 {activeSection === "permissions" && <PermissionsManagerView />}

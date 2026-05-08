@@ -54,6 +54,15 @@ class sessionsController {
         };
       });
 
+      await req.logAction({
+        accion: 'Sesiones globales consultadas',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `sessions=${data.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ sessions: data });
     } catch (error) {
       return handleError(res, req, error, 'Error al listar sesiones globales');
@@ -104,7 +113,7 @@ class sessionsController {
         userId: req.user?.id,
         username: req.user?.username,
         valor: `sessionId=${session.id}; targetUserId=${session.userId}; targetUsername=${session.user?.username || ''}`,
-        type: 'warning'
+        type: 'info'
       });
 
       return res.status(200).json({
@@ -124,3 +133,4 @@ class sessionsController {
 
 const ctrlSessions = new sessionsController();
 export { ctrlSessions };
+

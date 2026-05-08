@@ -1,10 +1,11 @@
 import { db, models } from '../../../models/index.js';
 import { QueryTypes } from 'sequelize';
 import { applyRolePresetPermissions } from '../../../helpers/applyRolePresetPermissions.js';
+import { getEquippedEmblemsByUser } from '../../../helpers/getEquippedEmblems.js';
 
 class UsersController {
   async getAssignableStatuses(transaction) {
-    return models.user_statuses.findAll({
+    return models.system_statuses.findAll({
       attributes: ['status', 'detail', 'color'],
       where: { asignable: 'YES', active: 'YES' },
       order: [['status', 'ASC']],
@@ -23,10 +24,20 @@ class UsersController {
 
   getUsersAdminList = async (req, res) => {
     try {
-      const users = await models.Users.findAll({
-        attributes: ['id', 'username', 'email', 'role', 'account', 'createdAt', 'updatedAt'],
-        order: [['id', 'ASC']]
-      });
+      const users = await db.query(
+        `
+          SELECT u.id, u.username, u.email, u.role, u.account, u.createdAt, u.updatedAt,
+            c.logo_url AS communityLogo,
+            c.color AS communityColor,
+            upi.img AS profileImage
+          FROM Users u
+          LEFT JOIN (SELECT * FROM user_profile_images ORDER BY createdAt DESC LIMIT 1) upi ON upi.userId = u.id
+          LEFT JOIN user_community uc ON uc.userId = u.id
+          LEFT JOIN community c ON c.id = uc.communityId
+          ORDER BY u.id ASC
+        `,
+        { type: QueryTypes.SELECT }
+      );
 
       const permissionRows = await db.query(
         `
@@ -51,7 +62,7 @@ class UsersController {
         attributes: ['role', 'color'],
         where: { active: 'YES' }
       });
-      const statusesCatalog = await models.user_statuses.findAll({
+      const statusesCatalog = await models.system_statuses.findAll({
         attributes: ['status', 'color'],
         where: { active: 'YES' }
       });
@@ -74,6 +85,9 @@ class UsersController {
         status: user.account,
         statusColor: statusColorMap[user.account] || null,
         lastConnection: user.updatedAt,
+        profileImage: user.profileImage,
+        communityLogo: user.communityLogo,
+        communityColor: user.communityColor,
         createdAt: user.createdAt,
         permissions: permissionsByUserId[user.id] || []
       }));
@@ -119,7 +133,7 @@ class UsersController {
         return res.status(404).json({ message: 'Usuario no encontrado' });
       }
 
-      req.logAction({
+      await req.logAction({
         accion: 'Revision de usuario por ID',
         apartado: 'Usuarios',
         userId: req.user?.id,
@@ -215,10 +229,12 @@ class UsersController {
 
       const [roleRecord, statusRecord, assignableRoles, assignableStatuses] = await Promise.all([
         models.Roles.findOne({ attributes: ['color', 'complementary', 'enfasis', 'extra'], where: { role: user.role, active: 'YES' } }),
-        models.user_statuses.findOne({ attributes: ['color'], where: { status: user.account, active: 'YES' } }),
+        models.system_statuses.findOne({ attributes: ['color'], where: { status: user.account, active: 'YES' } }),
         this.getAssignableRoles(),
         this.getAssignableStatuses()
       ]);
+
+      const equippedEmblems = await getEquippedEmblemsByUser(user.id);
 
       return res.status(200).json({
         user: {
@@ -242,6 +258,7 @@ class UsersController {
           avatarPosX: latestAvatar[0]?.avatarPosX ?? 50,
           avatarPosY: latestAvatar[0]?.avatarPosY ?? 50,
           avatarZoom: latestAvatar[0]?.avatarZoom ?? 1,
+          equippedEmblems,
           devices,
           statusHistory,
           permissions: assignedPermissionRows.map((permission) => permission.key)
@@ -565,3 +582,4 @@ class UsersController {
 
 const ctrlUsers = new UsersController();
 export { ctrlUsers };
+

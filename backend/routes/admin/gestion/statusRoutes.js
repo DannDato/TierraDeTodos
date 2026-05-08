@@ -6,9 +6,10 @@ import { checkPermissions } from "../../../middlewares/checkPermissions.js";
 
 const router = express.Router();
 
-router.get("/statuses", verifyToken, checkPermissions(["gest.statuses"]), ctrlStatus.getStatuses);
-router.post("/statuses", verifyToken, checkPermissions(["gest.statuses"]), ctrlStatus.createStatus);
-router.put("/statuses/:id", verifyToken, checkPermissions(["gest.statuses"]), ctrlStatus.updateStatus);
-router.delete("/statuses/:id", verifyToken, checkPermissions(["gest.statuses"]), ctrlStatus.deleteStatus);
+router.get('/statuses', verifyToken, checkPermissions(['statuses.view']), ctrlStatus.getStatuses);
+router.post('/statuses', verifyToken, checkPermissions(['statuses.gest']), ctrlStatus.createStatus);
+router.put('/statuses/:id', verifyToken, checkPermissions(['statuses.edit']), ctrlStatus.updateStatus);
+router.delete('/statuses/:id', verifyToken, checkPermissions(['statuses.remove']), ctrlStatus.deleteStatus);
 
 export default router;
+

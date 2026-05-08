@@ -47,5 +47,13 @@ export default (sequelize, DataTypes) => {
     timestamps: false
   });
 
+  AccessCodes.associate = (models) => {
+    AccessCodes.belongsTo(models.Users, {
+      foreignKey: 'user',
+      as: 'userRef',
+      constraints: false
+    });
+  };
+
   return AccessCodes;
 };

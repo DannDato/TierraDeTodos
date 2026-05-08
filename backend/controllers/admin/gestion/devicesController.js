@@ -65,6 +65,15 @@ class devicesController {
         })
         .sort((a, b) => new Date(b.firstLogin) - new Date(a.firstLogin));
 
+      await req.logAction({
+        accion: 'Dispositivos autorizados consultados',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `devices=${data.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({ devices: data });
     } catch (error) {
       return handleError(res, req, error, 'Error al listar dispositivos autorizados');
@@ -181,6 +190,15 @@ class devicesController {
           return String(a.username).localeCompare(String(b.username));
         });
 
+      await req.logAction({
+        accion: 'Historial de uso de dispositivo consultado',
+        apartado: 'Gestion',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: `deviceHash=${deviceHash}; owners=${owners.length}; logins=${loginHistory.length}`,
+        type: 'info'
+      });
+
       return res.status(200).json({
         deviceId: owners[0].id,
         folio: owners[0].folio || null,
@@ -293,7 +311,7 @@ class devicesController {
         userId: req.user?.id,
         username: req.user?.username,
         valor: `deviceHash=${deviceHash}; ownerUserId=${userId}; authorized=${authorized}; revokedSessions=${revokedSessions}`,
-        type: 'warning'
+        type: 'info'
       });
 
       return res.status(200).json({
@@ -311,3 +329,4 @@ class devicesController {
 
 const ctrlDevices = new devicesController();
 export { ctrlDevices };
+

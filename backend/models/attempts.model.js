@@ -37,5 +37,13 @@ export default (sequelize, DataTypes) => {
     timestamps: true
   });
 
+  Attempts.associate = (models) => {
+    Attempts.belongsTo(models.Users, {
+      foreignKey: 'user',
+      as: 'userRef',
+      constraints: false
+    });
+  };
+
   return Attempts;
 };

@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+﻿export default (sequelize, DataTypes) => {
   const tickets = sequelize.define('tickets', {
     id: {
       type: DataTypes.INTEGER,
@@ -29,11 +29,6 @@ export default (sequelize, DataTypes) => {
     subject: {
       type: DataTypes.STRING,
       allowNull: false
-    },
-    involvedPlayer: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      field: 'involved_player'
     },
     coordX: {
       type: DataTypes.FLOAT,
@@ -75,15 +70,30 @@ export default (sequelize, DataTypes) => {
 
   tickets.associate = (models) => {
     tickets.belongsTo(models.Users, {
-      foreignKey: 'user_id',
-      as: 'author'
+      foreignKey: 'userId',
+      as: 'author',
+      constraints: false
     });
 
     tickets.hasMany(models.tickets_messages, {
-      foreignKey: 'ticket_id',
-      as: 'messages'
+      foreignKey: 'ticketId',
+      as: 'messages',
+      constraints: false
     });
   };
 
+//   tickets.seed = async () => {
+//     const existing = await tickets.findOne({ where: { subject: 'Ejemplo de ticket' } });
+//     if (existing) return;
+//     await tickets.bulkCreate([
+//         { subject: 'Ejemplo de ticket', typeKey: 'GENERAL', priorityKey: 'MEDIA', statusKey: 'ABIERTO', description: 'Descripción del ticket de prueba', userId: 1, coordX: null, coordY: null, coordZ: null, evidence: null },
+//         { subject: 'Ejemplo de ticket', typeKey: 'GENERAL', priorityKey: 'MEDIA', statusKey: 'ABIERTO', description: 'Descripción del ticket de prueba', userId: 2, coordX: null, coordY: null, coordZ: null, evidence: null },
+//         { subject: 'Ejemplo de ticket', typeKey: 'GENERAL', priorityKey: 'MEDIA', statusKey: 'ABIERTO', description: 'Descripción del ticket de prueba', userId: 3, coordX: null, coordY: null, coordZ: null, evidence: null },
+//         { subject: 'Ejemplo de ticket', typeKey: 'GENERAL', priorityKey: 'MEDIA', statusKey: 'ABIERTO', description: 'Descripción del ticket de prueba', userId: 4, coordX: null, coordY: null, coordZ: null, evidence: null },
+//         { subject: 'Ejemplo de ticket', typeKey: 'GENERAL', priorityKey: 'MEDIA', statusKey: 'ABIERTO', description: 'Descripción del ticket de prueba', userId: 1, coordX: null, coordY: null, coordZ: null, evidence: null }
+//       ]);
+//     };
+
   return tickets;
 };
+

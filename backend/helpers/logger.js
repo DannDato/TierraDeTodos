@@ -1,10 +1,87 @@
 import dbLogs from '../config/databaseLogs.js';
 import { QueryTypes } from 'sequelize';
 import logger from './winston.js';
-import { use } from 'react';
-
 
 let currentLogTable = null;
+
+const SENSITIVE_PATTERNS = [
+  {
+    pattern: /(Bearer\s+)([A-Za-z0-9\-._~+/]+=*)/gi,
+    replacement: '$1[REDACTED]'
+  },
+  {
+    pattern: /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9._-]+\.[A-Za-z0-9._-]+\b/g,
+    replacement: '[REDACTED_JWT]'
+  },
+  {
+    pattern: /(client_secret|refresh_token|access_token|token|password|passwd|secret|authorization)\s*[:=]\s*([^,;\s]+)/gi,
+    replacement: '$1=[REDACTED]'
+  }
+];
+
+const LOG_LIMITS = {
+  accion: 255,
+  apartado: 255,
+  tabla: 255,
+  valor: 255,
+  username: 100,
+  ip: 50,
+  device: 255,
+  query: 10,
+};
+
+const LOG_LEVEL_ALIASES = {
+  warning: 'warn',
+  success: 'info',
+  fatal: 'error',
+  trace: 'debug',
+  login: 'info'
+};
+
+const VALID_LOG_LEVELS = new Set(['error', 'warn', 'info', 'debug']);
+
+function clampText(value, maxLength) {
+  if (value === null || value === undefined) return value;
+  const text = String(value);
+  if (!maxLength || text.length <= maxLength) return text;
+  return text.slice(0, maxLength);
+}
+
+function sanitizeLogValue(value) {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  let text = typeof value === 'string' ? value : JSON.stringify(value);
+
+  for (const { pattern, replacement } of SENSITIVE_PATTERNS) {
+    text = text.replace(pattern, replacement);
+  }
+
+  return text;
+}
+
+function normalizeLogType(type) {
+  const normalized = String(type || 'info').toLowerCase().trim();
+  const mapped = LOG_LEVEL_ALIASES[normalized] || normalized;
+  return VALID_LOG_LEVELS.has(mapped) ? mapped : 'info';
+}
+
+function buildConsoleMessage(accion, valor, type) {
+  const normalizedAction = sanitizeLogValue(accion) || 'Accion sin descripcion';
+  const normalizedValue = sanitizeLogValue(valor);
+
+  if (process.env.NODE_ENV !== 'development') {
+    return normalizedAction;
+  }
+
+  if (!normalizedValue) {
+    return normalizedAction;
+  }
+
+  const suffix = String(normalizedValue).substring(0, 140);
+  return `${normalizedAction}${type === 'error' ? ` [ ${suffix} ]` : ` [ ${suffix} ]`}`;
+}
 
 async function ensureLogTable(fecha) {
 
@@ -70,19 +147,29 @@ export async function logAction({
 }) {
 
   try {
+    const normalizedType = normalizeLogType(type);
+    const safeAccion = clampText(sanitizeLogValue(accion), LOG_LIMITS.accion);
+    const safeApartado = clampText(sanitizeLogValue(apartado), LOG_LIMITS.apartado);
+    const safeTabla = clampText(sanitizeLogValue(tabla), LOG_LIMITS.tabla);
+    const safeQuery = clampText(sanitizeLogValue(query || 'N/A'), LOG_LIMITS.query);
+    const safeCondicion = sanitizeLogValue(condicion);
+    const safeValor = clampText(sanitizeLogValue(valor), LOG_LIMITS.valor);
+    const safeUsername = clampText(sanitizeLogValue(username), LOG_LIMITS.username);
+    const safeIp = clampText(sanitizeLogValue(ip), LOG_LIMITS.ip);
+    const safeDevice = clampText(sanitizeLogValue(device), LOG_LIMITS.device);
 
     const logTable = await ensureLogTable(fecha);
 
     let oldData = null;
 
-    if (tabla && condicion && ["update", "delete"].includes(query?.toLowerCase())) {
+    if (safeTabla && safeCondicion && ["update", "delete"].includes(String(safeQuery || '').toLowerCase())) {
 
       const rows = await dbLogs.query(
-        `SELECT * FROM ${tabla} WHERE ${condicion}`,
+        `SELECT * FROM ${safeTabla} WHERE ${safeCondicion}`,
         { type: QueryTypes.SELECT }
       );
 
-      oldData = JSON.stringify(rows);
+      oldData = sanitizeLogValue(rows);
     }
 
     await dbLogs.query(
@@ -94,34 +181,36 @@ export async function logAction({
       {
         replacements: {
           usuario: userId,
-          username,
-          ip,
-          device,
+          username: safeUsername,
+          ip: safeIp,
+          device: safeDevice,
           fecha,
-          accion,
-          apartado,
-          tabla,
-          query,
-          condicion,
-          valor,
+          accion: safeAccion,
+          apartado: safeApartado,
+          tabla: safeTabla,
+          query: safeQuery,
+          condicion: safeCondicion,
+          valor: safeValor,
           old_data: oldData
         }
       }
     );
 
-    if (type === 'error') {
+    const message = buildConsoleMessage(safeAccion, safeValor, normalizedType);
+
+    if (normalizedType === 'error') {
       logger.error({
-        level: type,
-        message: `${accion} [ ${process.env.NODE_ENV === 'development' ? `${valor?.substring(0, 100)}` : ''} ]`,
-        username,
-        ip
+        level: normalizedType,
+        message,
+        username: safeUsername,
+        ip: safeIp
       });
     }else{
       logger.log({
-        level: type,
-        message: `${accion} [ ${process.env.NODE_ENV === 'development' ? `${valor?.substring(0, 100)}` : ''} ]`,
-        username,
-        ip
+        level: normalizedType,
+        message,
+        username: safeUsername,
+        ip: safeIp
       });
     }
 

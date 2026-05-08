@@ -61,11 +61,11 @@ lerna-debug.log*
 tmp/
 temp/
 *.local
+cancelled.psd
 
 # ---------------------------------------------
 # Project-specific
 # ---------------------------------------------
 /frontend/public/img/banner.gif
-/backend/client_secret_103278831395-tofpttersdl05a02got110730bciln1g.apps.googleusercontent.com.json
-
-client_secret_103278831395-tofpttersdl05a02got110730bciln1g.apps.googleusercontent.com
+**/client_secret*.json
+client_secret*

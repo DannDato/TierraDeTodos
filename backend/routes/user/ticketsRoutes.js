@@ -11,3 +11,4 @@ router.get('/tickets/:id/messages', verifyToken, ctrlTickets.getMessages);
 router.post('/tickets/:id/messages', verifyToken, ctrlTickets.addMessage);
 
 export default router;
+

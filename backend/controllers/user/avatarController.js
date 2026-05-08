@@ -30,6 +30,58 @@ class AvatarController {
         });
     };
 
+    getAvatarRows = async (userId) => {
+        return models.user_profile_images.findAll({
+            where: { userId },
+            order: [['id', 'DESC']]
+        });
+    };
+
+    getPublicBases = () => {
+        const bases = [];
+
+        if (process.env.R2_PUBLIC_URL) {
+            bases.push(process.env.R2_PUBLIC_URL.replace(/\/$/, ''));
+        }
+
+        if (process.env.R2_ENDPOINT && process.env.R2_BUCKET) {
+            bases.push(`${process.env.R2_ENDPOINT}/${process.env.R2_BUCKET}`.replace(/\/$/, ''));
+        }
+
+        return [...new Set(bases)];
+    };
+
+    extractR2KeyFromUrl = (fileUrl) => {
+        const rawUrl = String(fileUrl || '').trim();
+        if (!rawUrl) return null;
+
+        const publicBases = this.getPublicBases();
+        const matchedBase = publicBases.find((base) => rawUrl.startsWith(base));
+        if (matchedBase) {
+            const key = rawUrl.slice(matchedBase.length + 1);
+            return key || null;
+        }
+
+        try {
+            const parsed = new URL(rawUrl);
+            return parsed.pathname.replace(/^\//, '') || null;
+        } catch {
+            return null;
+        }
+    };
+
+    deleteAvatarObjectByUrl = async (fileUrl) => {
+        const key = this.extractR2KeyFromUrl(fileUrl);
+        if (!key) return false;
+
+        await this.s3().send(new DeleteObjectCommand({
+            Bucket: process.env.R2_BUCKET,
+            Key: key,
+        }));
+
+        return true;
+    };
+
     uploadAvatar = async (req, res) => {
         try {
             const file = req.file;
@@ -40,8 +92,10 @@ class AvatarController {
             }
 
             if (!file) {
-                return res.status(400).json({ message: 'No se recibió ninguna imagen' });
+                return res.status(400).json({ message: 'No se recibiÃ³ ninguna imagen' });
             }
+
+            const previousRows = await this.getAvatarRows(userId);
 
             const extByMime = {
                 'image/jpeg': 'jpg',
@@ -84,6 +138,31 @@ class AvatarController {
                 zoom
             });
 
+            // Limpieza: borrar avatares antiguos del S3 y limpiar filas viejas
+            for (const previousRow of previousRows) {
+                if (!previousRow?.img) continue;
+                try {
+                    await this.deleteAvatarObjectByUrl(previousRow.img);
+                } catch (cleanupError) {
+                    console.warn(`No se pudo borrar avatar anterior en S3 para user ${userId}: ${cleanupError.message}`);
+                }
+            }
+
+            if (previousRows.length > 0) {
+                await models.user_profile_images.destroy({
+                    where: { userId, id: previousRows.map((r) => r.id) }
+                });
+            }
+
+            await req.logAction({
+                accion: 'Avatar subido correctamente',
+                apartado: 'Avatar',
+                userId,
+                username: req.user?.username,
+                valor: `avatarId=${row.id}; replaced=${previousRows.length}`,
+                type: 'info'
+            });
+
             return res.status(201).json({
                 message: 'Avatar subido correctamente',
                 avatar: row
@@ -113,6 +192,15 @@ class AvatarController {
 
             await row.update({ pos_x: posX, pos_y: posY, zoom });
 
+            await req.logAction({
+                accion: 'Posicion de avatar actualizada',
+                apartado: 'Avatar',
+                userId,
+                username: req.user?.username,
+                valor: `avatarId=${row.id}; posX=${posX}; posY=${posY}; zoom=${zoom}`,
+                type: 'info'
+            });
+
             return res.status(200).json({
                 message: 'Posicion de avatar actualizada',
                 avatar: row
@@ -130,27 +218,31 @@ class AvatarController {
                 return res.status(401).json({ message: 'Usuario no autenticado' });
             }
 
-            const row = await this.getLatestAvatarRow(userId);
-            if (!row) {
+            const rows = await this.getAvatarRows(userId);
+            if (!rows || rows.length === 0) {
                 return res.status(404).json({ message: 'No hay avatar para eliminar' });
             }
 
-            const imageUrl = String(row.img || '');
-            const publicBase = process.env.R2_PUBLIC_URL
-                ? process.env.R2_PUBLIC_URL.replace(/\/$/, '')
-                : '';
-
-            if (publicBase && imageUrl.startsWith(publicBase)) {
-                const key = imageUrl.slice(publicBase.length + 1);
-                if (key) {
-                    await this.s3().send(new DeleteObjectCommand({
-                        Bucket: process.env.R2_BUCKET,
-                        Key: key
-                    }));
+            // Borrar todos los objetos vinculados en S3 para evitar basura
+            for (const row of rows) {
+                if (!row?.img) continue;
+                try {
+                    await this.deleteAvatarObjectByUrl(row.img);
+                } catch (cleanupError) {
+                    console.warn(`No se pudo borrar avatar en S3 para user ${userId}: ${cleanupError.message}`);
                 }
             }
 
-            await row.destroy();
+            await models.user_profile_images.destroy({ where: { userId } });
+
+            await req.logAction({
+                accion: 'Avatar eliminado correctamente',
+                apartado: 'Avatar',
+                userId,
+                username: req.user?.username,
+                valor: `deletedRows=${rows.length}`,
+                type: 'info'
+            });
 
             return res.status(200).json({
                 message: 'Avatar eliminado correctamente'

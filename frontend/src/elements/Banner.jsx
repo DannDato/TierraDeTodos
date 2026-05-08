@@ -11,7 +11,7 @@ function Banner({
 }) {
   return (
     <section id="inicio" className={`relative h-[600px] md:h-[800px] lg:h-[1000px] overflow-hidden ${className}`} {...props}>
-      
+
       {/* Imagen de fondo */}
       <div
         className="fixed top-0 left-0 w-full h-full bg-cover bg-center scale-110"
@@ -37,7 +37,8 @@ function Banner({
           zIndex: 10,
         }}
       >
-        <div className="w-full max-w-[1000px] z-20">
+         {/* max-w-[1000px] */}
+        <div className="w-full z-20 pt-10">
           {children}
         </div>
       </div>

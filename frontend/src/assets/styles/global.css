@@ -13,7 +13,7 @@
   --cancel-color: #ff4d4d;
 
   --active-color: #29d096;
-  --warning-color: #f9c725;
+  --warning-color: #ffbb01;
   --danger-color: #f44336;
 
   --user-color: #29d096;
@@ -33,7 +33,8 @@
   --discord-color: #5865f2;
   --discord-hover: #555eca;
 
-  --ins-background: #333130;
+  --ins-background: rgb(51, 49, 48);
+  --ins-background-translucid: rgba(51, 49, 48, 0.384);
   --ins-contextual-menu: #272625;
   --ins-text-white: #e7dfc8;
   --ins-text-gray: #bcb7a7;
@@ -54,10 +55,37 @@ section[id] {
   scroll-margin-top: 100px;
 }
 
+.box-main{
+  background-color: var(--ins-background-translucid);
+  border-radius: 30px;
+  border: ridge 1px var(--ins-menu-color);
+  transition: all 0.3s ease;
+}
+.box-main:hover {
+  transform: translateY(-2px);
+}
+
+.modal-main{
+  background-color: var(--ins-background);
+  border-radius: 30px;
+  border: ridge 1px var(--ins-menu-color);
+  transition: all 0.3s ease;
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Scrollbar global del proyecto */
 .tdt-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(231, 223, 200, 0.45) transparent;
+  scrollbar-color: rgba(85, 84, 81, 0.377) transparent;
 }
 
 .tdt-scrollbar::-webkit-scrollbar {
@@ -92,11 +120,11 @@ section[id] {
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
-  border-right-width: 5px;
+  border-right-width: 10px;
 }
 
 .tdt-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(231, 223, 200, 0.72), rgba(188, 183, 167, 0.72));
+  background: linear-gradient(180deg, rgba(231, 223, 200, 0.26), rgba(188, 183, 167, 0.72));
   background-clip: content-box;
 }
 
