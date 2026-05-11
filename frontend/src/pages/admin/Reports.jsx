@@ -255,7 +255,7 @@ function Reports() {
         onClose={closeConfirm}
         onConfirm={handleConfirmed}
       />
-      <div className="w-full max-w-7xl px-0 mx-0 text-[var(--ins-text-white)]">
+      <div className="w-full text-[var(--ins-text-white)]">
 
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
