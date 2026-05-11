@@ -244,7 +244,7 @@ function Progress() {
 		<div>
 			<LoadingOverlay isVisible={loading} message="Cargando progreso" />
 
-			<div className="min-h-screen mt-50 py-15 flex flex-col items-center pb-24 text-[var(--white-color)] z-[1]">
+			<div className="py-15 flex flex-col items-center pb-24 text-[var(--white-color)] z-[1]">
 				<div className="w-full px-0 mx-0 text-[var(--ins-text-white)]">
 					<div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
 						<div>
