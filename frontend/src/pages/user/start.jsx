@@ -210,7 +210,7 @@ function Start() {
               <span className="text-[var(--secondary-color)]">Inicio</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--ins-text-white)] tracking-tight">
-              Bienvenido de vuelta, {playerSummary.username}
+              Bienvenidx {playerSummary.username}
             </h1>
           </div>
         </div>

@@ -38,11 +38,14 @@ const App = function App() {
       "/login",
       "/register",
       "/verifyAccess",
+      "/start",
       "/profile",
       "/progress",
       "/tickets",
       "/players",
       "/news",
+      "/community",
+      "/commands",
       "/users",
       "/gestion",
       "/reports",
@@ -78,19 +81,21 @@ const App = function App() {
         <Route path="/verifyAccess" element={<VerifyAccess />} />
         <Route path="/password-recovery" element={<PasswordRecovery />} />
 
-        <Route path="/profile" element={<DashboardLayout><Profile /></DashboardLayout>}/>
-        <Route path="/progress" element={<DashboardLayout><Progress /></DashboardLayout>}/>
-        <Route path="/start" element={<DashboardLayout><Start /></DashboardLayout>}/>
-        <Route path="/tickets" element={<DashboardLayout><Tickets /></DashboardLayout>}/>
-        <Route path="/players" element={<DashboardLayout><Players /></DashboardLayout>}/>
-        <Route path="/news" element={<DashboardLayout><News /></DashboardLayout>}/>
-        <Route path="/gestion" element={<DashboardLayout><Gestion /></DashboardLayout>}/>
-        <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>}/>
-        <Route path="/emblems-admin" element={<DashboardLayout><EmblemsAdmin /></DashboardLayout>}/>
-        <Route path="/commands" element={<DashboardLayout><Commands /></DashboardLayout>}/>
+        <Route element={<DashboardLayout />}>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/progress" element={<Progress />} />
+          <Route path="/start" element={<Start />} />
+          <Route path="/tickets" element={<Tickets />} />
+          <Route path="/players" element={<Players />} />
+          <Route path="/news" element={<News />} />
+          <Route path="/gestion" element={<Gestion />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/emblems-admin" element={<EmblemsAdmin />} />
+          <Route path="/commands" element={<Commands />} />
+          <Route path="/community" element={<Community />} />
+          <Route path="/users" element={<Users />} />
+        </Route>
 
-        <Route path="/community" element={<DashboardLayout><Community /></DashboardLayout>}/>
-        <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>}/>
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
