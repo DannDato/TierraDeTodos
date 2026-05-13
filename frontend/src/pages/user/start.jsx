@@ -545,7 +545,7 @@ const initialChatMessages = [
         {/* ========================================================= */}
         {/* ACCESOS DIRECTOS RÁPIDOS */}
         {/* ========================================================= */}
-        <div className="mt-8 mb-8 w-full box-main shadow-md relative overflow-visible md:overflow-hidden px-4 py-6 md:p-10">
+        <div className="mt-8 mb-8 w-full box-main shadow-md relative overflow-visible md:overflow-hidden px-4 py-6 md:py-10">
           <div className="w-full ">
             <div className="w-full px-0 md:px-10">
               <div className="flex flex-col md:flex-row gap-5 md:h-160">

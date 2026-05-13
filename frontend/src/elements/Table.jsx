@@ -40,26 +40,26 @@ export default function Table({
   const presetClasses = {
     gestion: {
       table: "w-full text-left",
-      headerRow: "bg-black/10 text-sm text-[var(--ins-text-gray)]",
+      headerRow: "bg-black/10 text-sm text-[var(--ins-text-gray)] rounded-tl-3xl rounded-tr-3xl",
       headerCell: "py-4 px-4 font-bold uppercase tracking-wider",
-      stickyHeaderCell: "bg-[rgba(7,10,14,0.92)]",
+      stickyHeaderCell: "",
       bodyRow: "border-b border-black/10 align-top hover:bg-black/5 transition-colors",
       bodyCell: "py-4 px-4 text-[var(--ins-text-white)]",
     },
     compact: {
       table: "w-full text-left text-sm",
-      headerRow: "bg-[var(--white-color)]/5 text-[10px] uppercase tracking-[0.22em] text-[var(--ins-text-gray)]",
+      headerRow: "bg-black/5 text-[10px] uppercase tracking-[0.22em] text-[var(--ins-text-gray)] rounded-tl-3xl rounded-tr-3xl",
       headerCell: "px-5 py-3 font-bold",
-      stickyHeaderCell: "bg-[rgba(17,21,28,0.96)]",
-      bodyRow: "border-t border-[var(--white-color)]/5 align-top",
+      stickyHeaderCell: "",
+      bodyRow: "border-t border-black/5 align-top",
       bodyCell: "px-5 py-3 text-[var(--ins-text-white)]",
     },
     compactMuted: {
       table: "w-full text-left",
-      headerRow: "bg-[var(--black-color)]/20 text-xs uppercase tracking-wider text-[var(--ins-text-gray)]",
+      headerRow: "bg-black/20 text-xs uppercase tracking-wider text-[var(--ins-text-gray)] rounded-tl-3xl rounded-tr-3xl",
       headerCell: "px-4 py-3",
-      stickyHeaderCell: "bg-[rgba(9,11,15,0.96)]",
-      bodyRow: "border-t border-[var(--white-color)]/10",
+      stickyHeaderCell: "",
+      bodyRow: "border-t border-black/10",
       bodyCell: "px-4 py-3 text-[var(--ins-text-white)]",
     },
   };
@@ -71,7 +71,7 @@ export default function Table({
   const resolvedHeaderCellClass = headerCellClassName || resolvedPreset.headerCell;
   const resolvedBodyRowClass = bodyRowClassName || resolvedPreset.bodyRow;
   const resolvedBodyCellClass = bodyCellClassName || resolvedPreset.bodyCell;
-  const resolvedStickyHeaderCellClass = resolvedPreset.stickyHeaderCell || "bg-[rgba(7,10,14,0.92)]";
+  const resolvedStickyHeaderCellClass = resolvedPreset.stickyHeaderCell || "overflow-hidden";
   const normalizedPageSizeOptions = Array.from(new Set([defaultPageSize, ...pageSizeOptions]))
     .filter((value) => Number.isFinite(value) && value > 0)
     .sort((left, right) => left - right);
