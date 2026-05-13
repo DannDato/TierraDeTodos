@@ -29,7 +29,8 @@ function Controls({ children, maxWidthClass = "max-w-[1800px]" }) {
 
   const userMenuItems = menuItems.filter((item) => String(item.menuGroup || "user") === "user");
   const adminMenuItems = menuItems.filter((item) => String(item.menuGroup || "user") === "admin");
-  const desktopMenuItems = menuItems.filter((item) => item.shortAccess);
+  // const desktopMenuItems = menuItems.filter((item) => item.shortAccess);
+  const desktopMenuItems = menuItems.filter((item) => item.menuGroup === "user"  && item.id !== 10);
 
   useEffect(() => {
     const loadMenu = async () => {
@@ -190,8 +191,10 @@ function Controls({ children, maxWidthClass = "max-w-[1800px]" }) {
                     onClick={() => handleNavigate(item.path, item.target)}
                     className="inline-flex items-center gap-2 text-sm font-medium transition-colors duration-300 hover:text-[var(--secondary-color)]"
                   >
-                    <Icon size={16} />
-                    {item.name}
+                    <Icon size={18} className="max-[1100px]:m-2" />
+                      <span className="hidden min-[1100px]:block">
+                        {item.name}
+                      </span>
                   </button>
                 </li>
                 );

@@ -17,6 +17,7 @@ import {
   LogOut,
   Code
 } from "lucide-react";
+import * as Icons from "lucide-react";
 import Button from "../../elements/Button";
 import api from "../../api/axios";
 import tdtNewsImage from "../../img/tdtnews.png";
@@ -48,6 +49,7 @@ const mockAlerts = [
 function Start() {
   const navigate = useNavigate();
   const currentUsername = localStorage.getItem("username") || "Jugador";
+  const iframeContainerRef = useRef(null);
   const downloadIntervalRef = useRef(null);
 
   // Base local para evolucionar a progreso real desde API sin rehacer la UI.
@@ -134,8 +136,21 @@ function Start() {
 
   const featuredNews = normalizedNews[0] || null;
 
+const initialChatMessages = [
+  { id: 1, channel: "In Game", username: "Steve", usernameClass: "text-cyan-400", message: "alguien vio mi diamante?" },
+  { id: 2, channel: "In Game", username: "Alex", usernameClass: "text-green-400", message: "nop pero encontré una mina enorme" },
+  { id: 3, channel: "on Web", username: "LunaPvP", usernameClass: "text-pink-400", message: "cuidado hay creepers cerca del spawn" },
+  { id: 4, channel: "on Web", username: "VillagerPro", usernameClass: "text-orange-400", message: "vendo netherite x64" },
+  { id: 5, channel: "In Game", username: "NotchFan", usernameClass: "text-blue-400", message: "el server anda demasiado épico hoy" },
+  { id: 6, channel: "on Web", username: "ShadowKill", usernameClass: "text-red-400", message: "entren al portal YA" },
+  { id: 7, channel: "In Game", username: "EndQueen", usernameClass: "text-purple-400", message: "GG al dragón" },
+];
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+  const [chatMessages, setChatMessages] = useState(initialChatMessages);
+  const [chatInput, setChatInput] = useState("");
+  const chatListRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -196,8 +211,34 @@ function Start() {
     navigate(`/news?open=${encodeURIComponent(String(id))}`);
   };
 
+  const handleSendChatMessage = (event) => {
+    event.preventDefault();
+    const message = chatInput.trim();
+    if (!message) return;
+
+    const newMessage = {
+      id: Date.now(),
+      channel: "on Web",
+      username: currentUsername,
+      usernameClass: "text-[var(--secondary-color)]",
+      message,
+    };
+
+    setChatMessages((prev) => [...prev, newMessage]);
+    setChatInput("");
+  };
+
+  useEffect(() => {
+    if (!chatListRef.current) return;
+    chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
+  }, [chatMessages]);
+
   return (
-    <div className="min-h-screen h-screen py-15 flex items-start justify-center pb-2 text-[var(--white-color)] z-[1]">
+    <div className="min-h-screen h-screen py-15 flex items-start justify-center pb-2 text-[var(--white-color)] z-[1] px-3 lg:px-0">
+      <link
+        href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+        rel="stylesheet"
+      />
       <LoadingOverlay isVisible={loadingNews} message="Cargando noticias" />
       <div className="flex-row w-full  px-0 mx-0 min-h-screen h-screen">
 
@@ -209,7 +250,7 @@ function Start() {
               <span>/</span>
               <span className="text-[var(--secondary-color)]">Inicio</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--ins-text-white)] tracking-tight">
+            <h1 className="text-2xl md:text-4xl font-extrabold text-[var(--ins-text-white)] tracking-tight">
               Bienvenidx {playerSummary.username}
             </h1>
           </div>
@@ -263,9 +304,7 @@ function Start() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 ">
-            {/* Card de Insignias */}
             <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5 ">
-              {/* Capa de Runas (Fondo interno) */}
               <div
                 className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
                 style={{
@@ -274,12 +313,10 @@ function Start() {
                   backgroundPosition: 'center',
                   WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
                   maskImage: 'linear-gradient(to left, black, transparent)',
-                  // -----------------------
                   zIndex: 0
                 }}
               ></div>
 
-              {/* Contenido (Encima de las runas) */}
               <div className="relative z-10 w-full">
                 <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider">Insignias</p>
 
@@ -301,7 +338,6 @@ function Start() {
                   backgroundPosition: 'center',
                   WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
                   maskImage: 'linear-gradient(to left, black, transparent)',
-                  // -----------------------
                   zIndex: 0
                 }}
               ></div>
@@ -325,7 +361,6 @@ function Start() {
                   backgroundPosition: 'center',
                   WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
                   maskImage: 'linear-gradient(to left, black, transparent)',
-                  // -----------------------
                   zIndex: 0
                 }}
               ></div>
@@ -348,7 +383,6 @@ function Start() {
                   backgroundPosition: 'center',
                   WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
                   maskImage: 'linear-gradient(to left, black, transparent)',
-                  // -----------------------
                   zIndex: 0
                 }}
               ></div>
@@ -364,7 +398,7 @@ function Start() {
 
         </div>
         {/* CONTENIDO PRINCIPAL*/}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 pt-4">
           <div className="col-span-2 flex flex-col gap-6 p-8 max-h-120 box-main cursor-pointer   ">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
               <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
@@ -410,7 +444,7 @@ function Start() {
             )}
           </div>
 
-          <div className="lg:col-span-1 flex flex-col gap-6">
+          <div className="lg:col-span-1 flex flex-col gap-6 mt-4 md:mt-0 md:ml-4">
             <div className="box-main cursor-pointer p-6 min-h-[30rem] flex flex-col items-center relative overflow-hidden gap-5">
               <div className="w-full relative z-10">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
@@ -459,48 +493,50 @@ function Start() {
                 Únete a Discord
               </Button>
 
-              <div className="mt-0  flex items-center justify-center gap-2 text-xs font-bold text-[var(--white-color)]">
+              <div className="mt-0  flex items-center justify-center gap-2 text-xs font-bold text-[var(--white-color)] ">
                 {/* <Server size={14} /> Servidor en línea • 124 Jugadores */}
               </div>
-              <div className="w-full relative z-10">
-                <h2 className="text-xl font-bold  flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
-                  <Zap size={24} style={{ color: "var(--secondary-color)" }}/>
-                  Acceso rápido
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-align-center mt-4 relative z-10">
-                <button
-                  onClick={() => navigate('/commands')}
-                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-blue-500/20 hover:bg-amber-500/30 transition-colors shadow-md"
-                  type="button"
-                >
-                  <Code size={28} className="text-blue-500" />
-                  {/* <span className="text-xs font-bold text-amber-500 uppercase">Tickets</span> */}
-                </button>
-                <button
-                  onClick={() => navigate('/community')}
-                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-[var(--white-color)]/20 hover:bg-[var(--secondary-color)]/30 transition-colors shadow-md"
-                  type="button"
-                >
-                  <Users size={28} className="text-[var(--white-color)]" />
-                  {/* <span className="text-xs font-bold text-[var(--secondary-color)] uppercase">Comunidades</span> */}
-                </button>
-                <button
-                  onClick={() => navigate('/tickets')}
-                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 transition-colors shadow-md"
-                  type="button"
-                >
-                  <AlertTriangle size={28} className="text-amber-500" />
-                  {/* <span className="text-xs font-bold text-amber-500 uppercase">Tickets</span> */}
-                </button>
-                <button
-                  onClick={() => navigate('/logout')}
-                  className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-red-500/20 hover:bg-red-500/30 transition-colors shadow-md"
-                  type="button"
-                >
-                  <LogOut size={28} className="text-red-500" />
-                  {/* <span className="text-xs font-bold text-red-500 uppercase">Cerrar sesión</span> */}
-                </button>
+              <div className="">
+                <div className="w-full relative z-10">
+                  <h2 className="text-xl font-bold  flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
+                    <Zap size={24} style={{ color: "var(--secondary-color)" }}/>
+                    Acceso rápido
+                  </h2>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-align-center mt-4 relative z-10">
+                  <button
+                    onClick={() => navigate('/commands')}
+                    className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-blue-500/20 hover:bg-amber-500/30 transition-colors shadow-md"
+                    type="button"
+                    >
+                    <Code size={28} className="text-blue-500" />
+                    {/* <span className="text-xs font-bold text-amber-500 uppercase">Tickets</span> */}
+                  </button>
+                  <button
+                    onClick={() => navigate('/community')}
+                    className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-[var(--white-color)]/20 hover:bg-[var(--secondary-color)]/30 transition-colors shadow-md"
+                    type="button"
+                    >
+                    <Users size={28} className="text-[var(--white-color)]" />
+                    {/* <span className="text-xs font-bold text-[var(--secondary-color)] uppercase">Comunidades</span> */}
+                  </button>
+                  <button
+                    onClick={() => navigate('/tickets')}
+                    className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 transition-colors shadow-md"
+                    type="button"
+                    >
+                    <AlertTriangle size={28} className="text-amber-500" />
+                    {/* <span className="text-xs font-bold text-amber-500 uppercase">Tickets</span> */}
+                  </button>
+                  <button
+                    onClick={() => navigate('/logout')}
+                    className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-red-500/20 hover:bg-red-500/30 transition-colors shadow-md"
+                    type="button"
+                    >
+                    <LogOut size={28} className="text-red-500" />
+                    {/* <span className="text-xs font-bold text-red-500 uppercase">Cerrar sesión</span> */}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -509,20 +545,99 @@ function Start() {
         {/* ========================================================= */}
         {/* ACCESOS DIRECTOS RÁPIDOS */}
         {/* ========================================================= */}
-        {/* <div className="flex gap-4 mt-8 mb-8 w-full justify-center w-full box-main p-6 shadow-md relative overflow-hidden ">
-          <div
-            className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
-            style={{
-              backgroundImage: `url(${Runas})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
-              maskImage: 'linear-gradient(to left, black, transparent)',
-              // -----------------------
-              zIndex: 0
-            }}
-          ></div>
-        </div> */}
+        <div className="mt-8 mb-8 w-full box-main shadow-md relative overflow-visible md:overflow-hidden px-4 py-6 md:p-10">
+          <div className="w-full ">
+            <div className="w-full px-0 md:px-10">
+              <div className="flex flex-col md:flex-row gap-5 md:h-160">
+                <div className={`order-2 md:order-1 text-center md:h-full flex flex-col transition-all duration-300 ${isChatCollapsed ? "md:w-[64px] md:min-w-[64px]" : "md:w-[32%] md:min-w-[300px]"}`}>
+                  <div className="w-full relative z-10">
+                    <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] justify-center transition-opacity duration-200 ${isChatCollapsed ? "md:opacity-0 md:pointer-events-none" : "opacity-100"}`}>
+                      <Icons.MessageSquare size={24} style={{ color: "var(--secondary-color)" }} />
+                      Chat del juego
+                    </h2>
+                  </div>
+                  <div className="flex-1 min-h-0 flex items-center justify-center">
+                    <div className="rounded-3xl bg-black/10 p-4 backdrop-blur-[2px] h-full w-full flex flex-col overflow-hidden relative">
+                      <button
+                        type="button"
+                        aria-label={isChatCollapsed ? "Descolapsar chat" : "Colapsar chat"}
+                        onClick={() => setIsChatCollapsed((prev) => !prev)}
+                        className="hidden md:inline-flex self-end items-center justify-center p-1 rounded-lg text-[var(--white-color)]/70 hover:text-[var(--white-color)] hover:bg-white/10 transition-colors"
+                      >
+                        {isChatCollapsed ? <Icons.ChevronRight size={18} /> : <Icons.ChevronLeft size={18} />}
+                      </button>
+
+                      <div className={`${isChatCollapsed ? "hidden md:flex" : "hidden"} flex-1 items-center justify-center`}>
+                        <div className="flex flex-col items-center gap-3 text-[var(--white-color)]/70">
+                          <Icons.MessageSquare size={22} style={{ color: "var(--secondary-color)" }} />
+                          <span className="[writing-mode:vertical-rl] rotate-180 text-[11px] font-bold tracking-[0.3em]">
+                            CHAT
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className={`flex h-full min-h-0 flex-col gap-3 ${isChatCollapsed ? "md:hidden" : ""}`}>
+                        <div ref={chatListRef} className="space-y-3 text-[15px] leading-5 text-left w-full overflow-y-auto flex-1 min-h-0">
+                          {chatMessages.map((entry) => (
+                            <div key={entry.id}>
+                              <span className="text-yellow-400 px-2">[{entry.channel}]</span>{" "}
+                              <span className={`${entry.usernameClass} font-bold`}>{entry.username}</span>
+                              <span className="text-white">: {entry.message}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <form onSubmit={handleSendChatMessage} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={chatInput}
+                            onChange={(event) => setChatInput(event.target.value)}
+                            placeholder="Escribe un mensaje..."
+                            className="flex-1 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[var(--secondary-color)]/40"
+                          />
+                          <button
+                            type="submit"
+                            className="rounded-xl bg-[var(--secondary-color)] px-3 py-2 text-xs font-bold text-black hover:opacity-90 transition-opacity"
+                          >
+                            Enviar
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="order-1 md:order-2 md:h-full flex-1 min-w-0 flex flex-col">
+                  <div className="w-full relative z-10">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
+                      <Icons.Map size={24} style={{ color: "var(--secondary-color)" }} />
+                      Mapa del juego
+                    </h2>
+                  </div>
+                  <iframe
+                    src="https://www.dcraft.nl/map/"
+                    frameborder="0"
+                    className="w-full rounded-3xl border border-white/10 h-[28rem] md:h-full"
+                    title="Mapa interactivo de Tierra de Todos"
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    sandbox="allow-scripts allow-same-origin allow-popups"
+                    style={{ border: "none" }}
+                  >
+                    Tu navegador no soporta iframes.
+                  </iframe>
+                </div>
+              </div>
+              <span className="p-5 text-center text-xs text-[var(--white-color)]/50 mt-2 block md:hidden">
+                Para una mejor experiencia, te recomendamos abrir esta seccion en pc. El mapa es interactivo y puede ser un poco pesado para dispositivos móviles.
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="py-10">
+
+        </div>
       </div>
     </div>
   );
