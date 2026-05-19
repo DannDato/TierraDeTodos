@@ -76,16 +76,12 @@ class AdminReportsController {
       }
 
       if (q) {
-        const maybeId = Number(q);
         const escapedQ = q.replace(/[%_\\]/g, '\\$&');
         where[Op.or] = [
           { subject: { [Op.like]: `%${escapedQ}%` } },
-          { '$author.username$': { [Op.like]: `%${escapedQ}%` } }
+          { '$author.username$': { [Op.like]: `%${escapedQ}%` } },
+          { ticketCode: { [Op.like]: `%${escapedQ}%` } }
         ];
-
-        if (Number.isInteger(maybeId) && maybeId > 0) {
-          where[Op.or].push({ id: maybeId });
-        }
       }
 
       const tickets = await models.tickets.findAll({
@@ -98,7 +94,6 @@ class AdminReportsController {
             required: false
           }
         ],
-        // Prioriza urgencia y dentro de cada prioridad atiende mÃ¡s viejo primero.
         order: [
           [literal("CASE `tickets`.`priority_key` WHEN 'URGENTE' THEN 1 WHEN 'ALTA' THEN 2 WHEN 'MEDIA' THEN 3 WHEN 'BAJA' THEN 4 ELSE 5 END"), 'ASC'],
           ['createdAt', 'ASC']
@@ -129,10 +124,14 @@ class AdminReportsController {
         );
       }
 
-      const ticketsWithUnread = tickets.map((ticket) => ({
-        ...ticket.toJSON(),
-        unreadCount: unreadByTicketId.get(Number(ticket.id)) || 0
-      }));
+      const ticketsWithUnread = tickets.map((ticket) => {
+        const t = ticket.toJSON();
+        delete t.id;
+        return {
+          ...t,
+          unreadCount: unreadByTicketId.get(Number(ticket.id)) || 0
+        };
+      });
 
       const canCloseTicket = accessScope.canCloseTickets;
 
@@ -151,7 +150,7 @@ class AdminReportsController {
     }
   };
 
-  // GET /admin/reports/tickets/:id/messages
+  // GET /admin/reports/tickets/:ticketCode/messages
   getMessages = async (req, res) => {
     try {
       const permissionKeys = await this.getTicketPermissions(req.user.id);
@@ -161,11 +160,11 @@ class AdminReportsController {
         return res.status(403).json({ message: 'No autorizado para este apartado' });
       }
 
-      const ticketId = Number(req.params.id);
-      if (!ticketId) return res.status(400).json({ message: 'ID invÃ¡lido' });
+      const ticketCode = String(req.params.id || req.params.ticketCode || '').trim();
+      if (!ticketCode) return res.status(400).json({ message: 'Ticket code inválido' });
 
       const ticket = await models.tickets.findOne({
-        where: { id: ticketId },
+        where: { ticketCode },
         include: [
           {
             model: models.Users,
@@ -186,14 +185,14 @@ class AdminReportsController {
         { seenByAdmin: true },
         {
           where: {
-            ticketId,
+            ticketId: ticket.id,
             seenByAdmin: false
           }
         }
       );
 
       const messages = await models.tickets_messages.findAll({
-        where: { ticketId },
+        where: { ticketId: ticket.id },
         order: [['createdAt', 'ASC'], ['id', 'ASC']]
       });
 
@@ -202,23 +201,26 @@ class AdminReportsController {
         apartado: 'Reports',
         userId: req.user?.id,
         username: req.user?.username,
-        valor: `ticketId=${ticketId}; messages=${messages.length}`,
+        valor: `ticketCode=${ticketCode}; messages=${messages.length}`,
         type: 'info'
       });
 
-      return res.status(200).json({ ticket, messages });
+      // Eliminar id, exponer solo ticketCode
+      const ticketObj = ticket.toJSON();
+      delete ticketObj.id;
+      return res.status(200).json({ ticket: ticketObj, messages });
     } catch (error) {
       handleError(res, req, error, 'Error al obtener mensajes del ticket');
     }
   };
 
-  // POST /admin/reports/tickets/:id/messages
+  // POST /admin/reports/tickets/:ticketCode/messages
   addMessageAsSystem = async (req, res) => {
     try {
-      const ticketId = Number(req.params.id);
-      if (!ticketId) return res.status(400).json({ message: 'ID invÃ¡lido' });
+      const ticketCode = String(req.params.id || req.params.ticketCode || '').trim();
+      if (!ticketCode) return res.status(400).json({ message: 'Ticket code inválido' });
 
-      const ticket = await models.tickets.findByPk(ticketId);
+      const ticket = await models.tickets.findOne({ where: { ticketCode } });
       if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
 
       if (ticket.statusKey !== 'ABIERTO') {
@@ -228,11 +230,11 @@ class AdminReportsController {
       }
 
       const message = normalizeText(req.body?.message);
-      if (!message) return res.status(400).json({ message: 'El mensaje no puede estar vacÃ­o' });
+      if (!message) return res.status(400).json({ message: 'El mensaje no puede estar vacío' });
       if (message.length > 5000) return res.status(400).json({ message: 'El mensaje no puede superar 5000 caracteres' });
 
       const created = await models.tickets_messages.create({
-        ticketId,
+        ticketId: ticket.id,
         userId: req.user.id,
         authorUsername: 'Sistema',
         authorRole: 'SYSTEM',
@@ -247,7 +249,7 @@ class AdminReportsController {
         apartado: 'Reports',
         userId: req.user?.id,
         username: req.user?.username,
-        valor: `ticketId=${ticketId}; messageId=${created.id}`,
+        valor: `ticketCode=${ticketCode}; messageId=${created.id}`,
         type: 'info'
       });
 
@@ -257,13 +259,13 @@ class AdminReportsController {
     }
   };
 
-  // PATCH /admin/reports/tickets/:id/close
+  // PATCH /admin/reports/tickets/:ticketCode/close
   closeTicket = async (req, res) => {
     try {
-      const ticketId = Number(req.params.id);
-      if (!ticketId) return res.status(400).json({ message: 'ID invÃ¡lido' });
+      const ticketCode = String(req.params.id || req.params.ticketCode || '').trim();
+      if (!ticketCode) return res.status(400).json({ message: 'Ticket code inválido' });
 
-      const ticket = await models.tickets.findByPk(ticketId);
+      const ticket = await models.tickets.findOne({ where: { ticketCode } });
       if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
 
       if (ticket.statusKey !== 'ABIERTO') {
@@ -277,13 +279,16 @@ class AdminReportsController {
         apartado: 'Reports',
         userId: req.user?.id,
         username: req.user?.username,
-        valor: `ticketId=${ticket.id}; targetUserId=${ticket.userId}`,
+        valor: `ticketCode=${ticketCode}; targetUserId=${ticket.userId}`,
         type: 'info'
       });
 
+      // Eliminar id, exponer solo ticketCode
+      const ticketObj = ticket.toJSON();
+      delete ticketObj.id;
       return res.status(200).json({
         message: 'Ticket cerrado correctamente',
-        ticket
+        ticket: ticketObj
       });
     } catch (error) {
       handleError(res, req, error, 'Error al cerrar ticket');
@@ -292,10 +297,10 @@ class AdminReportsController {
 
   rejectTicket = async (req, res) => {
     try {
-      const ticketId = Number(req.params.id);
-      if (!ticketId) return res.status(400).json({ message: 'ID inválido' });
+      const ticketCode = String(req.params.id || req.params.ticketCode || '').trim();
+      if (!ticketCode) return res.status(400).json({ message: 'Ticket code inválido' });
 
-      const ticket = await models.tickets.findByPk(ticketId);
+      const ticket = await models.tickets.findOne({ where: { ticketCode } });
       if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
 
       if (ticket.statusKey !== 'ABIERTO') {
@@ -309,13 +314,16 @@ class AdminReportsController {
         apartado: 'Reports',
         userId: req.user?.id,
         username: req.user?.username,
-        valor: `ticketId=${ticket.id}; targetUserId=${ticket.userId}`,
+        valor: `ticketCode=${ticketCode}; targetUserId=${ticket.userId}`,
         type: 'info'
       });
 
+      // Eliminar id, exponer solo ticketCode
+      const ticketObj = ticket.toJSON();
+      delete ticketObj.id;
       return res.status(200).json({
         message: 'Ticket rechazado correctamente',
-        ticket
+        ticket: ticketObj
       });
     } catch (error) {
       handleError(res, req, error, 'Error al rechazar ticket');

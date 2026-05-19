@@ -1,3 +1,15 @@
+// Generador de ticketCode aleatorio único (32 caracteres)
+const generateTicketCode = async () => {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let code, exists = true;
+  while (exists) {
+    code = Array.from({ length: 32 }, () => charset[Math.floor(Math.random() * charset.length)]).join('');
+    // Verifica unicidad en la base de datos
+    // eslint-disable-next-line no-await-in-loop
+    exists = await models.tickets.findOne({ where: { ticketCode: code }, attributes: ['id'] });
+  }
+  return code;
+};
 import { db, models } from '../../models/index.js';
 import handleError from '../../handlers/handleError.js';
 
@@ -128,7 +140,9 @@ class TicketsController {
       if (!priority) return res.status(400).json({ message: 'Prioridad de ticket invÃ¡lida' });
 
       const ticket = await db.transaction(async (transaction) => {
+        const ticketCode = await generateTicketCode();
         const createdTicket = await models.tickets.create({
+          ticketCode,
           userId,
           typeKey,
           priorityKey,

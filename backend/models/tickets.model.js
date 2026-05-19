@@ -61,6 +61,7 @@
     }
 
   }, {
+    modelName: 'tickets',
     tableName: 'tickets',
     timestamps: true,
     indexes: [

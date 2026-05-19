@@ -377,7 +377,7 @@ function TicketCard({ ticket, typeMap, priorityMap, onOpen }) {
         <div>
           <h3 className="font-bold text-[var(--ins-text-white)]">{ticket.subject}</h3>
             <p className="text-xs text-[var(--ins-text-gray)] mt-1">
-              {new Date(ticket.createdAt).toLocaleString("es-MX")} · <span className="text-sky-400 font-mono">{ticket.ticketCode}</span>
+              {new Date(ticket.createdAt).toLocaleString("es-MX")} ·
           </p>
         </div>
         <div className="flex flex-col items-end justify-center self-center gap-1.5 flex-shrink-0">
@@ -477,7 +477,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
               <>
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${st.border} ${st.bg} ${st.text} uppercase tracking-wider`}>{ticket.statusKey}</span>
-                  <span className="text-[10px] font-bold text-sky-400 font-mono uppercase tracking-wider">{ticket.ticketCode}</span>
+                  {/* <span className="text-[10px] font-bold text-sky-400 font-mono uppercase tracking-wider">{ticket.ticketCode}</span> */}
                 </div>
                 <h3 className="font-bold text-[var(--ins-text-white)] text-lg leading-tight truncate">{ticket.subject}</h3>
                 <div className="flex flex-wrap gap-2 mt-2">

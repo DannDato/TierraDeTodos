@@ -20,7 +20,12 @@ const loadModels = async () => {
       const modelUrl = pathToFileURL(modelPath).href;
       const modelModule = await import(modelUrl);
       const model = modelModule.default(db, DataTypes);
-      models[model.name] = model;
+      // Registro explícito para tickets
+      if (file === 'tickets.model.js') {
+        models.tickets = model;
+      } else {
+        models[model.name] = model;
+      }
     }
   }
 

@@ -208,14 +208,14 @@ function Reports() {
 
   const openChat = useCallback(async (ticket) => {
     // Feedback inmediato en UI: al abrir conversación se considera leído.
-    setTickets((prev) => prev.map((t) => (t.id === ticket.id ? { ...t, unreadCount: 0 } : t)));
+    setTickets((prev) => prev.map((t) => (t.ticketCode === ticket.ticketCode ? { ...t, unreadCount: 0 } : t)));
 
     setChatTicket(ticket);
     setChatData(null);
     setChatLoading(true);
 
     try {
-      const { data } = await api.get(`/admin/reports/tickets/${ticket.id}/messages`);
+      const { data } = await api.get(`/admin/reports/tickets/${ticket.ticketCode}/messages`);
       setChatData(data);
     } catch {
       setChatData({ ticket, messages: [] });
@@ -404,12 +404,13 @@ function AdminTicketCard({ ticket, typeMap, priorityMap, onDoubleClick }) {
       className="rounded-2xl bg-black/30 p-4 cursor-pointer hover:bg-black/40 transition-colors select-none"
       onClick={() => onDoubleClick(ticket)}
       title="Click para abrir conversación"
+      data-ticket-code={ticket.ticketCode}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-bold text-[var(--ins-text-white)]">{ticket.subject}</h3>
           <p className="text-xs text-[var(--ins-text-gray)] mt-1">
-            {new Date(ticket.createdAt).toLocaleString("es-MX")} · #{ticket.id} · {ticket.author?.username || "Usuario"}
+            {new Date(ticket.createdAt).toLocaleString("es-MX")} · <span className="font-mono text-sky-300">{ticket.ticketCode}</span> · {ticket.author?.username || "Usuario"}
           </p>
         </div>
         <div className="flex flex-col items-end justify-center self-center gap-1.5 flex-shrink-0">
@@ -501,7 +502,7 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
 
     try {
       setSending(true);
-      const { data } = await api.post(`/admin/reports/tickets/${ticket.id}/messages`, { message: text });
+      const { data } = await api.post(`/admin/reports/tickets/${ticket.ticketCode}/messages`, { message: text });
       onMessageSent(data.message);
       setNewMessage("");
     } catch (err) {
@@ -532,7 +533,7 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
     if (!ticket || ticket.statusKey !== "ABIERTO") return;
     try {
       setRejecting(true);
-      const { data } = await api.patch(`/admin/reports/tickets/${ticket.id}/reject`);
+      const { data } = await api.patch(`/admin/reports/tickets/${ticket.ticketCode}/reject`);
       onTicketClosed?.(data.ticket);
       onAlert?.({ type: "success", title: "Ticket rechazado", message: "El ticket se rechazó correctamente.", reload: true });
       await onRequestRefresh?.();
@@ -557,7 +558,7 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
     if (!ticket || ticket.statusKey !== "ABIERTO") return;
     try {
       setClosing(true);
-      const { data } = await api.patch(`/admin/reports/tickets/${ticket.id}/close`);
+      const { data } = await api.patch(`/admin/reports/tickets/${ticket.ticketCode}/close`);
       onTicketClosed?.(data.ticket);
       onAlert?.({ type: "success", title: "Ticket cerrado", message: "El ticket se cerró correctamente.", reload: true });
       await onRequestRefresh?.();
@@ -601,7 +602,7 @@ function AdminTicketChatModal({ chatData, loading, currentUser, canCloseTicket, 
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${st.border} ${st.bg} ${st.text} uppercase tracking-wider`}>{ticket.statusKey}</span>
                   <span className="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider" style={{ backgroundColor: `${priority?.color || "#f59e0b"}26`, color: priority?.color || "#f59e0b" }}>{priority?.name || ticket.priorityKey}</span>
-                  <span className="text-[10px] font-bold text-[var(--ins-text-dark)] uppercase tracking-wider">#{ticket.id}</span>
+                  <span className="text-[10px] font-bold text-sky-400 font-mono uppercase tracking-wider">{ticket.ticketCode}</span>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-bold text-[var(--ins-text-white)] text-xl leading-tight flex-1 min-w-0">{ticket.subject}</h3>

@@ -237,6 +237,7 @@ export default (sequelize, DataTypes) => {
       { role: 'POLICE', permissionKey: 'menu.community', active: true },
       { role: 'POLICE', permissionKey: 'menu.progress', active: true },
       { role: 'POLICE', permissionKey: 'menu.commands', active: true },
+      { role: 'POLICE', permissionKey: 'tickets.police', active: true },
 
       { role: 'STREAMER', permissionKey: 'menu.start', active: true },
       { role: 'STREAMER', permissionKey: 'menu.tickets', active: true },

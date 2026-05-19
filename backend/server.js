@@ -53,7 +53,7 @@ const port = process.env.PORT || 3000;
 
 // Sincronizar modelos (alter true para migraciones automáticas)
 try {
-  await db.sync({ alter: true });
+//   await db.sync({ alter: true });
   console.log('[DB] Modelos sincronizados con alter:true');
 } catch (err) {
   console.error('[DB] Error al sincronizar modelos:', err);
