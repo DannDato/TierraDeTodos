@@ -1,5 +1,7 @@
 export default (sequelize, DataTypes) => {
 
+  const buildDeviceFolio = (id) => `DEV-${String(id).padStart(2, '0')}`;
+
   const UserDevices = sequelize.define('UserDevices', {
     id: {
       type: DataTypes.INTEGER,
@@ -15,6 +17,22 @@ export default (sequelize, DataTypes) => {
     device_hash: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+
+    device_id: {
+      type: DataTypes.STRING(128),
+      allowNull: true
+    },
+
+    fingerprint_hash: {
+      type: DataTypes.STRING(128),
+      allowNull: true
+    },
+
+    fingerprint_version: {
+      type: DataTypes.STRING(16),
+      allowNull: true,
+      defaultValue: 'v2'
     },
 
     folio: {
@@ -38,13 +56,83 @@ export default (sequelize, DataTypes) => {
       allowNull: true
     },
 
+    accept_language: {
+      type: DataTypes.STRING(128),
+      allowNull: true
+    },
+
+    language: {
+      type: DataTypes.STRING(32),
+      allowNull: true
+    },
+
+    timezone: {
+      type: DataTypes.STRING(64),
+      allowNull: true
+    },
+
+    platform: {
+      type: DataTypes.STRING(64),
+      allowNull: true
+    },
+
+    browser: {
+      type: DataTypes.STRING(64),
+      allowNull: true
+    },
+
+    os: {
+      type: DataTypes.STRING(64),
+      allowNull: true
+    },
+
+    device_type: {
+      type: DataTypes.STRING(32),
+      allowNull: true
+    },
+
+    screen_resolution: {
+      type: DataTypes.STRING(24),
+      allowNull: true
+    },
+
+    color_depth: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+
+    pixel_ratio: {
+      type: DataTypes.STRING(16),
+      allowNull: true
+    },
+
+    hardware_concurrency: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+
+    device_memory: {
+      type: DataTypes.STRING(16),
+      allowNull: true
+    },
+
+    max_touch_points: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+
+    fingerprint_metadata: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+
     first_login: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW
     },
 
-    last_login: {  
+    last_login: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW
@@ -59,6 +147,14 @@ export default (sequelize, DataTypes) => {
         fields: ['user']
       },
       {
+        name: 'user_devices_device_hash_index',
+        fields: ['device_hash']
+      },
+      {
+        name: 'user_devices_user_device_id_index',
+        fields: ['user', 'device_id']
+      },
+      {
         name: 'user_devices_folio_unique',
         unique: true,
         fields: ['folio']
@@ -68,7 +164,7 @@ export default (sequelize, DataTypes) => {
 
   UserDevices.addHook('afterCreate', async (device, options) => {
     if (device.folio) return;
-    const folio = `DEV-${String(device.id).padStart(8, '0')}`;
+    const folio = buildDeviceFolio(device.id);
     await device.update({ folio }, { transaction: options?.transaction, hooks: false });
   });
 
@@ -79,7 +175,7 @@ export default (sequelize, DataTypes) => {
     });
 
     for (const row of rowsWithoutFolio) {
-      const folio = `DEV-${String(row.id).padStart(8, '0')}`;
+      const folio = buildDeviceFolio(row.id);
       await row.update({ folio }, { hooks: false });
     }
   };

@@ -168,6 +168,22 @@ Si `FOLDER` esta vacio, los prefijos quedan como abajo.
 - Registra accion, usuario, IP, device y metadata de consulta.
 - Puede capturar estado previo (`old_data`) en `update/delete`.
 
+### Limpieza automatica de Attempts
+- Job interno al arrancar el backend para purgar intentos antiguos.
+- Variables de entorno:
+  - `ATTEMPTS_CLEANUP_ENABLED` (`true` por defecto)
+  - `ATTEMPTS_RETENTION_DAYS` (`30` por defecto)
+  - `ATTEMPTS_CLEANUP_INTERVAL_MINUTES` (`60` por defecto)
+
+### Rate-limit auth publico
+- El middleware `publicAuthRateLimit` aplica limites a rutas publicas de auth.
+- Variables de entorno disponibles:
+  - `RATE_LIMIT_LOGIN_MAX_IP`, `RATE_LIMIT_LOGIN_MAX_USER`, `RATE_LIMIT_LOGIN_WINDOW_MS`
+  - `RATE_LIMIT_REGISTER_MAX_IP`, `RATE_LIMIT_REGISTER_MAX_USER`, `RATE_LIMIT_REGISTER_WINDOW_MS`
+  - `RATE_LIMIT_VERIFY_MAX_IP`, `RATE_LIMIT_VERIFY_MAX_USER`, `RATE_LIMIT_VERIFY_WINDOW_MS`
+  - `RATE_LIMIT_RESEND_MAX_IP`, `RATE_LIMIT_RESEND_MAX_USER`, `RATE_LIMIT_RESEND_WINDOW_MS`
+  - `RATE_LIMIT_GOOGLE_MAX_IP`, `RATE_LIMIT_GOOGLE_WINDOW_MS`
+
 ## 11. Modelos principales
 
 - `Users`

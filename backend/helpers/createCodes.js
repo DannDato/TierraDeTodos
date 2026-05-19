@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import nodemailer from "nodemailer";
 import {models} from "../models/index.js";
 import fs from "fs";
@@ -7,21 +8,33 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const ACCESS_CODE_LENGTH = 6;
+
+export const generateAccessCode = () => {
+    return crypto.randomInt(0, 10 ** ACCESS_CODE_LENGTH).toString().padStart(ACCESS_CODE_LENGTH, "0");
+};
+
+const normalizeCodeForSend = (value) => {
+    const digits = String(value ?? "").replace(/\D/g, "");
+    return digits.padStart(ACCESS_CODE_LENGTH, "0").slice(-ACCESS_CODE_LENGTH);
+};
 
 export const sendAccessCodeEmail = async ({ user, code, req, apartado = "VerifyAccess" }) => {
     try {
+        const normalizedCode = normalizeCodeForSend(code);
+
         if (process.env.NODE_ENV === 'development') {
             console.log("======================================");
             console.log(`Usuario: ${user.email}`);
             console.log(`Nuevo dispositivo detectado`);
-            console.log(`Codigo de verificacion: ${code}`);
+            console.log(`Codigo de verificacion: ${normalizedCode}`);
             console.log("Este codigo expira en 10 minutos");
             console.log("======================================");
         }
 
         if(process.env.SEND_MAIL === 'true'){
             const templatePath = path.join(__dirname, '../emails/nuevo-dispositivo.html');
-            const htmlContent = fs.readFileSync(templatePath, 'utf-8').replace('{{CODE}}', code);
+            const htmlContent = fs.readFileSync(templatePath, 'utf-8').replace('{{CODE}}', normalizedCode);
             let transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
@@ -34,7 +47,7 @@ export const sendAccessCodeEmail = async ({ user, code, req, apartado = "VerifyA
                 from: "Tierra de Todos <" + process.env.DANNBOT_MAIL_USER + ">",
                 to: user.email,
                 subject: 'Nuevo dispositivo detectado - Código de verificación',
-                text: `Tu código de verificación es: ${code}`,
+                text: `Tu código de verificación es: ${normalizedCode}`,
                 html: htmlContent
 
             };
@@ -75,17 +88,7 @@ export const sendAccessCodeEmail = async ({ user, code, req, apartado = "VerifyA
 
 export const createAccessCode = async (user, deviceHash, req, res) => {
     try {
-        const generateNumber = () => {
-            var baseTime= new Date().getTime();
-            var base=0
-            const digitos = Math.floor(Math.log10(baseTime)) + 1;
-            if (baseTime >= 6){
-                base=Math.floor(baseTime / Math.pow(10, digitos - 6));
-            }
-            return Math.floor(base + Math.random() * 900000).toString();
-        };
-
-        const code = generateNumber();
+        const code = generateAccessCode();
         const codeCrypted = await bcrypt.hash(code, 10);
         const expiration = new Date();
         expiration.setMinutes(expiration.getMinutes() + 10); // expira en 10 minutos
@@ -100,7 +103,7 @@ export const createAccessCode = async (user, deviceHash, req, res) => {
         if (checkExistingCodes) {await checkExistingCodes.destroy();}
 
         await models.AccessCodes.create({
-            codigo: parseInt(code),
+            codigo: Number(code),
             user: user.id,
             device_hash: deviceHash,
             code: codeCrypted,

@@ -15,7 +15,7 @@ const parseOptionalNumber = (value) => {
 };
 
 class TicketsController {
-  // GET /user/tickets â€” lista los tickets del usuario autenticado
+  // GET /user/tickets — lista los tickets del usuario autenticado
   getMyTickets = async (req, res) => {
     try {
       const userId = req.user.id;
@@ -49,10 +49,15 @@ class TicketsController {
         );
       }
 
-      const ticketsWithUnread = tickets.map((ticket) => ({
-        ...ticket.toJSON(),
-        unreadCount: unreadByTicketId.get(Number(ticket.id)) || 0
-      }));
+      const ticketsWithUnread = tickets.map((ticket) => {
+        const t = ticket.toJSON();
+        // Eliminar id, exponer solo ticketCode
+        delete t.id;
+        return {
+          ...t,
+          unreadCount: unreadByTicketId.get(Number(ticket.id)) || 0
+        };
+      });
 
       await req.logAction({
         accion: 'Tickets del usuario consultados',
@@ -136,7 +141,7 @@ class TicketsController {
           evidence
         }, { transaction });
 
-        // Primer mensaje de conversaciÃ³n: la descripciÃ³n inicial del usuario
+        // Primer mensaje de conversación: la descripción inicial del usuario
         await models.tickets_messages.create({
           ticketId: createdTicket.id,
           userId,
@@ -156,26 +161,29 @@ class TicketsController {
         apartado: 'Tickets',
         userId: req.user?.id,
         username: req.user?.username,
-        valor: `ticketId=${ticket.id}; typeKey=${typeKey}; priorityKey=${priorityKey}`,
+        valor: `ticketCode=${ticket.ticketCode}; typeKey=${typeKey}; priorityKey=${priorityKey}`,
         type: 'info'
       });
 
-      return res.status(201).json({ ticket: { ...ticket.toJSON(), unreadCount: 0 } });
+      // Eliminar id, exponer solo ticketCode
+      const ticketObj = ticket.toJSON();
+      delete ticketObj.id;
+      return res.status(201).json({ ticket: { ...ticketObj, unreadCount: 0 } });
     } catch (error) {
       handleError(res, req, error, 'Error al crear ticket');
     }
   };
 
-  // GET /user/tickets/:id/messages â€” mensajes de un ticket (solo el dueÃ±o)
+  // GET /user/tickets/:ticketCode/messages — mensajes de un ticket (solo el dueño)
   getMessages = async (req, res) => {
     try {
       const userId   = req.user.id;
-      const ticketId = Number(req.params.id);
+      const ticketCode = String(req.params.id || req.params.ticketCode || '').trim();
 
-      if (!ticketId) return res.status(400).json({ message: 'ID invÃ¡lido' });
+      if (!ticketCode) return res.status(400).json({ message: 'Ticket code inválido' });
 
       const ticket = await models.tickets.findOne({
-        where: { id: ticketId, userId }
+        where: { ticketCode, userId }
       });
 
       if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
@@ -184,14 +192,14 @@ class TicketsController {
         { seenByUser: true },
         {
           where: {
-            ticketId,
+            ticketId: ticket.id,
             seenByUser: false
           }
         }
       );
 
       const messages = await models.tickets_messages.findAll({
-        where: { ticketId },
+        where: { ticketId: ticket.id },
         order: [['createdAt', 'ASC'], ['id', 'ASC']]
       });
 
@@ -200,26 +208,29 @@ class TicketsController {
         apartado: 'Tickets',
         userId: req.user?.id,
         username: req.user?.username,
-        valor: `ticketId=${ticketId}; messages=${messages.length}`,
+        valor: `ticketCode=${ticketCode}; messages=${messages.length}`,
         type: 'info'
       });
 
-      return res.status(200).json({ ticket, messages });
+      // Eliminar id, exponer solo ticketCode
+      const ticketObj = ticket.toJSON();
+      delete ticketObj.id;
+      return res.status(200).json({ ticket: ticketObj, messages });
     } catch (error) {
       handleError(res, req, error, 'Error al obtener mensajes del ticket');
     }
   };
 
-  // POST /user/tickets/:id/messages â€” agrega mensaje (solo si ABIERTO y es el dueÃ±o)
+  // POST /user/tickets/:ticketCode/messages — agrega mensaje (solo si ABIERTO y es el dueño)
   addMessage = async (req, res) => {
     try {
       const userId   = req.user.id;
-      const ticketId = Number(req.params.id);
+      const ticketCode = String(req.params.id || req.params.ticketCode || '').trim();
 
-      if (!ticketId) return res.status(400).json({ message: 'ID invÃ¡lido' });
+      if (!ticketCode) return res.status(400).json({ message: 'Ticket code inválido' });
 
       const ticket = await models.tickets.findOne({
-        where: { id: ticketId, userId }
+        where: { ticketCode, userId }
       });
 
       if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
@@ -231,11 +242,11 @@ class TicketsController {
       }
 
       const message = normalizeText(req.body?.message);
-      if (!message) return res.status(400).json({ message: 'El mensaje no puede estar vacÃ­o' });
+      if (!message) return res.status(400).json({ message: 'El mensaje no puede estar vacío' });
       if (message.length > MAX_MESSAGE) return res.status(400).json({ message: `El mensaje no puede superar ${MAX_MESSAGE} caracteres` });
 
       const created = await models.tickets_messages.create({
-        ticketId,
+        ticketId: ticket.id,
         userId,
         authorUsername: req.user.username,
         authorRole: 'USER',
@@ -250,7 +261,7 @@ class TicketsController {
         apartado: 'Tickets',
         userId: req.user?.id,
         username: req.user?.username,
-        valor: `ticketId=${ticketId}; messageId=${created.id}`,
+        valor: `ticketCode=${ticketCode}; messageId=${created.id}`,
         type: 'info'
       });
 

@@ -6,16 +6,24 @@ import { ctrlRegister } from "../../controllers/auth/registerController.js";
 import { ctrlVerify } from "../../controllers/auth/verifyController.js";
 import { verifyToken } from "../../middlewares/verifyToken.js";
 import { ctrlGoogleAuth } from "../../controllers/auth/googleAuthController.js";
+import {
+	googleAuthRateLimit,
+	loginRateLimit,
+	registerRateLimit,
+	resendVerifyCodeRateLimit,
+	verifyCodeRateLimit,
+} from "../../middlewares/publicAuthRateLimit.js";
 
 const router = express.Router();
 
-router.post("/login", ctrlAuthenticate.authenticate);
-router.post("/register", ctrlRegister.register);
-router.post("/verify-code", ctrlVerify.verifyAccess);
-router.post("/resend-verify-code", ctrlVerify.resendAccessCode);
+router.post("/login", loginRateLimit, ctrlAuthenticate.authenticate);
+router.post("/register", registerRateLimit, ctrlRegister.register);
+router.post("/verify-code", verifyCodeRateLimit, ctrlVerify.verifyAccess);
+router.post("/resend-verify-code", resendVerifyCodeRateLimit, ctrlVerify.resendAccessCode);
 router.post("/logout", verifyToken, ctrlLogout.logout);
-router.get("/google/authorized", ctrlGoogleAuth.handleGoogleAuth);
-router.get("/google/unauthorized", ctrlGoogleAuth.handleGoogleNoAuth);
+router.post("/logout/all", verifyToken, ctrlLogout.logoutAll);
+router.get("/google/authorized", googleAuthRateLimit, ctrlGoogleAuth.handleGoogleAuth);
+router.get("/google/unauthorized", googleAuthRateLimit, ctrlGoogleAuth.handleGoogleNoAuth);
 
 
 export default router;

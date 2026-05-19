@@ -75,8 +75,8 @@ export async function initializeDatabase() {
     try {
         await loadModels();
         await db.authenticate();
-        // await db.sync({ alter: true });
-        await db.sync();
+        await db.sync({ alter: true });
+        // await db.sync();
         // await ensureForeignKeyConstraints();
         // await runModelSeeds();
 

@@ -138,7 +138,7 @@ class ProfileController {
   profile = async (req, res) => {
     try {
         const user = req.user.id;
-        const hashDevice = generateDeviceHash(req);
+                const currentSessionDeviceHash = req.session?.device || generateDeviceHash(req);
         let ip = req.ip || req.headers['x-forwarded-for'];
         if(process.env.NODE_ENV === 'development'){ip='148.202.104.78';}
         const response = await fetch(`http://ip-api.com/json/${ip}`);
@@ -214,12 +214,12 @@ class ProfileController {
                     '[]'
                 ) AS devices
             FROM Users u
-            LEFT JOIN user_devices ud ON ud.user = u.id
+            LEFT JOIN user_devices ud ON ud.user = u.id AND ud.authorized = 'AUTHORIZED'
             WHERE u.id = ?
             GROUP BY u.id;
         `, {
             replacements:[country,
-                hashDevice,
+                currentSessionDeviceHash,
                 user
             ],
             type: db.QueryTypes.SELECT
@@ -252,29 +252,40 @@ class ProfileController {
     }
   };
 
-    // DELETE /profile/devices/:id
+    // DELETE /profile/devices/:deviceHash
     revokeDevice = async (req, res) => {
         try {
             const userId = req.user.id;
-            const deviceId = parseInt(req.params.id, 10);
+            const deviceHash = String(req.params.deviceHash || '').trim().toLowerCase();
 
-            if (!deviceId || Number.isNaN(deviceId)) {
-                return res.status(400).json({ message: 'ID de dispositivo inválido' });
+            if (!/^[a-f0-9]{64}$/.test(deviceHash)) {
+                return res.status(400).json({ message: 'Hash de dispositivo inválido' });
             }
 
             const device = await models.UserDevices.findOne({
-                where: { id: deviceId, user: userId }
+                where: { device_hash: deviceHash, user: userId }
             });
 
             if (!device) {
                 return res.status(404).json({ message: 'Dispositivo no encontrado' });
             }
 
-            const isCurrent = device.device_hash === req.device?.hash;
+            const isCurrent = device.device_hash === req.session?.device;
 
             await models.Sessions.update(
                 { revoked: true },
                 { where: { userId, device: device.device_hash, revoked: false } }
+            );
+
+            await models.UserDevices.update(
+                { authorized: 'PENDING' },
+                {
+                    where: {
+                        user: userId,
+                        device_hash: device.device_hash,
+                        authorized: 'AUTHORIZED'
+                    }
+                }
             );
 
             await req.logAction({
@@ -282,7 +293,7 @@ class ProfileController {
                 apartado: 'Perfil',
                 userId,
                 username: req.user.username,
-                valor: `deviceId=${deviceId}; isCurrent=${isCurrent}`,
+                valor: `deviceHash=${deviceHash}; isCurrent=${isCurrent}; authorized=PENDING`,
                 type: 'info'
             });
 

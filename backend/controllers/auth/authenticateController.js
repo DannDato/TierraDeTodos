@@ -1,11 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { models, } from '../../models/index.js';
 import { Op } from 'sequelize';
-import generateDeviceHash from '../../utils/generateDeviceHash.js';
 import { createAccessCode } from '../../helpers/createCodes.js';
 import { CreateSession } from '../../helpers/CreateSession.js';
 import { getActualEdition } from '../../utils/getEdition.js';
 import bcrypt from 'bcrypt';
+import { buildDeviceLookup, buildUserDevicePayload, getDeviceContext, isUsableIpAddress } from '../../utils/deviceIdentity.js';
 
 class AuthenticateController {
     ensureUserInActiveEdition = async ({ userId }) => {
@@ -41,8 +41,7 @@ class AuthenticateController {
             return res.status(400).json({ message: 'Datos incompletos' });
         }
 
-        const now = Date.now();
-        const windowTime = new Date(now - 5 * 60 * 1000);
+        const deviceContext = getDeviceContext(req);
 
         const user = await models.Users.findOne({
             where: {
@@ -53,52 +52,6 @@ class AuthenticateController {
             }
         });
 
-        // Verificacion por ip
-        const ipAttempts = await models.Attempts.count({
-            where: {
-                ip_address: req.ip,
-                action_type: 'LOGIN',
-                status: 'FAILED',
-                createdAt: { [Op.gte]: windowTime }
-            }
-        });
-        if (ipAttempts >= 20) {
-            await req.logAction({
-                accion: "Bloqueo temporal por IP - demasiados intentos fallidos",
-                apartado: "Login",
-                ip: req.ip,
-                type:"warn"
-            });
-            return res.status(429).json({
-                message: 'Demasiados intentos. Intenta nuevamente más tarde.'
-            });
-        }
-
-        // verificacion por usuario (si existe)
-        if (user) {
-            const userAttempts = await models.Attempts.count({
-                where: {
-                    user: user.id,
-                    action_type: 'LOGIN',
-                    status: 'FAILED',
-                    createdAt: { [Op.gte]: windowTime }
-                }
-            });
-
-            if (userAttempts >= 5) {
-                await req.logAction({
-                    accion: "Cuenta bloqueada - múltiples intentos de login fallidos",
-                    apartado: "Login",
-                    userId: user.id,
-                    username: user.username,
-                    type:"warn"
-                });
-                return res.status(429).json({
-                    message: 'Cuenta temporalmente bloqueada. Intenta más tarde.'
-                });
-            }
-        }
-
         
         if (!user) {
             // Hash válido (bcrypt cost 10) para mantener tiempo de respuesta constante y no revelar si el usuario existe
@@ -108,8 +61,8 @@ class AuthenticateController {
                 action_type: 'LOGIN',
                 status: 'FAILED',
                 reason: 'Usuario no encontrado',
-                ip_address: req.ip,
-                user_agent: req.headers['user-agent']
+                ip_address: deviceContext.ip,
+                user_agent: deviceContext.userAgent
             });
             await req.logAction({
                 accion: "Login fallido - usuario no encontrado",
@@ -131,8 +84,8 @@ class AuthenticateController {
                 action_type: 'LOGIN',
                 status: 'FAILED',
                 reason: 'Contraseña incorrecta',
-                ip_address: req.ip,
-                user_agent: req.headers['user-agent']
+                ip_address: deviceContext.ip,
+                user_agent: deviceContext.userAgent
             });
             await req.logAction({
                 accion: "Login fallido - contraseña incorrecta",
@@ -151,7 +104,7 @@ class AuthenticateController {
             apartado: "Login",
             userId: user.id,
             username: user.username,
-            valor: req.ip
+            valor: deviceContext.ip
         });
         //limpiar intentos fallidos 
         await models.Attempts.destroy({
@@ -166,18 +119,43 @@ class AuthenticateController {
             user: user.id,
             action_type: 'LOGIN',
             status: 'SUCCESS',
-            ip_address: req.ip,
-            user_agent: req.headers['user-agent']
+            ip_address: deviceContext.ip,
+            user_agent: deviceContext.userAgent
         });
 
         await this.ensureUserInActiveEdition({ userId: user.id });
 
-        // Registrar dispositivo
-        const deviceHash = generateDeviceHash(req);
+        const deviceHash = deviceContext.deviceHash;
+        const deniedLookup = buildDeviceLookup(deviceContext);
+
+        if (deviceContext.deviceId) {
+            deniedLookup.push({ device_id: deviceContext.deviceId });
+        }
+
+        const canUseDeniedFallbackSignature = Boolean(
+            isUsableIpAddress(deviceContext.ip)
+            && deviceContext.userAgent
+            && deviceContext.browser
+            && deviceContext.browser !== 'unknown'
+            && deviceContext.os
+            && deviceContext.os !== 'unknown'
+        );
+
+        if (canUseDeniedFallbackSignature) {
+            deniedLookup.push({
+                ip_address: deviceContext.ip,
+                user_agent: deviceContext.userAgent,
+                browser: deviceContext.browser || null,
+                os: deviceContext.os || null,
+                platform: deviceContext.platform || null,
+                device_type: deviceContext.deviceType || null,
+            });
+        }
+
         const deniedDevice = await models.UserDevices.findOne({
             where: {
                 user: user.id,
-                device_hash: deviceHash,
+                [Op.or]: deniedLookup,
                 authorized: "DENIED"
             }
         });
@@ -188,7 +166,7 @@ class AuthenticateController {
                 apartado: "Login",
                 userId: user.id,
                 username: user.username,
-                valor: `deviceHash=${deviceHash}; ip=${req.ip}`,
+                valor: `deviceHash=${deviceHash}; ip=${deviceContext.ip}`,
                 type: "warn"
             });
 
@@ -200,25 +178,35 @@ class AuthenticateController {
         const existingDevice = await models.UserDevices.findOne({
             where: {
                 user: user.id,
-                device_hash: deviceHash,
+                [Op.or]: buildDeviceLookup(deviceContext),
                 authorized: "AUTHORIZED"
             }
         });
-        if (!existingDevice) {
+
+        const fingerprintChanged = Boolean(
+            existingDevice
+            && existingDevice.fingerprint_hash
+            && deviceContext.fingerprintHash
+            && existingDevice.fingerprint_hash !== deviceContext.fingerprintHash
+        );
+
+        if (!existingDevice || fingerprintChanged) {
             await models.UserDevices.destroy({
                 where: {
                     user: user.id,
-                    device_hash: deviceHash,
+                    [Op.or]: buildDeviceLookup(deviceContext),
                     authorized: "PENDING"
                 }
             })
-            await models.UserDevices.create({
-                user: user.id,
-                device_hash: deviceHash,
-                user_agent: req.headers['user-agent'],
-                ip_address: req.ip,
-                authorized: "PENDING"
-            });
+
+            await models.UserDevices.create(
+                buildUserDevicePayload({
+                    userId: user.id,
+                    context: deviceContext,
+                    authorized: "PENDING"
+                })
+            );
+
             var enviado = await createAccessCode(user, deviceHash, req, res);
             if(enviado){
                 return res.status(200).json({
@@ -232,6 +220,16 @@ class AuthenticateController {
             }
 
         } else {
+            const updatePayload = buildUserDevicePayload({
+                userId: user.id,
+                context: deviceContext,
+                authorized: "AUTHORIZED"
+            });
+
+            delete updatePayload.user;
+            delete updatePayload.authorized;
+
+            Object.assign(existingDevice, updatePayload);
             existingDevice.last_login = new Date();
             await existingDevice.save();
         }

@@ -39,7 +39,6 @@ export const verifyToken = async (req, res, next) => {
         apartado: 'AuthMiddleware',
         userId: req.user?.id,
         username: req.user?.username,
-        valor: `Token: ${token}`,
         type: 'error'
       });
       return res.status(401).json({ message: "Sesión inválida o revocada" });
@@ -51,6 +50,9 @@ export const verifyToken = async (req, res, next) => {
 
     req.user = user;
     req.session = session;
+    req.device = {
+      hash: session.device || null
+    };
     req.user.permissions = permissions.map(p => p.permission);
 
     next();

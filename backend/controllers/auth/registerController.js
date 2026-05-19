@@ -1,14 +1,14 @@
 
 import { models, db } from '../../models/index.js';
 import { Op } from 'sequelize';
-import generateDeviceHash from '../../utils/generateDeviceHash.js';
 import { createAccessCode } from '../../helpers/createCodes.js';
 import { applyRolePresetPermissions } from '../../helpers/applyRolePresetPermissions.js';
 import { getActualEdition } from '../../utils/getEdition.js';
 import bcrypt from 'bcrypt';
+import { buildUserDevicePayload, getDeviceContext } from '../../utils/deviceIdentity.js';
 
 class RegisterController {
-    buildUserFolio = (userId) => `TDT-${String(userId).padStart(8, '0')}`;
+    buildUserFolio = (userId) => `DEV-${String(userId).padStart(2, '0')}`;
 
     ensureUserInActiveEdition = async ({ userId, source = 'REGISTER', transaction, editionId }) => {
         const effectiveEditionId = editionId || (await getActualEdition())?.id;
@@ -92,15 +92,17 @@ class RegisterController {
             transaction
         });
 
-        const deviceHash = generateDeviceHash(req);
+        const deviceContext = getDeviceContext(req);
+        const deviceHash = deviceContext.deviceHash;
 
-        await models.UserDevices.create({
-            user: newUser.id,
-            device_hash: deviceHash,
-            user_agent: req.headers['user-agent'],
-            ip_address: req.ip,
-            authorized: "PENDING"
-        }, { transaction });
+        await models.UserDevices.create(
+            buildUserDevicePayload({
+                userId: newUser.id,
+                context: deviceContext,
+                authorized: "PENDING"
+            }),
+            { transaction }
+        );
 
         const SendAccess = await createAccessCode(newUser, deviceHash, req, res);
         if (!SendAccess) {throw new Error("No se pudo crear el código de acceso");}

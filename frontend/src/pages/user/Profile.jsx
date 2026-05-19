@@ -179,9 +179,8 @@ function Profile() {
 
   const handleLogout = async () => {
     try {
-      await api.post("/auth/logout", {
-        allDevices: logoutMode === "all",
-      });
+      const endpoint = logoutMode === "all" ? "/auth/logout/all" : "/auth/logout";
+      await api.post(endpoint);
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
@@ -196,10 +195,12 @@ function Profile() {
   }, []);
 
   const handleRevokeDevice = async (device) => {
-    if (revokingDeviceId) return;
-    setRevokingDeviceId(device.id);
+    const targetHash = String(device?.device_hash || "").trim().toLowerCase();
+    if (!targetHash || revokingDeviceId) return;
+
+    setRevokingDeviceId(targetHash);
     try {
-      const { data } = await api.delete(`/user/profile/devices/${device.id}`);
+      const { data } = await api.delete(`/user/profile/devices/${targetHash}`);
       if (data?.redirectToLogin) {
         localStorage.removeItem("token");
         window.location.href = "/login";
@@ -207,7 +208,7 @@ function Profile() {
       }
       setUser((prev) => ({
         ...prev,
-        devices: (prev.devices || []).filter((d) => d.id !== device.id),
+        devices: (prev.devices || []).filter((d) => String(d.device_hash || "").toLowerCase() !== targetHash),
       }));
     } catch (err) {
       openInfoModal({
@@ -899,11 +900,11 @@ function Profile() {
                         size="sm"
                         className="text-xs flex items-center gap-1 shrink-0 ml-2"
                         onClick={() => handleRevokeDevice(device)}
-                        disabled={revokingDeviceId === device.id}
+                        disabled={revokingDeviceId === String(device.device_hash || "").toLowerCase()}
                         title={device.isCurrent ? "Cerrar sesión actual" : "Cerrar sesión en este dispositivo"}
                       >
                         <LogOut size={13} />
-                        {revokingDeviceId === device.id ? "..." : "Cerrar"}
+                        {revokingDeviceId === String(device.device_hash || "").toLowerCase() ? "..." : "Cerrar"}
                       </Button>
                     </div>
                   </div>

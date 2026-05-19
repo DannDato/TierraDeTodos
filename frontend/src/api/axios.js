@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { buildClientDeviceHeaders } from '../utils/deviceIdentity';
 
 const isDev = import.meta.env.DEV;
 
@@ -21,6 +22,14 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
+    const deviceHeaders = buildClientDeviceHeaders();
+
+    Object.entries(deviceHeaders).forEach(([key, value]) => {
+      if (value) {
+        config.headers[key] = value;
+      }
+    });
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

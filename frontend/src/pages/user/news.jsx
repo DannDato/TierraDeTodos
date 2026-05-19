@@ -14,7 +14,7 @@ const createInitialNewsForm = () => ({
   title: "",
   type: "NOTICIA",
   fecha: new Date().toISOString().slice(0, 10),
-  // description: "",
+  description: "",
   note: "",
 });
 
@@ -96,10 +96,15 @@ function News() {
           const parsedTypes = Array.isArray(typeCandidates) ? typeCandidates : [];
           setNewsTypes(parsedTypes);
           if (parsedTypes.length > 0) {
-            setFormData((prev) => ({
-              ...prev,
-              type: prev.type || parsedTypes[0]?.name || "NOTICIA",
-            }));
+            const firstType = String(parsedTypes[0]?.name || "NOTICIA").toUpperCase();
+            setFormData((prev) => {
+              const currentType = String(prev.type || "").toUpperCase();
+              const existsInTypes = parsedTypes.some((type) => String(type?.name || "").toUpperCase() === currentType);
+              return {
+                ...prev,
+                type: existsInTypes ? currentType : firstType,
+              };
+            });
           }
         } else {
           setNews([]);
@@ -201,6 +206,22 @@ function News() {
     if (color) return color;
     return "#f59e0b";
   };
+
+  const isCreateFormValid = useMemo(() => {
+    return Boolean(
+      String(formData.title || "").trim()
+      && String(formData.fecha || "").trim()
+      && String(formData.description || "").trim()
+    );
+  }, [formData]);
+
+  const isEditFormValid = useMemo(() => {
+    return Boolean(
+      String(editFormData.title || "").trim()
+      && String(editFormData.fecha || "").trim()
+      && String(editFormData.description || "").trim()
+    );
+  }, [editFormData]);
 
 
   const isNewsLiked = useCallback((newsId) => {
@@ -382,9 +403,15 @@ function News() {
 
     if (!file) {
       if (mode === "create") {
+        if (selectedImagePreview?.startsWith("blob:")) {
+          URL.revokeObjectURL(selectedImagePreview);
+        }
         setSelectedImageFile(null);
         setSelectedImagePreview("");
       } else {
+        if (editImagePreview?.startsWith("blob:")) {
+          URL.revokeObjectURL(editImagePreview);
+        }
         setEditImageFile(null);
         setEditImagePreview("");
       }
@@ -394,7 +421,7 @@ function News() {
     if (!file.type?.startsWith("image/")) {
       openAlert({
         type: "warning",
-        title: "Archivo no valido",
+        title: "Archivo no válido",
         message: "Solo se permiten imágenes.",
       });
       event.target.value = "";
@@ -413,9 +440,15 @@ function News() {
 
     const preview = URL.createObjectURL(file);
     if (mode === "create") {
+      if (selectedImagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(selectedImagePreview);
+      }
       setSelectedImageFile(file);
       setSelectedImagePreview(preview);
     } else {
+      if (editImagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(editImagePreview);
+      }
       setEditImageFile(file);
       setEditImagePreview(preview);
     }
@@ -577,7 +610,7 @@ function News() {
     if (!payload.comment) {
       openAlert({
         type: "warning",
-        title: "Comentario vacio",
+        title: "Comentario vacío",
         message: "Escribe un comentario antes de publicar.",
       });
       return;
@@ -682,7 +715,7 @@ function News() {
     openAlert({
       type: "warning",
       title: "Eliminar noticia",
-      message: "Esta accion eliminara la noticia de forma permanente. Deseas continuar?",
+      message: "Esta acción eliminará la noticia de forma permanente. ¿Deseas continuar?",
       onConfirm: performDeleteSelected,
       confirmText: "Eliminar",
       cancelText: "Cancelar",
@@ -712,7 +745,7 @@ function News() {
               <span className="text-[var(--secondary-color)]">Noticias</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--ins-text-white)] tracking-tight">
-              Noticias!
+              Noticias
             </h1>
             <p className="hidden lg:block text-sm text-[var(--ins-text-gray)] mt-2 max-w-3xl leading-relaxed">
               Mantente al tanto de las últimas novedades, eventos y anuncios relacionados con Tierra de Todos.
@@ -755,7 +788,7 @@ function News() {
           <div className="box-main p-6 text-center text-[var(--ins-text-gray)] mb-6">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
               <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
-              mmmm... no hay noticias por aquí
+              {search.trim() ? "No encontramos resultados para tu búsqueda." : "No hay noticias por aquí por ahora."}
             </h2>
           </div>
         ) : (
@@ -765,7 +798,7 @@ function News() {
               <div>
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
                   <Newspaper size={24} style={{ color: "var(--secondary-color)" }}/>
-                  Ultima noticia destacada
+                  Última noticia destacada
                 </h2>
                 <div
                   className="relative h-80 w-full overflow-hidden cursor-pointer mb-4 box-main group"
@@ -866,12 +899,23 @@ function News() {
       </div>
 
       {selectedNews && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-x-0 top-0 bottom-0 z-[130] flex items-start justify-center px-4 md:px-6 pt-[72px] md:pt-[84px] pb-[86px] md:pb-6" role="dialog" aria-modal="true" aria-label={isEditingSelected ? "Editar noticia" : "Detalle de noticia"}>
 
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeNewsModal} />
-          <div className="relative w-full md:w-[96vw] xl:w-[92vw] max-w-[1700px] h-[90vh] md:h-[88vh] overflow-y-auto md:overflow-hidden tdt-scrollbar modal-main">
+          <div className="relative w-full md:w-[96vw] xl:w-[92vw] max-w-[1700px] h-full max-h-full overflow-y-auto md:overflow-hidden tdt-scrollbar modal-main">
             {isEditingSelected ? (
               <div className="h-full flex flex-col md:grid md:grid-cols-12 md:min-h-0 md:overflow-hidden">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeNewsModal();
+                  }}
+                  className="absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors z-[500]"
+                >
+                  <X size={18} />
+                </button>
+
                 <div
                   className="relative h-56 md:h-full md:col-span-4 w-full cursor-pointer overflow-hidden"
                   onClick={() => {
@@ -881,18 +925,8 @@ function News() {
                   <img src={editImagePreview || selectedNews.image} alt={selectedNews.title} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
                   <div className="absolute inset-0 flex items-center justify-center text-white/90 text-sm font-bold tracking-wider uppercase bg-black/25">
-                    Click para cambiar imagen
+                    Clic para cambiar imagen
                   </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      closeNewsModal();
-                    }}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors"
-                  >
-                    <X size={18} />
-                  </button>
                   <input
                     ref={editImageInputRef}
                     type="file"
@@ -922,10 +956,19 @@ function News() {
                           e.stopPropagation();
                           handleSaveEditedNews();
                         }}
-                        disabled={submitting}
+                        disabled={submitting || !isEditFormValid}
                         aria-label="Guardar cambios"
                       >
                         <Save size={16} />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="cancel"
+                        className="inline-flex items-center justify-center p-2 rounded-xl bg-[var(--cancel-color)] hover:bg-[var(--hover-cancel)] text-white"
+                        onClick={cancelEditSelected} disabled={submitting}
+                        aria-label="Cancelar"
+                      >
+                        <X size={16} />
                       </Button>
                     </div>
                   </div>
@@ -975,9 +1018,9 @@ function News() {
                     />
                   </div>
 
-                  <div className="pt-4 border-t border-white/10 flex items-center justify-end">
+                  {/* <div className="pt-4 border-t border-white/10 flex items-center justify-end">
                     <Button type="button" variant="ghost" className="text-white" onClick={cancelEditSelected} disabled={submitting}>Cancelar</Button>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             ) : (
@@ -1090,13 +1133,16 @@ function News() {
                         <Send size={16} />
                       </Button>
                     </div>
+                    <span className="self-end text-[11px] text-[var(--ins-text-gray)]">
+                      {String(commentText || "").length}/1000
+                    </span>
                   </div>
 
                   <div className="space-y-3 md:flex-1 md:min-h-0 md:overflow-y-auto md:pr-1 md:tdt-scrollbar">
                     {commentsLoading ? (
                       <p className="text-sm text-[var(--ins-text-gray)]">Cargando comentarios...</p>
                     ) : sortedComments.length === 0 ? (
-                      <p className="text-sm text-[var(--ins-text-gray)]">Aun no hay comentarios. Se la primera persona en comentar.</p>
+                      <p className="text-sm text-[var(--ins-text-gray)]">Aún no hay comentarios. Sé la primera persona en comentar.</p>
                     ) : (
                       sortedComments.map((entry) => (
                         <div key={entry.id} className="rounded-2xl bg-black/15 p-3 border border-white/5">
@@ -1168,114 +1214,121 @@ function News() {
       )}
 
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-x-0 top-0 bottom-0 z-[140] flex items-start justify-center px-4 md:px-6 pt-[72px] md:pt-[84px] pb-[86px] md:pb-6" role="dialog" aria-modal="true" aria-label="Crear noticia">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeCreateModal} />
           <form
             onSubmit={handleCreateNews}
-            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] overflow-hidden flex flex-col md:grid md:grid-cols-12 modal-main"
+            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-full max-h-full overflow-y-auto md:overflow-hidden tdt-scrollbar modal-main"
+            aria-busy={submitting ? "true" : "false"}
           >
-            <div
-              className="relative h-56 md:h-full md:col-span-4 w-full cursor-pointer overflow-hidden"
-              onClick={() => createImageInputRef.current?.click()}
-            >
-              <img
-                src={selectedImagePreview || tdtNewsImage}
-                alt="Preview noticia"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center text-white/90 text-sm font-bold tracking-wider uppercase bg-black/25">
-                Click para subir imagen
-              </div>
+            <div className="h-full flex flex-col md:grid md:grid-cols-12 md:min-h-0 md:overflow-hidden">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   closeCreateModal();
                 }}
-                className="absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors"
+                className="absolute top-4 right-4 p-2 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors z-[500]"
               >
                 <X size={18} />
               </button>
-              <input
-                ref={createImageInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(event) => handleImageChange(event, "create")}
-              />
+
               <div
-                className="absolute bottom-0 left-0 p-6 w-full"
-                onClick={(e) => e.stopPropagation()}
+                className="relative h-56 md:h-full md:col-span-4 w-full cursor-pointer overflow-hidden"
+                onClick={() => createImageInputRef.current?.click()}
               >
-                <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(formData.type) }}>
-                  {formData.type}
-                </span>
+                <img
+                  src={selectedImagePreview || tdtNewsImage}
+                  alt="Preview noticia"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+                <div className="absolute inset-0 flex items-center justify-center text-white/90 text-sm font-bold tracking-wider uppercase bg-black/25">
+                  Clic para subir imagen
+                </div>
                 <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                  placeholder="Título de la noticia"
-                  className="w-full bg-transparent border-b border-white/50 text-2xl md:text-3xl font-extrabold text-white leading-tight outline-none focus:border-white placeholder:text-white/65"
+                  ref={createImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => handleImageChange(event, "create")}
                 />
-              </div>
-            </div>
-
-            <div className="p-6 overflow-y-auto tdt-scrollbar space-y-4 md:col-span-8 md:min-h-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Tipo</span>
-                  <Select
-                    value={formData.type}
-                    onChange={(value) => setFormData((prev) => ({ ...prev, type: value }))}
-                    options={typeOptions}
-                    className="w-full"
-                    placeholder={typeOptions.length > 0 ? "Seleccionar" : "Sin tipos disponibles"}
-                  />
-                </div>
-                <div>
-                  <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Fecha</span>
+                <div
+                  className="absolute bottom-0 left-0 p-6 w-full"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(formData.type) }}>
+                    {formData.type}
+                  </span>
                   <input
-                    type="date"
-                    value={formData.fecha}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, fecha: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)]"
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                    placeholder="Título de la noticia"
+                    className="w-full bg-transparent border-b border-white/50 text-2xl md:text-3xl font-extrabold text-white leading-tight outline-none focus:border-white placeholder:text-white/65"
                   />
                 </div>
               </div>
 
-              <div>
-                <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Descripción</span>
-                <textarea
-                  rows={6}
-                  value={formData.description}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                  placeholder="Contenido principal de la noticia"
-                  className="w-full bg-transparent border-b border-white/30 text-lg text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/45"
-                  style={{ fontFamily: '"Times New Roman", Times, serif' }}
-                />
-              </div>
+              <div className="p-6 space-y-4 md:col-span-8 md:h-full md:min-h-0 md:overflow-y-auto md:tdt-scrollbar md:flex md:flex-col">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Tipo</span>
+                    <Select
+                      value={formData.type}
+                      onChange={(value) => setFormData((prev) => ({ ...prev, type: value }))}
+                      options={typeOptions}
+                      className="w-full"
+                      placeholder={typeOptions.length > 0 ? "Seleccionar" : "Sin tipos disponibles"}
+                    />
+                  </div>
+                  <div>
+                    <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Fecha</span>
+                    <input
+                      type="date"
+                      value={formData.fecha}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, fecha: e.target.value }))}
+                      className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)]"
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <span className="block text-[11px] text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-1">Nota</span>
-                <textarea
-                  rows={2}
-                  value={formData.note}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, note: e.target.value }))}
-                  placeholder="Dato extra opcional"
-                  className="w-full bg-transparent border-b border-white/25 text-base text-[var(--ins-text-gray)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
-                  style={{ fontFamily: '"Times New Roman", Times, serif' }}
-                />
-              </div>
-            </div>
+                <div className="md:flex-1 md:min-h-0 md:flex md:flex-col">
+                  <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Descripción</span>
+                  <textarea
+                    rows={6}
+                    value={formData.description}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                    placeholder="Contenido principal de la noticia"
+                    className="w-full md:flex-1 md:min-h-0 bg-transparent border-b border-white/30 text-lg text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/45"
+                    style={{ fontFamily: '"Times New Roman", Times, serif' }}
+                  />
+                </div>
 
-            <div className="px-6 py-4 flex justify-end gap-3 md:col-span-8">
-              <Button type="button" variant="ghost" className="text-white" onClick={closeCreateModal}>
-                Cancelar
-              </Button>
-              <Button type="submit" variant="primary" className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white" disabled={submitting || typeOptions.length === 0}>
-                Publicar
-              </Button>
+                <div>
+                  <div className="mb-1 flex items-center justify-between gap-3">
+                    <span className="block text-[11px] text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold">Nota</span>
+                    <span className="text-[11px] text-[var(--ins-text-gray)]">Opcional</span>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={formData.note}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, note: e.target.value }))}
+                    placeholder="Dato extra opcional"
+                    className="w-full bg-transparent border-b border-white/25 text-base text-[var(--ins-text-gray)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/35"
+                    style={{ fontFamily: '"Times New Roman", Times, serif' }}
+                  />
+                </div>
+
+                <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-3">
+                  <Button type="button" variant="cancel" className="text-white" onClick={closeCreateModal}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" variant="primary" className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white" disabled={submitting || typeOptions.length === 0 || !isCreateFormValid}>
+                    Publicar
+                  </Button>
+                </div>
+              </div>
             </div>
           </form>
         </div>

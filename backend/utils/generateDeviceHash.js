@@ -1,13 +1,7 @@
-import crypto from "crypto";
+import { getDeviceContext } from "./deviceIdentity.js";
 
 function generateDeviceHash(req){
-
-    const raw = `${req.ip}-${req.headers['user-agent']}`;
-
-    return crypto
-        .createHash('sha256')
-        .update(raw)
-        .digest('hex');
+    return getDeviceContext(req).deviceHash;
 }
 
 export default generateDeviceHash;

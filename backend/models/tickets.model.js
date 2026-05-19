@@ -5,6 +5,12 @@
       autoIncrement: true,
       primaryKey: true
     },
+    ticketCode: {
+      type: DataTypes.STRING(48),
+      allowNull: false,
+      unique: true,
+      field: 'ticket_code',
+    },
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -53,6 +59,7 @@
       type: DataTypes.STRING,
       allowNull: true
     }
+
   }, {
     tableName: 'tickets',
     timestamps: true,
@@ -64,8 +71,29 @@
       {
         name: 'tickets_status_key_index',
         fields: ['status_key']
+      },
+      {
+        name: 'tickets_ticket_code_index',
+        unique: true,
+        fields: ['ticket_code']
       }
     ]
+  });
+
+  // Hook para generar ticket_code aleatorio y único
+  tickets.beforeCreate(async (ticket, options) => {
+    if (!ticket.ticketCode) {
+      let code;
+      let exists = true;
+      const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      while (exists) {
+        code = Array.from({ length: 32 }, () => charset[Math.floor(Math.random() * charset.length)]).join('');
+        // Verifica unicidad
+        // eslint-disable-next-line no-await-in-loop
+        exists = await tickets.findOne({ where: { ticketCode: code }, attributes: ['id'] });
+      }
+      ticket.ticketCode = code;
+    }
   });
 
   tickets.associate = (models) => {

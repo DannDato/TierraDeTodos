@@ -7,6 +7,8 @@ import { initializeDatabase } from './config/databaseBootstrap.js'
 import { logAction } from "./helpers/logger.js";
 import injectLogAction from "./middlewares/injectLogAction.js";
 import secureDelay from "./middlewares/secureDelay.js";
+import { startAttemptsCleanupJob } from './helpers/attemptsCleanup.js';
+import { db } from './models/index.js';
 
 // Crear la app
 const app = express()
@@ -49,6 +51,14 @@ app.use(process.env.FOLDER || '', routes)
 
 const port = process.env.PORT || 3000;
 
+// Sincronizar modelos (alter true para migraciones automáticas)
+try {
+  await db.sync({ alter: true });
+  console.log('[DB] Modelos sincronizados con alter:true');
+} catch (err) {
+  console.error('[DB] Error al sincronizar modelos:', err);
+}
+
 app.listen(port, ()=> {
     console.clear();
     console.log("\n\n____________________________________________________________________\n");
@@ -56,4 +66,27 @@ app.listen(port, ()=> {
     logAction({accion: dbMessage,apartado: 'Server',query: 'N/A',tabla: 'N/A',condicion: 'N/A',valor: 'N/A',type: type});
     logAction({accion: `Servidor iniciado en ${process.env.NODE_ENV}`,apartado: 'Server',query: 'N/A',tabla: 'N/A',condicion: 'N/A',valor: 'N/A',type: type});
     logAction({accion: `El servidor esta funcionando en ${process.env.BACKEND_URL}:${port}/`,apartado: 'Server',query: 'N/A',tabla: 'N/A',condicion: 'N/A',valor: 'N/A',type: type});
+
+    if (dbConnection) {
+        startAttemptsCleanupJob({
+            onInfo: (message) => logAction({
+                accion: message,
+                apartado: 'AttemptsCleanup',
+                query: 'N/A',
+                tabla: 'Attempts',
+                condicion: 'N/A',
+                valor: 'N/A',
+                type: 'info'
+            }),
+            onError: (message) => logAction({
+                accion: message,
+                apartado: 'AttemptsCleanup',
+                query: 'N/A',
+                tabla: 'Attempts',
+                condicion: 'N/A',
+                valor: 'N/A',
+                type: 'error'
+            })
+        });
+    }
 });

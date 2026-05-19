@@ -1,9 +1,19 @@
 import bcrypt from "bcrypt";
 import { Op } from 'sequelize';
 import {models} from "../models/index.js";
+import { buildDeviceLookup, buildUserDevicePayload } from "../utils/deviceIdentity.js";
 
-export const verifyAccessCode = async (user, deviceHash, codigo, req, res) => {
+const ACCESS_CODE_REGEX = /^\d{6}$/;
+
+export const verifyAccessCode = async (user, deviceContext, codigo, req, res) => {
     try {
+        const normalizedCode = String(codigo ?? "").replace(/\D/g, "");
+        const deviceHash = deviceContext.deviceHash;
+
+        if (!ACCESS_CODE_REGEX.test(normalizedCode)) {
+            return {type: "error", message: "El código debe tener exactamente 6 dígitos"};
+        }
+
         const accessCode = await models.AccessCodes.findOne({
             where: {
                 user: user.id,
@@ -12,7 +22,7 @@ export const verifyAccessCode = async (user, deviceHash, codigo, req, res) => {
             }
         });
 
-        const isCodeValid = accessCode ? await bcrypt.compare(codigo, accessCode.code) : false;
+        const isCodeValid = accessCode ? await bcrypt.compare(normalizedCode, accessCode.code) : false;
 
         if (!isCodeValid) {
             await req.logAction({
@@ -34,18 +44,40 @@ export const verifyAccessCode = async (user, deviceHash, codigo, req, res) => {
         // Marcar código como usado
         accessCode.is_used = 'USED';
         accessCode.verified_at = new Date();
-        accessCode.ip_address = req.ip;
+        accessCode.ip_address = deviceContext.ip;
         await accessCode.save();
         
-        // Autorizar dispositivo
+        // Autorizar dispositivo (coincidencia por hash o device_id)
+        const deviceLookup = buildDeviceLookup(deviceContext);
         const userDevice = await models.UserDevices.findOne({
             where: {
                 user: user.id,
-                device_hash: deviceHash
-            }
+                [Op.or]: deviceLookup
+            },
+            order: [['id', 'DESC']]
         });
-        userDevice.authorized = "AUTHORIZED";
-        await userDevice.save();
+
+        if (userDevice) {
+            const payload = buildUserDevicePayload({
+                userId: user.id,
+                context: deviceContext,
+                authorized: "AUTHORIZED"
+            });
+
+            delete payload.user;
+            Object.assign(userDevice, payload);
+            userDevice.last_login = new Date();
+            await userDevice.save();
+        } else {
+            await models.UserDevices.create(
+                buildUserDevicePayload({
+                    userId: user.id,
+                    context: deviceContext,
+                    authorized: "AUTHORIZED"
+                })
+            );
+        }
+
         await req.logAction({
             accion: "Verificación de dispositivo exitosa",
             apartado: "VerifyAccess",

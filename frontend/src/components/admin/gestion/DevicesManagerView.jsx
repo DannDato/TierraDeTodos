@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { RefreshCcw, Eye, EyeOff, Search, X } from "lucide-react";
+import { RefreshCcw, Eye, EyeOff, Search, ShieldAlert, X } from "lucide-react";
 
 import Button from "../../../elements/Button";
 import AlertModal from "../../../elements/AlertModal";
@@ -191,6 +191,18 @@ function DevicesManagerView() {
       render: (device) => cropText(device.userAgent),
     },
     {
+      key: "client",
+      header: "Cliente",
+      cellClassName: "text-[var(--ins-text-white)] text-xs",
+      render: (device) => `${device.browser || "Unknown"} / ${device.os || "Unknown"}`,
+    },
+    {
+      key: "deviceType",
+      header: "Tipo",
+      cellClassName: "text-[var(--ins-text-gray)] text-xs uppercase",
+      render: (device) => device.deviceType || "UNKNOWN",
+    },
+    {
       key: "authorized",
       header: "Status",
       render: (device) => (
@@ -232,7 +244,7 @@ function DevicesManagerView() {
       cellClassName: "text-[var(--ins-text-white)] text-sm",
       render: (device) => (device.lastLogin ? new Date(device.lastLogin).toLocaleString() : "N/A"),
     },
-  ]), [authorizationToneMap, toggleIpVisibility, visibleIpRowIds]);
+  ]), [visibleIpRowIds]);
 
   return (
     <div className="flex flex-col h-full animate-[fadeIn_0.2s_ease-out]">
@@ -282,7 +294,7 @@ function DevicesManagerView() {
         rowKey="deviceId"
         onRowDoubleClick={(row) => openDeviceDetail(row)}
         minWidth="min-w-[920px]"
-        emptyColSpan={7}
+        emptyColSpan={9}
         emptyMessage={devices.length === 0 ? "No hay dispositivos registrados." : "No hay resultados para la búsqueda."}
       />
 
@@ -375,7 +387,7 @@ function DeviceHistoryModal({ device, detailData, loading, onClose, openAlert, o
     },
     {
       key: "lastLoginAt",
-      header: "Ultimo login",
+      header: "Último login",
       cellClassName: "text-[var(--ins-text-white)] text-sm",
       render: (row) => (row.lastLoginAt ? new Date(row.lastLoginAt).toLocaleString() : "N/A"),
     },
@@ -417,6 +429,12 @@ function DeviceHistoryModal({ device, detailData, loading, onClose, openAlert, o
       header: "User-Agent",
       cellClassName: "text-[var(--ins-text-gray)] text-xs",
       render: (attempt) => attempt.userAgent || "N/A",
+    },
+    {
+      key: "source",
+      header: "Origen",
+      cellClassName: "text-[var(--ins-text-gray)] text-xs",
+      render: (attempt) => attempt.source || "N/A",
     },
   ];
 
@@ -495,6 +513,12 @@ function DeviceHistoryModal({ device, detailData, loading, onClose, openAlert, o
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InfoCell label="Hash" value={detailData?.deviceHash || device.deviceHash} mono />
             <InfoCell label="User-Agent completo" value={device.userAgent} />
+            <InfoCell label="Fingerprint" value={detailData?.titular?.fingerprintHash || device.fingerprintHash} mono />
+            <InfoCell label="Cliente" value={`${detailData?.titular?.browser || device.browser || "Unknown"} / ${detailData?.titular?.os || device.os || "Unknown"}`} />
+            <InfoCell label="Plataforma" value={detailData?.titular?.platform || device.platform || "N/A"} />
+            <InfoCell label="Tipo de dispositivo" value={detailData?.titular?.deviceType || device.deviceType || "N/A"} />
+            <InfoCell label="Zona horaria" value={detailData?.titular?.timezone || device.timezone || "N/A"} />
+            <InfoCell label="Resolución" value={detailData?.titular?.screenResolution || device.screenResolution || "N/A"} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] gap-4 items-start">
@@ -551,6 +575,13 @@ function DeviceHistoryModal({ device, detailData, loading, onClose, openAlert, o
             </div>
           )}
 
+          {currentAuthorization === "DENIED" && (
+            <div className="rounded-2xl border border-rose-500/35 bg-rose-500/15 px-4 py-3 text-sm text-rose-100 shadow-[0_0_20px_rgba(244,63,94,0.12)] inline-flex items-center gap-2">
+              <ShieldAlert size={16} />
+              El dispositivo queda bloqueado para futuros inicios de sesión mientras permanezca en estado DENIED.
+            </div>
+          )}
+
           <div className="bg-[var(--black-color)]/20 rounded-2xl overflow-hidden">
             <div className="px-4 py-3 border-b border-[var(--white-color)]/10 flex items-center justify-between gap-3">
               <h4 className="text-sm font-bold text-[var(--ins-text-white)] uppercase tracking-wider">Usuarios vinculados</h4>
@@ -587,7 +618,7 @@ function DeviceHistoryModal({ device, detailData, loading, onClose, openAlert, o
                 columns={attemptsColumns}
                 data={attempts}
                 rowKey="id"
-                minWidth="min-w-[850px]"
+                  minWidth="min-w-[980px]"
                 layout="embedded"
                 preset="compactMuted"
               />

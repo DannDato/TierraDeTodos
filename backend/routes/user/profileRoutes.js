@@ -19,7 +19,7 @@ router.patch("/profile/username", verifyToken, ctrlProfile.requestUsernameChange
 router.post("/profile/verify-change", verifyToken, ctrlProfile.verifyProfileChange);
 
 // Revocar sesiones de un dispositivo específico
-router.delete("/profile/devices/:id", verifyToken, ctrlProfile.revokeDevice);
+router.delete("/profile/devices/:deviceHash", verifyToken, ctrlProfile.revokeDevice);
 
 export default router;
 

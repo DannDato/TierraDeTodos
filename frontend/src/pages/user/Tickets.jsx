@@ -201,13 +201,13 @@ function Tickets() {
   // ── chat modal ─────────────────────────────────────────────────────────────
   const openChat = useCallback(async (ticket) => {
     // Feedback inmediato en UI: al abrir conversación se considera leído.
-    setTickets((prev) => prev.map((t) => (t.id === ticket.id ? { ...t, unreadCount: 0 } : t)));
+    setTickets((prev) => prev.map((t) => (t.ticketCode === ticket.ticketCode ? { ...t, unreadCount: 0 } : t)));
 
     setChatTicket(ticket);
     setChatData(null);
     setChatLoading(true);
     try {
-      const { data } = await api.get(`/user/tickets/${ticket.id}/messages`);
+      const { data } = await api.get(`/user/tickets/${ticket.ticketCode}/messages`);
       setChatData(data);
     } catch {
       setChatData({ ticket, messages: [] });
@@ -250,11 +250,13 @@ function Tickets() {
           </p>
         </div>
 
-        {/* Resumen */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-          <SummaryCard label="Total tickets" value={summary.total} />
-          <SummaryCard label="Abiertos"       value={summary.abiertos} color="text-emerald-300" />
-          <SummaryCard label="Cerrados"        value={summary.cerrados} color="text-[var(--ins-text-dark)]" />
+        {/* Resumen simplificado */}
+        <div className="flex justify-end mb-6 px-2">
+          <div className="flex items-center gap-4 text-sm font-semibold">
+            <span className="text-[var(--ins-text-gray)]">Total: <span className="text-[var(--ins-text-white)] font-bold">{summary.total}</span></span>
+            <span className="text-emerald-300">Abiertos: <span className="font-bold">{summary.abiertos}</span></span>
+            <span className="text-[var(--ins-text-dark)]">Cerrados: <span className="font-bold">{summary.cerrados}</span></span>
+          </div>
         </div>
 
         {/* Cuerpo */}
@@ -352,14 +354,7 @@ function Tickets() {
 }
 
 // ─── SummaryCard ─────────────────────────────────────────────────────────────
-function SummaryCard({ label, value, color = "text-[var(--ins-text-white)]" }) {
-  return (
-    <div className="box-main p-6">
-      <p className="text-xs uppercase tracking-widest text-[var(--ins-text-gray)] font-bold">{label}</p>
-      <p className={`text-2xl font-extrabold mt-2 ${color}`}>{value}</p>
-    </div>
-  );
-}
+
 
 // ─── TicketCard ───────────────────────────────────────────────────────────────
 function TicketCard({ ticket, typeMap, priorityMap, onOpen }) {
@@ -381,8 +376,8 @@ function TicketCard({ ticket, typeMap, priorityMap, onOpen }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-bold text-[var(--ins-text-white)]">{ticket.subject}</h3>
-          <p className="text-xs text-[var(--ins-text-gray)] mt-1">
-            {new Date(ticket.createdAt).toLocaleString("es-MX")} · #{ticket.id}
+            <p className="text-xs text-[var(--ins-text-gray)] mt-1">
+              {new Date(ticket.createdAt).toLocaleString("es-MX")} · <span className="text-sky-400 font-mono">{ticket.ticketCode}</span>
           </p>
         </div>
         <div className="flex flex-col items-end justify-center self-center gap-1.5 flex-shrink-0">
@@ -454,7 +449,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
     if (!text || !ticket || !isOpen) return;
     try {
       setSending(true);
-      const { data } = await api.post(`/user/tickets/${ticket.id}/messages`, { message: text });
+      const { data } = await api.post(`/user/tickets/${ticket.ticketCode}/messages`, { message: text });
       onMessageSent(data.message);
       setNewMessage("");
     } catch (err) {
@@ -482,7 +477,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
               <>
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${st.border} ${st.bg} ${st.text} uppercase tracking-wider`}>{ticket.statusKey}</span>
-                  <span className="text-[10px] font-bold text-[var(--ins-text-dark)] uppercase tracking-wider">#{ticket.id}</span>
+                  <span className="text-[10px] font-bold text-sky-400 font-mono uppercase tracking-wider">{ticket.ticketCode}</span>
                 </div>
                 <h3 className="font-bold text-[var(--ins-text-white)] text-lg leading-tight truncate">{ticket.subject}</h3>
                 <div className="flex flex-wrap gap-2 mt-2">

@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { models } from '../models/index.js';
+import { getDeviceContext } from '../utils/deviceIdentity.js';
 
 export const CreateSession = async ({ token, userId, req }) => {
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -8,7 +9,7 @@ export const CreateSession = async ({ token, userId, req }) => {
     throw new Error('Token inválido para el usuario actual');
   }
 
-  const device = req.headers['user-agent'] || 'unknown-device';
+  const device = getDeviceContext(req).deviceHash;
 
   await models.Sessions.destroy({
     where: {
