@@ -66,4 +66,5 @@ export const SEED_ORDER = [
   'commands',
   'command_permissions',
   'UserPermissions',
+  'catalog'
 ];
