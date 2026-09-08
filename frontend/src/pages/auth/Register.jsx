@@ -180,7 +180,11 @@ function Register() {
               </div>
 
               <SocialsAuth
-                onGoogle={() => console.log("Google register")}
+                onAuthError={(message) => {
+                  const text = typeof message === "string" ? message : "Error al autenticar";
+                  setUsernameError(text);
+                  setEmailError(text);
+                }}
                 onDiscord={() => console.log("Discord register")}
                 onMicrosoft={() => console.log("Microsoft register")}
               />

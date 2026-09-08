@@ -162,6 +162,11 @@
       as: 'statusChangesApplied',
       constraints: false
     });
+    Users.hasMany(models.user_connected_accounts,{
+        foreignKey: 'userId',
+        as: 'connectedAccounts',
+        constraints: false
+    });
   };
 
   Users.seed = async () => {
@@ -260,6 +265,6 @@
 
     console.log('🌱 Seeds de usuarios aplicadas correctamente.');
   };
-
+  
   return Users;
 };

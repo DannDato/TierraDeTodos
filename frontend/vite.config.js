@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, '.', '');
-  const targetBase = env.VITE_API_BASE;
+  const targetBase = env.VITE_API_BASE?.replace(/\/$/, '');
   const targetPort = env.VITE_API_PORT;
 
   if (command === 'serve' && (!targetBase || !targetPort)) {

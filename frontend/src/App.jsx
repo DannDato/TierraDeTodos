@@ -11,6 +11,8 @@ import Profile from "./pages/user/Profile";
 import Progress from "./pages/user/Progress";
 import VerifyAccess from "./pages/auth/VerifyAccess"
 import PasswordRecovery from "./pages/auth/passwordRecovery"
+import CompleteGoogleRegistration from "./pages/auth/CompleteGoogleRegistration"
+import TwitchCallback from "./pages/auth/TwitchCallback"
 // Layouts
 import DashboardLayout from "./layouts/DashboardLayout";
 // Páginas de usuario
@@ -38,6 +40,8 @@ const App = function App() {
       "/login",
       "/register",
       "/verifyAccess",
+      "/complete-registration",
+      "/auth/twitch/callback",
       "/start",
       "/profile",
       "/progress",
@@ -79,6 +83,8 @@ const App = function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verifyAccess" element={<VerifyAccess />} />
+        <Route path="/complete-registration" element={<CompleteGoogleRegistration />} />
+        <Route path="/auth/twitch/callback" element={<TwitchCallback />} />
         <Route path="/password-recovery" element={<PasswordRecovery />} />
 
         <Route element={<DashboardLayout />}>

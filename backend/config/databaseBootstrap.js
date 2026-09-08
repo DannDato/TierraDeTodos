@@ -78,7 +78,7 @@ export async function initializeDatabase() {
         // await db.sync({ alter: true });
         await db.sync();
         // await ensureForeignKeyConstraints();
-        // await runModelSeeds();
+        await runModelSeeds();
 
         dbConnection = true;
         dbMessage = 'Base de datos conectada correctamente';

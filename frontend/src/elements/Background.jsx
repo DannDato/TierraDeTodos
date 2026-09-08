@@ -14,8 +14,6 @@ function Background({
 }) {
   return (
     <section id="inicio" className={`relative ${className}`} {...props}>
-
-
       {/* Imagen de fondo */}
       <div
         className="fixed top-0 left-0 w-full h-full bg-cover bg-center scale-110"

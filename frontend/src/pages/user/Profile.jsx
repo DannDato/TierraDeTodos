@@ -10,6 +10,7 @@ import Credencial from "../../components/user/Credencial";
 import InfoRow from "../../elements/InfoRow";
 
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
+import Socials from "../../components/auth/Socials";
 
 function Profile() {
     // User state must be declared first
@@ -25,6 +26,10 @@ function Profile() {
     const [showEmailVerification, setShowEmailVerification] = useState(false);
     const [emailVerificationCode, setEmailVerificationCode] = useState("");
     const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+    const [connectedAccounts, setConnectedAccounts] = useState([]);
+    const [googleClientId, setGoogleClientId] = useState(null);
+    const [isLoadingSocials, setIsLoadingSocials] = useState(false);
+    const [socialDisconnectProvider, setSocialDisconnectProvider] = useState(null);
 
     // Keep edit fields in sync with user data
     useEffect(() => {
@@ -139,6 +144,65 @@ function Profile() {
     setInfoModal({ isOpen: true, type, title, message });
   };
 
+  const loadConnectedAccounts = async () => {
+    const { data } = await api.get("/auth/google/accounts");
+    setConnectedAccounts(data?.accounts || []);
+  };
+
+  const handleGoogleCredential = async (response) => {
+    if (!response?.credential) {
+      openInfoModal({ type: "error", title: "Google", message: "Google no devolvió una credencial válida." });
+      return;
+    }
+
+    try {
+      setIsLoadingSocials(true);
+      await api.post("/auth/google/accounts", { credential: response.credential });
+      await loadConnectedAccounts();
+      openInfoModal({ type: "success", title: "Google conectado", message: "Tu cuenta de Google quedó vinculada correctamente." });
+    } catch (err) {
+      openInfoModal({ type: "error", title: "No se pudo conectar Google", message: err.response?.data?.message || "Inténtalo de nuevo." });
+    } finally {
+      setIsLoadingSocials(false);
+    }
+  };
+
+  const handleSocialProviderClick = (provider) => {
+    if (provider === "TWITCH") {
+      setIsLoadingSocials(true);
+      api.get("/auth/twitch/connect")
+        .then(({ data }) => window.location.assign(data.authorizationUrl))
+        .catch((err) => {
+          setIsLoadingSocials(false);
+          openInfoModal({ type: "error", title: "No se pudo conectar Twitch", message: err.response?.data?.message || "Inténtalo de nuevo." });
+        });
+      return;
+    }
+    if (provider !== "GOOGLE") {
+      openInfoModal({ type: "info", title: provider, message: "Este proveedor estará disponible próximamente." });
+    }
+  };
+
+  const confirmSocialDisconnect = async () => {
+    const provider = socialDisconnectProvider;
+    const account = connectedAccounts.find((item) => item.provider === provider);
+    if (!account) return;
+    try {
+      setSocialDisconnectProvider(null);
+      setIsLoadingSocials(true);
+      await api.delete(`/auth/google/accounts/${account.id}`);
+      await loadConnectedAccounts();
+    } catch (err) {
+      openInfoModal({ type: "error", title: "No se pudo desconectar", message: err.response?.data?.message || "Inténtalo de nuevo." });
+    } finally {
+      setIsLoadingSocials(false);
+    }
+  };
+
+  const handleSocialDisconnect = (provider) => {
+    setSocialDisconnectProvider(provider);
+  };
+
   const closeInfoModal = () => {
     setInfoModal((prev) => ({ ...prev, isOpen: false }));
   };
@@ -146,9 +210,10 @@ function Profile() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const [profileResponse, credentialResponse] = await Promise.all([
+        const [profileResponse, credentialResponse, googleConfigResponse] = await Promise.all([
           api.get("/user/profile"),
-          api.get("/user/credential")
+          api.get("/user/credential"),
+          api.get("/auth/google/config")
         ]);
 
         const profileData = profileResponse?.data?.user || profileResponse?.data || {};
@@ -159,6 +224,8 @@ function Profile() {
           ...credentialData,
           devices: profileData.devices || []
         });
+        setGoogleClientId(googleConfigResponse?.data?.clientId || null);
+        await loadConnectedAccounts();
       } catch (err) {
         const message =
           err.response?.data?.message ||
@@ -496,7 +563,7 @@ function Profile() {
     <section className="min-h-screen py-15 flex items-start justify-center pb-24 min-h-screen h-screen">
 
       <LoadingOverlay
-        isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer || isLoadingPassword || isSavingProfile}
+        isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer || isLoadingPassword || isSavingProfile || isLoadingSocials}
         message={isLoadingPassword ? "Enviando correo de recuperación..." : isSavingProfile ? "Guardando perfil..." : (!user ? "Cargando cuenta..." : "Guardando cambios...")}
       />
 
@@ -561,6 +628,17 @@ function Profile() {
         onClose={closeInfoModal}
         onConfirm={closeInfoModal}
         cancelText=""
+      />
+
+      <AlertModal
+        isOpen={Boolean(socialDisconnectProvider)}
+        type="warning"
+        title="Desconectar proveedor"
+        message={`¿Seguro que deseas desconectar ${socialDisconnectProvider || "este proveedor"}? Podrás volver a vincularlo después, pero seguirá siendo necesario conservar otro método de acceso.`}
+        onClose={() => setSocialDisconnectProvider(null)}
+        onConfirm={confirmSocialDisconnect}
+        cancelText="Cancelar"
+        confirmText="Desconectar"
       />
 
       {user && (
@@ -838,6 +916,18 @@ function Profile() {
 
               </form>
             )}
+
+            <div className="box-main p-6">
+              <h2 className="text-xl font-bold mb-2">Cuentas conectadas</h2>
+              <p className="mb-5 text-sm text-[var(--ins-text-gray)]">Conecta proveedores externos para acceder más fácilmente a tu cuenta.</p>
+              <Socials
+                googleClientId={googleClientId}
+                connectedAccounts={connectedAccounts}
+                onGoogleCredential={handleGoogleCredential}
+                onProviderClick={handleSocialProviderClick}
+                onDisconnect={handleSocialDisconnect}
+              />
+            </div>
 
             {/* SECURITY */}
             <div className="box-main p-6">

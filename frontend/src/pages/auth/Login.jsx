@@ -15,50 +15,55 @@ import { ArrowLeft, Pencil } from "lucide-react";
 function Login() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  const [loading, setLoading] = useState(false)
 
+  const [loading, setLoading] = useState(false);
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [usuarioError, setUsuarioError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
 
-  if (token) { return <Navigate to="/start" replace />; }
+  if (token) {return <Navigate to="/start" replace />;}
 
+
+  // Login tradicional
   const handleLogin = async (event) => {
     event.preventDefault();
-
-    // Validaciones básicas
-    if (!usuario) return setUsuarioError("El usuario es obligatorio");
-    if (!password) return setPasswordError("La contraseña es obligatoria");
+    
+    if (!usuario) {return setUsuarioError("El usuario es obligatorio");}
+    if (!password) {return setPasswordError("La contraseña es obligatoria");}
 
     setUsuarioError(false);
     setPasswordError(false);
     setLoading(true);
 
     try {
-      const { data } = await api.post("/auth/login", { usuario, password });
+      const { data } = await api.post("/auth/login", {usuario,password});
 
-      // nvo dispositivo
       if (data.type === "new_device") {
         setPendingVerifyAccessUser(usuario);
         setVerifyAccessResendAvailableAt(Date.now() + 60_000);
         return navigate("/verifyAccess");
       }
 
-      // login Directo
       if (data.token) {
         localStorage.setItem("token", data.token);
-        localStorage.setItem("username", data.user.username);
-        localStorage.setItem("role", data.user.role);
+        localStorage.setItem("username",data.user.username);
+        localStorage.setItem("role",data.user.role);
         navigate("/start");
       }
+
     } catch (error) {
-      const message = error.response?.data?.message || "Error al conectar con el servidor";
+      const message =
+        error.response?.data?.message ||
+        "Error al conectar con el servidor";
       setUsuarioError(message);
       setPasswordError(message);
+
+    } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <>
@@ -114,7 +119,7 @@ function Login() {
               </div>
 
               <SocialsAuth
-                onGoogle={() => console.log("Google login")}
+                onAuthError={(message) => setUsuarioError(typeof message === "string" ? message : "Error al autenticar")}
                 onDiscord={() => console.log("Discord login")}
                 onMicrosoft={() => console.log("Microsoft login")}
               />
