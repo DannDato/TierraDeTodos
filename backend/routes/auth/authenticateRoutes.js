@@ -7,6 +7,7 @@ import { ctrlVerify } from "../../controllers/auth/verifyController.js";
 import { verifyToken } from "../../middlewares/verifyToken.js";
 import { ctrlGoogleAuth } from "../../controllers/auth/googleAuthController.js";
 import { ctrlTwitchAuth } from "../../controllers/auth/twitchAuthController.js";
+import { ctrlDiscordAuth } from "../../controllers/auth/discordAuthController.js";
 
 const router = express.Router();
 
@@ -27,6 +28,9 @@ router.get("/twitch/start", ctrlTwitchAuth.start);
 router.get("/twitch/connect", verifyToken, ctrlTwitchAuth.start);
 router.get("/twitch/callback", ctrlTwitchAuth.callback);
 router.post("/twitch/exchange", ctrlTwitchAuth.exchangeResult);
+router.get("/discord/connect", verifyToken, ctrlDiscordAuth.start);
+router.get("/discord/callback", ctrlDiscordAuth.callback);
+router.post("/discord/exchange", verifyToken, ctrlDiscordAuth.exchangeResult);
 router.post("/external/complete-registration", ctrlGoogleAuth.completeRegistration);
 
 

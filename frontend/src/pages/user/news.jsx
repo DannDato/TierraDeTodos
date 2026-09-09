@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Heart, Newspaper, Pencil, Plus, Save, Send, Trash2, UserRound, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { ChevronRight, Download, Heart, Newspaper, Pencil, Plus, Save, Send, Trash2, UserRound, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
@@ -9,6 +10,7 @@ import AlertModal from "../../elements/AlertModal";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import tdtNewsImage from "../../img/tdtnews.png";
 import bgPaperImage from "../../img/bg-paper.png";
+import NewsEditorModal from "../../components/user/NewsEditorModal";
 
 const createInitialNewsForm = () => ({
   title: "",
@@ -36,6 +38,7 @@ function News() {
   const [editFormData, setEditFormData] = useState(createInitialNewsForm());
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImagePreview, setEditImagePreview] = useState("");
+  const [expandedImage, setExpandedImage] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [formData, setFormData] = useState(createInitialNewsForm());
   const [selectedImageFile, setSelectedImageFile] = useState(null);
@@ -291,15 +294,20 @@ function News() {
     pendingCommentLikes.current.clear();
   }, []);
 
+  const closeExpandedImage = useCallback(() => {
+    setExpandedImage(null);
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key !== "Escape") return;
+      if (expandedImage) { closeExpandedImage(); return; }
       if (isCreateModalOpen) { setIsCreateModalOpen(false); return; }
       if (selectedNews) closeNewsModal();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isCreateModalOpen, selectedNews, closeNewsModal]);
+  }, [expandedImage, isCreateModalOpen, selectedNews, closeExpandedImage, closeNewsModal]);
 
   useEffect(() => {
     const loadComments = async () => {
@@ -484,13 +492,20 @@ function News() {
       if (createdNews && selectedImageFile) {
         const imageFormData = new FormData();
         imageFormData.append("newsImage", selectedImageFile);
-
-        const imageResult = await api.post(`/user/news/${createdNews.id}/image`, imageFormData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-
-        const updatedNews = imageResult?.data?.news || createdNews;
-        setNews((prev) => [updatedNews, ...(Array.isArray(prev) ? prev : [])]);
+        try {
+          const imageResult = await api.post(`/user/news/${createdNews.id}/image`, imageFormData, {
+            headers: { "Content-Type": undefined },
+          });
+          const updatedNews = imageResult?.data?.news || createdNews;
+          setNews((prev) => [updatedNews, ...(Array.isArray(prev) ? prev : [])]);
+        } catch (imageError) {
+          setNews((prev) => [createdNews, ...(Array.isArray(prev) ? prev : [])]);
+          openAlert({
+            type: "warning",
+            title: "Noticia creada sin imagen",
+            message: imageError.response?.data?.message || "La noticia se creó, pero no se pudo subir la imagen.",
+          });
+        }
       } else if (createdNews) {
         setNews((prev) => [createdNews, ...(Array.isArray(prev) ? prev : [])]);
       }
@@ -535,11 +550,9 @@ function News() {
       if (updatedNews && editImageFile) {
         const imageFormData = new FormData();
         imageFormData.append("newsImage", editImageFile);
-
         const imageResult = await api.post(`/user/news/${selectedNews.id}/image`, imageFormData, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { "Content-Type": undefined },
         });
-
         updatedNews = imageResult?.data?.news || updatedNews;
       }
 
@@ -690,7 +703,7 @@ function News() {
   };
 
   return (
-    <div className="min-h-screen h-screen py-15 flex items-start justify-center pb-2 text-[var(--white-color)] z-[1]">
+    <div className="min-h-screen h-screen py-15 flex items-start justify-center pb-2 text-[var(--white-color)] z-[1] p-3">
       <LoadingOverlay isVisible={loading || submitting} message={submitting ? "Publicando noticia..." : "Cargando noticias"} />
       <AlertModal
         isOpen={alertConfig.isOpen}
@@ -719,7 +732,7 @@ function News() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-row sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
             <div className="relative w-full sm:w-[340px]">
               <input
                 type="text"
@@ -745,7 +758,7 @@ function News() {
                 className="bg-[var(--secondary-color)] hover:bg-[var(--hover-secondary)] text-white gap-2"
                 onClick={openCreateModal}
               >
-                <Plus size={16} /> Nueva noticia
+                <Plus size={16} className="" /><p className="hidden md:block">Nueva noticia</p>
               </Button>
             )}
           </div>
@@ -865,12 +878,27 @@ function News() {
         )}
       </div>
 
-      {selectedNews && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {selectedNews && createPortal((
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-5">
 
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeNewsModal} />
-          <div className="relative w-full md:w-[96vw] xl:w-[92vw] max-w-[1700px] h-[90vh] md:h-[88vh] overflow-y-auto md:overflow-hidden tdt-scrollbar modal-main">
+          <div className="relative z-10 grid h-[min(720px,calc(100dvh-3rem))] max-h-[720px] w-full max-w-[1600px] overflow-y-auto rounded-3xl modal-main md:w-[88vw] md:overflow-hidden">
             {isEditingSelected ? (
+              <>
+                <NewsEditorModal
+                  mode="edit"
+                  formData={editFormData}
+                  setFormData={setEditFormData}
+                  image={selectedNews.image}
+                  imagePreview={editImagePreview}
+                  imageInputRef={editImageInputRef}
+                  onImageChange={(event) => handleImageChange(event, "edit")}
+                  onClose={cancelEditSelected}
+                  onSave={handleSaveEditedNews}
+                  submitting={submitting}
+                  typeOptions={typeOptions}
+                />
+                {false && (
               <div className="h-full flex flex-col md:grid md:grid-cols-12 md:min-h-0 md:overflow-hidden">
                 <div
                   className="relative h-56 md:h-full md:col-span-4 w-full cursor-pointer overflow-hidden"
@@ -980,6 +1008,8 @@ function News() {
                   </div>
                 </div>
               </div>
+                )}
+              </>
             ) : (
               <div className="flex flex-col md:grid md:grid-cols-12 md:h-full md:min-h-0 md:overflow-hidden">
                 <button
@@ -990,8 +1020,18 @@ function News() {
                   <X size={18} />
                 </button>
 
-                <div className="relative h-56 md:h-full md:min-h-0 md:col-span-4 border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
-                  <img src={selectedNews.image} alt={selectedNews.title} className="w-full h-full object-cover" />
+                <div className="relative h-[28rem] md:h-full md:min-h-0 md:col-span-5 border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
+                  <button
+                    type="button"
+                    className="group absolute inset-0 z-10 h-full w-full cursor-zoom-in"
+                    onClick={() => setExpandedImage({ src: selectedNews.image, title: selectedNews.title })}
+                    aria-label="Ver imagen ampliada"
+                  >
+                    <img src={selectedNews.image} alt={selectedNews.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 text-sm font-semibold text-white opacity-0 transition-all group-hover:bg-black/25 group-hover:opacity-100">
+                      Ver imagen ampliada
+                    </span>
+                  </button>
                   <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-b from-black/80 via-black/35 to-transparent" />
                   <button
                     type="button"
@@ -1063,7 +1103,7 @@ function News() {
                   ) : null}
                 </div>
 
-                <div className="px-5 py-5 md:px-6 md:py-6 md:col-span-4 md:h-full md:min-h-0 md:overflow-hidden md:flex md:flex-col">
+                <div className="px-5 py-5 md:px-5 md:py-6 md:col-span-3 md:h-full md:min-h-0 md:overflow-hidden md:flex md:flex-col">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--ins-text-white)] mb-3">
                     Comentarios
                   </h3>
@@ -1165,17 +1205,65 @@ function News() {
             )}
           </div>
         </div>
-      )}
+      ), document.body)}
+
+      {expandedImage && createPortal((
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm" onClick={closeExpandedImage}>
+          <div className="relative flex h-full w-full items-center justify-center">
+            <img
+              src={expandedImage.src}
+              alt={expandedImage.title}
+              className="max-h-[calc(100dvh-7rem)] max-w-[min(92vw,1500px)] rounded-xl object-contain shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            />
+            <div className="absolute right-0 top-0 flex items-center gap-2 sm:right-2 sm:top-2">
+              <a
+                href={expandedImage.src}
+                download
+                target="_blank"
+                rel="noreferrer"
+                onClick={(event) => event.stopPropagation()}
+                className="inline-flex items-center gap-2 rounded-xl bg-white/15 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/25"
+              >
+                <Download size={16} /> Descargar
+              </a>
+              <button
+                type="button"
+                onClick={closeExpandedImage}
+                className="rounded-full bg-black/45 p-2 text-white transition-colors hover:bg-black/65"
+                aria-label="Cerrar imagen ampliada"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+      ), document.body)}
 
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <>
+          <NewsEditorModal
+            mode="create"
+            formData={formData}
+            setFormData={setFormData}
+            image={tdtNewsImage}
+            imagePreview={selectedImagePreview}
+            imageInputRef={createImageInputRef}
+            onImageChange={(event) => handleImageChange(event, "create")}
+            onClose={closeCreateModal}
+            onSubmit={handleCreateNews}
+            submitting={submitting}
+            typeOptions={typeOptions}
+          />
+          {false && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-5">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeCreateModal} />
           <form
             onSubmit={handleCreateNews}
-            className="relative w-full md:w-full lg:w-[60vw] max-w-[1200px] h-[90vh] overflow-hidden flex flex-col md:grid md:grid-cols-12 modal-main"
+            className="relative z-10 grid h-[min(720px,calc(100dvh-3rem))] max-h-[720px] w-full max-w-[1200px] grid-cols-1 overflow-hidden rounded-3xl modal-main md:h-[min(720px,calc(100dvh-3rem))] md:grid-cols-12 md:grid-rows-[minmax(0,1fr)_auto]"
           >
             <div
-              className="relative h-56 md:h-full md:col-span-4 w-full cursor-pointer overflow-hidden"
+              className="relative h-52 w-full cursor-pointer overflow-hidden md:col-span-4 md:row-span-2 md:h-full"
               onClick={() => createImageInputRef.current?.click()}
             >
               <img
@@ -1204,25 +1292,22 @@ function News() {
                 className="hidden"
                 onChange={(event) => handleImageChange(event, "create")}
               />
-              <div
-                className="absolute bottom-0 left-0 p-6 w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <span className="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-md mb-3" style={{ backgroundColor: getBadgeColor(formData.type) }}>
-                  {formData.type}
-                </span>
+            </div>
+
+            <div className="flex min-h-0 flex-col overflow-y-auto p-5 tdt-scrollbar md:col-span-8 md:row-span-1 md:p-7">
+              <div className="mb-5">
+                <label htmlFor="create-news-title" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--ins-text-gray)]">Título</label>
                 <input
+                  id="create-news-title"
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                   placeholder="Título de la noticia"
-                  className="w-full bg-transparent border-b border-white/50 text-2xl md:text-3xl font-extrabold text-white leading-tight outline-none focus:border-white placeholder:text-white/65"
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-lg font-bold text-[var(--ins-text-white)] outline-none transition-colors placeholder:text-white/35 focus:border-[var(--secondary-color)]"
                 />
               </div>
-            </div>
 
-            <div className="p-6 overflow-y-auto tdt-scrollbar space-y-4 md:col-span-8 md:min-h-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Tipo</span>
                   <Select
@@ -1244,19 +1329,19 @@ function News() {
                 </div>
               </div>
 
-              <div>
+              <div className="flex min-h-[190px] flex-1 flex-col">
                 <span className="block text-xs text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-2">Descripción</span>
                 <textarea
-                  rows={6}
+                  rows={8}
                   value={formData.description}
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="Contenido principal de la noticia"
-                  className="w-full bg-transparent border-b border-white/30 text-lg text-[var(--ins-text-white)] leading-relaxed whitespace-pre-wrap outline-none focus:border-[var(--secondary-color)] resize-none placeholder:text-white/45"
+                  className="min-h-0 w-full flex-1 resize-none rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-lg leading-relaxed text-[var(--ins-text-white)] outline-none transition-colors placeholder:text-white/45 focus:border-[var(--secondary-color)]"
                   style={{ fontFamily: '"Times New Roman", Times, serif' }}
                 />
               </div>
 
-              <div>
+              <div className="mt-5">
                 <span className="block text-[11px] text-[var(--ins-text-gray)] uppercase tracking-wider font-semibold mb-1">Nota</span>
                 <textarea
                   rows={2}
@@ -1269,7 +1354,7 @@ function News() {
               </div>
             </div>
 
-            <div className="px-6 py-4 flex justify-end gap-3 md:col-span-8">
+            <div className="flex justify-end gap-3 border-t border-white/10 px-5 py-4 md:col-span-8 md:row-span-1 md:px-7">
               <Button type="button" variant="ghost" className="text-white" onClick={closeCreateModal}>
                 Cancelar
               </Button>
@@ -1279,6 +1364,8 @@ function News() {
             </div>
           </form>
         </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -6,6 +6,7 @@ import { createAccessCode } from '../../helpers/createCodes.js';
 import { CreateSession } from '../../helpers/CreateSession.js';
 import { getActualEdition } from '../../utils/getEdition.js';
 import bcrypt from 'bcrypt';
+import { incrementStat } from '../../helpers/achievementEngine.js';
 
 class AuthenticateController {
     ensureUserInActiveEdition = async ({ userId }) => {
@@ -123,8 +124,10 @@ class AuthenticateController {
             });
         }
 
-        // validar contraseña
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        // Las cuentas creadas con proveedores externos pueden no tener contraseña.
+        // Usamos el hash dummy para conservar un tiempo de respuesta uniforme.
+        const passwordHash = user.password || '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36DRcra6';
+        const isPasswordValid = await bcrypt.compare(password, passwordHash);
         if (!isPasswordValid) {
             await models.Attempts.create({
                 user: user.id,
@@ -253,6 +256,12 @@ class AuthenticateController {
             userId: user.id,
             req
         });
+
+        try {
+            await incrementStat(user.id, 'LOGIN_COUNT', 1, req);
+        } catch (statError) {
+            await req.logAction({ accion: 'No se pudo actualizar LOGIN_COUNT', apartado: 'Achievements', userId: user.id, username: user.username, valor: statError.message, type: 'error' });
+        }
 
         let jsonResponse={
             token,

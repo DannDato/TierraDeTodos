@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { LogOut, PencilIcon, Monitor, ShieldAlert, User, Info, X } from "lucide-react";
+import { LogOut, PencilIcon, Monitor, ShieldAlert, User, Info, X, Link2, ClipboardList } from "lucide-react";
 
 import Button from "../../elements/Button";
 import Input from "../../elements/Input";
@@ -11,6 +11,7 @@ import InfoRow from "../../elements/InfoRow";
 
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import Socials from "../../components/auth/Socials";
+import ProfileInformation from "../../components/user/ProfileInformation";
 
 function Profile() {
     // User state must be declared first
@@ -27,6 +28,7 @@ function Profile() {
     const [emailVerificationCode, setEmailVerificationCode] = useState("");
     const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
     const [connectedAccounts, setConnectedAccounts] = useState([]);
+    const [hasPassword, setHasPassword] = useState(false);
     const [googleClientId, setGoogleClientId] = useState(null);
     const [isLoadingSocials, setIsLoadingSocials] = useState(false);
     const [socialDisconnectProvider, setSocialDisconnectProvider] = useState(null);
@@ -147,6 +149,7 @@ function Profile() {
   const loadConnectedAccounts = async () => {
     const { data } = await api.get("/auth/google/accounts");
     setConnectedAccounts(data?.accounts || []);
+    setHasPassword(Boolean(data?.hasPassword));
   };
 
   const handleGoogleCredential = async (response) => {
@@ -178,6 +181,16 @@ function Profile() {
         });
       return;
     }
+    if (provider === "DISCORD") {
+      setIsLoadingSocials(true);
+      api.get("/auth/discord/connect")
+        .then(({ data }) => window.location.assign(data.authorizationUrl))
+        .catch((err) => {
+          setIsLoadingSocials(false);
+          openInfoModal({ type: "error", title: "No se pudo conectar Discord", message: err.response?.data?.message || "Inténtalo de nuevo." });
+        });
+      return;
+    }
     if (provider !== "GOOGLE") {
       openInfoModal({ type: "info", title: provider, message: "Este proveedor estará disponible próximamente." });
     }
@@ -200,6 +213,14 @@ function Profile() {
   };
 
   const handleSocialDisconnect = (provider) => {
+    if (!hasPassword && connectedAccounts.length <= 1) {
+      openInfoModal({
+        type: "warning",
+        title: "Contraseña requerida",
+        message: "No puedes desconectar tu última plataforma porque tu cuenta no tiene contraseña. Configura una contraseña antes de continuar.",
+      });
+      return;
+    }
     setSocialDisconnectProvider(provider);
   };
 
@@ -560,7 +581,7 @@ function Profile() {
   };
 
   return (
-    <section className="min-h-screen py-15 flex items-start justify-center pb-24 min-h-screen h-screen">
+    <section className="min-h-screen py-15 flex items-start justify-center pb-24 min-h-screen h-screen p-3">
 
       <LoadingOverlay
         isVisible={!user || isUploadingAvatar || isSavingAvatarPosition || isLoadingStreamer || isSavingStreamer || isLoadingPassword || isSavingProfile || isLoadingSocials}
@@ -822,29 +843,35 @@ function Profile() {
                 Estatus Actual
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 h-20 ">
-                <InfoRow
-                  icon={<Monitor size={16} />}
-                  label="Estatus"
-                  value={<span className="text-lg font-bold" style={{ color: currentStatus.color }}>{currentStatus.label}</span>}
-                />
-                <InfoRow
-                  icon={<Info size={16} />}
-                  label="Motivo"
-                  value={<p className="font-semibold text-sm leading-relaxed break-words">{statusReason}</p>}
-                />
-                <InfoRow
-                  icon={<Info size={16} />}
-                  label="Actualizado por"
-                  value={
-                    <>
-                      <p className="font-semibold text-sm">{user.status_changed_by || "Sistema"}</p>
-                      <p className="text-xs text-[var(--ins-text-gray)] mt-1">
-                        {user.status_changed_at ? new Date(user.status_changed_at).toLocaleDateString() : "N/A"}
-                      </p>
-                    </>
-                  }
-                />
+              <div className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-3">
+                <div className="min-w-0">
+                  <InfoRow
+                    icon={<Monitor size={16} />}
+                    label="Estatus"
+                    value={<span className="text-lg font-bold" style={{ color: currentStatus.color }}>{currentStatus.label}</span>}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <InfoRow
+                    icon={<Info size={16} />}
+                    label="Motivo"
+                    value={<p className="break-words text-sm font-semibold leading-relaxed">{statusReason}</p>}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <InfoRow
+                    icon={<Info size={16} />}
+                    label="Actualizado por"
+                    value={
+                      <>
+                        <p className="break-words text-sm font-semibold">{user.status_changed_by || "Sistema"}</p>
+                        <p className="mt-1 text-xs text-[var(--ins-text-gray)]">
+                          {user.status_changed_at ? new Date(user.status_changed_at).toLocaleDateString() : "N/A"}
+                        </p>
+                      </>
+                    }
+                  />
+                </div>
               </div>
 
               {isCancelledStatus && (
@@ -918,7 +945,10 @@ function Profile() {
             )}
 
             <div className="box-main p-6">
-              <h2 className="text-xl font-bold mb-2">Cuentas conectadas</h2>
+              <h2 className="mb-2 flex items-center gap-2 text-xl font-bold">
+                <Link2 size={21} className="text-[var(--secondary-color)]" />
+                Cuentas conectadas
+              </h2>
               <p className="mb-5 text-sm text-[var(--ins-text-gray)]">Conecta proveedores externos para acceder más fácilmente a tu cuenta.</p>
               <Socials
                 googleClientId={googleClientId}
@@ -927,6 +957,15 @@ function Profile() {
                 onProviderClick={handleSocialProviderClick}
                 onDisconnect={handleSocialDisconnect}
               />
+            </div>
+
+            <div className="box-main p-6">
+              <h2 className="mb-2 flex items-center gap-2 text-xl font-bold">
+                <ClipboardList size={21} className="text-[var(--secondary-color)]" />
+                Información adicional
+              </h2>
+              <p className="mb-5 text-sm text-[var(--ins-text-gray)]">Completa los datos opcionales que quieras mostrar en tu perfil.</p>
+              <ProfileInformation />
             </div>
 
             {/* SECURITY */}
@@ -1032,7 +1071,7 @@ function Profile() {
       )}
 
       {user && isAvatarEditorOpen && avatarPreview && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-3xl bg-[#151515] p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white">Ajustar avatar</h3>

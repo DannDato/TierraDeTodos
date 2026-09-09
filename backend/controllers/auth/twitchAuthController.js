@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 
 import { models } from '../../models/index.js';
 import { ctrlGoogleAuth } from './googleAuthController.js';
+import { setStat, incrementStat } from '../../helpers/achievementEngine.js';
 
 const TWITCH_PROVIDER = 'TWITCH';
 const TWITCH_SCOPE = 'user:read:email';
@@ -89,6 +90,12 @@ class TwitchAuthController {
         if (existing && existing.userId !== stateRecord.userId) throw new Error('Esta cuenta de Twitch ya está vinculada a otro usuario');
         if (existing) throw new Error('Esta cuenta de Twitch ya está vinculada a tu usuario');
         await models.user_connected_accounts.create({ userId: stateRecord.userId, provider: TWITCH_PROVIDER, providerUserId: providerData.providerUserId, providerEmail: providerData.email, displayName: providerData.displayName, avatarUrl: providerData.avatarUrl, lastUsedAt: new Date() });
+        try {
+          const connectedCount = await models.user_connected_accounts.count({ where: { userId: stateRecord.userId } });
+          await setStat(stateRecord.userId, 'CONNECTED_ACCOUNTS', connectedCount, req);
+        } catch (statError) {
+          await req.logAction({ accion: 'No se pudo actualizar CONNECTED_ACCOUNTS', apartado: 'Achievements', userId: stateRecord.userId, valor: statError.message, type: 'error' });
+        }
         result = { type: 'connected', provider: TWITCH_PROVIDER };
       } else {
         const account = await models.user_connected_accounts.findOne({ where: { provider: TWITCH_PROVIDER, providerUserId: providerData.providerUserId }, include: [{ model: models.Users, as: 'user' }] });
@@ -118,6 +125,11 @@ class TwitchAuthController {
     const device = await ctrlGoogleAuth.checkDevice({ user, req });
     if (device.type !== 'authorized') return { ...device.response, registered: false };
     const token = await ctrlGoogleAuth.createTdtSession({ user, req });
+    try {
+      await incrementStat(user.id, 'LOGIN_COUNT', 1, req);
+    } catch (statError) {
+      await req.logAction({ accion: 'No se pudo actualizar LOGIN_COUNT', apartado: 'Achievements', userId: user.id, username: user.username, valor: statError.message, type: 'error' });
+    }
     return { type: 'authenticated', provider: TWITCH_PROVIDER, token, user: { id: user.id, username: user.username, role: user.role, displayName: user.displayName, email: user.email, picture: providerData.avatarUrl } };
   };
 

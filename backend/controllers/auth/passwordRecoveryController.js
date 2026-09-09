@@ -126,12 +126,15 @@ class PasswordRecoveryController {
           return res.status(400).json({ message: "Tu contraseÃ±a no puede ser igual a una de tus contraseÃ±as anteriores." });
         }
       }
-      // Guardar la contraseÃ±a actual antes de cambiarla
-      await models.UserPasswords.create({
-        userId: user.id,
-        password: user.password,
-        changedAt: new Date()
-      });
+      // Las cuentas creadas mediante plataforma pueden no tener contraseña previa.
+      // No se guarda NULL en el historial, porque UserPasswords.password es NOT NULL.
+      if (user.password) {
+        await models.UserPasswords.create({
+          userId: user.id,
+          password: user.password,
+          changedAt: new Date()
+        });
+      }
       user.password = await bcrypt.hash(password, 10);
       await user.save();
       // Cerrar todas las sesiones activas del usuario

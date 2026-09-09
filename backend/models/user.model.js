@@ -167,6 +167,26 @@
         as: 'connectedAccounts',
         constraints: false
     });
+    Users.hasMany(models.UserInformation, {
+      foreignKey: 'userId',
+      as: 'informationValues',
+      constraints: false
+    });
+    Users.hasMany(models.UserStats, {
+      foreignKey: 'userId',
+      as: 'stats',
+      constraints: false
+    });
+    Users.hasMany(models.UserAchievements, {
+      foreignKey: 'userId',
+      as: 'achievementsProgress',
+      constraints: false
+    });
+    Users.hasMany(models.UserNotifications, {
+      foreignKey: 'userId',
+      as: 'notifications',
+      constraints: false
+    });
   };
 
   Users.seed = async () => {

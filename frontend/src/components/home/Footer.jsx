@@ -1,7 +1,29 @@
+import { useEffect, useState } from "react";
 import Button from "../../elements/Button";
+import api from "../../api/axios";
 
 function Footer({ socialLinks }) {
-  const discordUrl = String(socialLinks?.discord || "https://discord.gg/tdt3").trim() || "https://discord.gg/tdt3";
+  const [publicLinks, setPublicLinks] = useState(socialLinks || {});
+
+  useEffect(() => {
+    if (socialLinks) {
+      setPublicLinks(socialLinks);
+      return undefined;
+    }
+
+    let mounted = true;
+    api.get("/system/public-information?keys=links.social")
+      .then(({ data }) => {
+        if (mounted) setPublicLinks(data?.config?.["links.social"] || {});
+      })
+      .catch(() => {
+        if (mounted) setPublicLinks({});
+      });
+
+    return () => { mounted = false; };
+  }, [socialLinks]);
+
+  const discordUrl = String(publicLinks?.discord || "").trim();
 
   return (
     <footer className="bg-[var(--black-color)] text-[var(--white-color)] pt-16 pb-8 border-t border-white/5 relative z-20">
@@ -24,16 +46,16 @@ function Footer({ socialLinks }) {
           </div>
 
           <div className="flex flex-col text-center md:text-right items-center md:items-end justify-center gap-4">
-            <Button
-              variant="discord"
-              size="md"
-              className="shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all"
-              fullWidth={false}
-              target="_blank"
-              href={discordUrl}
-            >
-              Únete a Discord
-            </Button>
+            {discordUrl && <Button
+                variant="discord"
+                size="md"
+                className="shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all"
+                fullWidth={false}
+                target="_blank"
+                href={discordUrl}
+              >
+                Únete a Discord
+              </Button>}
             <p className="text-xs sm:text-sm text-gray-400 max-w-sm">
               Únete a nuestro Discord para estar al tanto de los sneak peeks antes del lanzamiento.
             </p>

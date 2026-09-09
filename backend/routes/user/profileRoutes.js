@@ -8,6 +8,8 @@ const router = express.Router();
 
 // Obtener perfil
 router.get("/profile", verifyToken, ctrlProfile.profile);
+router.get("/profile/information", verifyToken, ctrlProfile.getInformation);
+router.put("/profile/information", verifyToken, ctrlProfile.updateInformation);
 
 // Iniciar cambio de correo
 router.patch("/profile/email", verifyToken, ctrlProfile.requestEmailChange);

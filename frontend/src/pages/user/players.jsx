@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Clock3, ShieldCheck, Sparkles, UserRound, Users, X, BrickWall,TableProperties } from "lucide-react";
+import { ArrowUp, Clock3, ShieldCheck, Sparkles, UserRound, Users, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 
@@ -9,8 +9,6 @@ import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import Button from "../../elements/Button";
 import InfoRow from "../../elements/InfoRow";
 import Select from "../../elements/Select";
-import Table from "../../elements/Table";
-import Tabbar from "../../elements/Tabbar";
 
 // Oculta el scroll global del body cuando este componente está montado
 function useHideBodyScrollbar() {
@@ -41,7 +39,6 @@ function Players() {
 	const [roleFilter, setRoleFilter] = useState("ALL");
 	const [statusFilter, setStatusFilter] = useState("ALL");
 	const [sortBy, setSortBy] = useState("recent");
-	const [viewMode, setViewMode] = useState("grid");
 	const [loading, setLoading] = useState(true);
 	const [showScrollTop, setShowScrollTop] = useState(false);
 	const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
@@ -242,59 +239,8 @@ function Players() {
 		{ value: "az", label: "A - Z" },
 	];
 
-	const tableColumns = [
-		{
-			key: "username",
-			header: "Jugador",
-			cellClassName: "text-[var(--ins-text-white)] font-bold",
-			render: (player) => player?.username || "N/A",
-		},
-		{
-			key: "role",
-			header: "Rol",
-			cellClassName: "text-[var(--ins-text-white)]",
-			render: (player) => player?.role || "N/A",
-		},
-		{
-			key: "status",
-			header: "Estatus",
-			cellClassName: "text-[var(--ins-text-white)]",
-			render: (player) => statusConfig[String(player?.status || "").toUpperCase()]?.label || "Desconocido",
-		},
-		{
-			key: "createdAt",
-			header: "Registro",
-			cellClassName: "text-[var(--ins-text-gray)]",
-			render: (player) => {
-				const createdAt = player?.createdAt ? new Date(player.createdAt) : null;
-				if (!createdAt || Number.isNaN(createdAt.getTime())) return "N/A";
-				return createdAt.toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" });
-			},
-		},
-		{
-			key: "emblems",
-			header: "Insignias",
-			cellClassName: "text-[var(--ins-text-white)]",
-			render: (player) => {
-				const count = Array.isArray(player?.equippedEmblems) ? player.equippedEmblems.length : 0;
-				return `${count}`;
-			},
-		},
-		{
-			key: "actions",
-			header: "Acciones",
-			headerClassName: "text-right",
-			cellClassName: "text-right",
-			render: (player) => (
-				<Button variant="ghost" size="sm" onClick={() => setSelectedPlayer(player)}>
-					Ver perfil rapido
-				</Button>
-			),
-		},
-	];
-
 	return (
-		<div className="min-h-screen h-screen py-15 flex items-start justify-center pb-24">
+		<div className="min-h-screen h-screen py-15 flex items-start justify-center pb-24 p-3">
 			<LoadingOverlay isVisible={loading} message="Cargando jugadores" />
 
 			{selectedPlayer ? (
@@ -325,7 +271,7 @@ function Players() {
 					<div className="w-full ">
 						<div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
 
-							<div className="flex flex-wrap gap-2 justify-end w-full">
+							<div className="hidden lg:flex flex-wrap gap-2 justify-end w-full">
 								<div className="w-full sm:w-[170px]">
 									<Select value={roleFilter} onChange={setRoleFilter} options={roleOptions} />
 								</div>
@@ -365,32 +311,8 @@ function Players() {
 					</div>
 				) : (
 					<>
-						<div className="box-main lg:p-6 relative overflow-hidden">
-							<div className="flex flex-wrap justify-between mb-10">
-								<div className="p-5">
-									<h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] ">
-										<Users size={24} style={{ color: "var(--secondary-color)" }}/>
-										Todos los ciudadanos
-									</h2>
-									<p className="text-xs text-[var(--ins-text-gray)] mb-4 uppercase tracking-[0.18em]">
-										Mostrando {Math.min(visibleCount, sortedPlayers.length)} de {sortedPlayers.length} miembros
-									</p>
-								</div>
-								<div className="flex items-center justify-end gap-2 sm:w-auto p-5">
-									<Tabbar
-										tabs={[
-											{ id: "grid", label: "Grid", icon: <BrickWall size={16} />, activeIconClassName: "text-[var(--secondary-color)]" },
-											{ id: "table", label: "Table", icon: <TableProperties size={16} />, activeIconClassName: "text-[var(--secondary-color)]" },
-										]}
-										activeTab={viewMode}
-										onChange={setViewMode}
-									/>
-								</div>
-
-							</div>
-
-							{viewMode === "grid" ? (
-								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 justify-items-center">
+						<div className="lg:p-6 relative overflow-hidden">
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-center">
 									{visiblePlayers.map((player) => {
 								const normalizedStatus = String(player?.status || "").toUpperCase();
 								const currentStatus = {
@@ -434,22 +356,7 @@ function Players() {
 									</div>
 								);
 									})}
-								</div>
-							) : (
-								<Table
-									columns={tableColumns}
-									data={visiblePlayers}
-									rowKey="id"
-									onRowClick={(player) => setSelectedPlayer(player)}
-									layout="embedded"
-									preset="compactMuted"
-									enablePagination={false}
-									maxHeight="max-h-[34rem]"
-									minWidth="min-w-[980px]"
-									emptyColSpan={6}
-									emptyMessage="No hay jugadores para mostrar."
-								/>
-							)}
+							</div>
 						</div>
 
 						<div ref={sentinelRef} className="w-full h-12" />
@@ -507,7 +414,7 @@ function QuickProfileModal({ player, onClose, canOpenTickets, onOpenTicket, curr
 			: `${equippedEmblems.length} insignias visibles en su perfil.`;
 
 	return (
-		<div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+		<div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
 			<div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 			<div className="relative w-full max-w-5xl overflow-hidden max-h-[88vh] flex flex-col modal-main">
 				<div className="flex items-center justify-between px-6 py-5 border-b border-white/10">

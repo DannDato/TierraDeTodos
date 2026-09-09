@@ -24,6 +24,8 @@ import Select from "../../../elements/Select";
 import Tabbar from "../../../elements/Tabbar";
 import Textarea from "../../../elements/Textarea";
 import EmblemTemplate from "../../../templates/emblems.psd?url";
+import AchievementDetailModal from "./AchievementDetailModal";
+import { createPortal } from "react-dom";
 
 const EMBLEM_RARITY_OPTIONS = [
   { value: "common", label: "Common" },
@@ -33,20 +35,28 @@ const EMBLEM_RARITY_OPTIONS = [
   { value: "mythic", label: "Mythic" },
 ];
 
-const GOAL_TYPE_OPTIONS = [
-  { value: "kill", label: "Kill" },
-  { value: "craft", label: "Craft" },
-  { value: "explore", label: "Explore" },
-  { value: "social", label: "Social" },
-  { value: "event", label: "Event" },
-  { value: "custom", label: "Custom" },
+const ACHIEVEMENT_TYPE_OPTIONS = [
+  { value: "STAT", label: "Estadística" },
+  { value: "CUSTOM", label: "Personalizado" },
 ];
 
-const GOAL_PROGRESS_OPTIONS = [
-  { value: "cumulative", label: "Cumulative" },
-  { value: "single", label: "Single" },
-  { value: "boolean", label: "Boolean" },
+const ACHIEVEMENT_OPERATOR_OPTIONS = [
+  { value: "GTE", label: "Mayor o igual" },
+  { value: "LTE", label: "Menor o igual" },
+  { value: "EQ", label: "Igual" },
 ];
+
+const ACHIEVEMENT_RARITY_OPTIONS = [
+  { value: "COMMON", label: "Common" },
+  { value: "UNCOMMON", label: "Uncommon" },
+  { value: "RARE", label: "Rare" },
+  { value: "EPIC", label: "Epic" },
+  { value: "LEGENDARY", label: "Legendary" },
+  { value: "MYTHIC", label: "Mythic" },
+];
+
+const GOAL_TYPE_OPTIONS = [];
+const GOAL_PROGRESS_OPTIONS = [];
 
 const yesNoOptions = [
   { value: "false", label: "No" },
@@ -68,6 +78,26 @@ const buildInitialEmblem = () => ({
   color: "#9CA3AF",
   isHidden: false,
   isActive: true,
+});
+
+const buildInitialAchievement = () => ({
+  id: null,
+  key: "",
+  name: "",
+  description: "",
+  hint: "",
+  type: "STAT",
+  rarity: "COMMON",
+  goal: 1,
+  operator: "GTE",
+  statDefinitionId: "",
+  isSecret: false,
+  isActive: true,
+  isRepeatable: false,
+  points: 0,
+  icon: "",
+  sortOrder: 0,
+  prizeEmblemId: "",
 });
 
 const buildInitialGoal = () => ({
@@ -95,9 +125,10 @@ function AchievementsManagerView() {
   const [editionFilter, setEditionFilter] = useState("ALL");
   const [editions, setEditions] = useState([]);
   const [emblems, setEmblems] = useState([]);
-  const [goals, setGoals] = useState([]);
+  const [achievements, setAchievements] = useState([]);
+  const [statDefinitions, setStatDefinitions] = useState([]);
   const [selectedEmblem, setSelectedEmblem] = useState(null);
-  const [selectedGoal, setSelectedGoal] = useState(null);
+  const [selectedAchievement, setSelectedAchievement] = useState(null);
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
     type: "info",
@@ -106,10 +137,6 @@ function AchievementsManagerView() {
   });
 
   const pendingActionRef = useRef(null);
-
-  useEffect(() => {
-    loadAll();
-  }, []);
 
   const openAlert = ({ type = "info", title = "Aviso", message = "", onConfirm = null }) => {
     pendingActionRef.current = onConfirm;
@@ -132,15 +159,17 @@ function AchievementsManagerView() {
   const loadAll = async () => {
     try {
       setLoading(true);
-      const [editionsRes, emblemsRes, goalsRes] = await Promise.all([
+      const [editionsRes, emblemsRes, achievementsRes, statsRes] = await Promise.all([
         api.get("/admin/editions"),
         api.get("/system/achievements/emblems"),
-        api.get("/system/achievements/goals"),
+        api.get("/system/achievements/catalog-v2"),
+        api.get("/system/achievements/stat-definitions"),
       ]);
 
       setEditions(Array.isArray(editionsRes.data) ? editionsRes.data : []);
       setEmblems(Array.isArray(emblemsRes.data?.emblems) ? emblemsRes.data.emblems : []);
-      setGoals(Array.isArray(goalsRes.data?.goals) ? goalsRes.data.goals : []);
+      setAchievements(Array.isArray(achievementsRes.data?.achievements) ? achievementsRes.data.achievements : []);
+      setStatDefinitions(Array.isArray(statsRes.data?.stats) ? statsRes.data.stats : []);
     } catch (error) {
       openAlert({
         type: "error",
@@ -149,11 +178,16 @@ function AchievementsManagerView() {
       });
       setEditions([]);
       setEmblems([]);
-      setGoals([]);
+      setAchievements([]);
+      setStatDefinitions([]);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadAll();
+  }, []);
 
   const editionOptions = useMemo(() => {
     const base = [{ value: "ALL", label: "Todas las ediciones" }];
@@ -175,25 +209,15 @@ function AchievementsManagerView() {
     });
   }, [emblems, editionFilter, searchTerm]);
 
-  const filteredGoals = useMemo(() => {
+  const filteredAchievements = useMemo(() => {
     const search = String(searchTerm || "").trim().toLowerCase();
-    return goals.filter((item) => {
-      if (editionFilter !== "ALL" && String(item.editionId) !== editionFilter) return false;
+    return achievements.filter((item) => {
       if (!search) return true;
-      return [item.title, item.description, item.type, item.progressType, item?.emblem?.name]
+      return [item.key, item.name, item.description, item.type, item.rarity, item?.statDefinition?.name, item?.prizeEmblem?.name]
         .map((value) => String(value || "").toLowerCase())
         .some((value) => value.includes(search));
     });
-  }, [goals, editionFilter, searchTerm]);
-
-  const emblemOptionsForGoal = useMemo(() => {
-    return emblems
-      .filter((emblem) => (editionFilter === "ALL" ? true : String(emblem.editionId) === editionFilter))
-      .map((emblem) => ({
-        value: String(emblem.id),
-        label: `${emblem.name} (${emblem.rarity})`,
-      }));
-  }, [emblems, editionFilter]);
+  }, [achievements, searchTerm]);
 
   const openCreateEmblem = () => {
     const baseEditionId = editionFilter !== "ALL" ? Number(editionFilter) : "";
@@ -201,8 +225,7 @@ function AchievementsManagerView() {
   };
 
   const openCreateGoal = () => {
-    const baseEditionId = editionFilter !== "ALL" ? Number(editionFilter) : "";
-    setSelectedGoal({ ...buildInitialGoal(), editionId: baseEditionId });
+    setSelectedAchievement(buildInitialAchievement());
   };
 
   const requestDeleteEmblem = (item) => {
@@ -233,28 +256,28 @@ function AchievementsManagerView() {
     }
   };
 
-  const requestDeleteGoal = (item) => {
+  const requestDeleteAchievement = (item) => {
     openAlert({
       type: "warning",
       title: "Eliminar logro",
-      message: `Se eliminará ${item?.title || "logro"}. Esta acción no se puede deshacer.`,
-      onConfirm: () => deleteGoal(item),
+      message: `Se eliminará ${item?.name || "achievement"}. Esta acción no se puede deshacer.`,
+      onConfirm: () => deleteAchievement(item),
     });
   };
 
-  const deleteGoal = async (item) => {
+  const deleteAchievement = async (item) => {
     if (!item?.id) return;
     try {
       setIsSaving(true);
-      await api.delete(`/system/achievements/goals/${item.id}`);
+      await api.delete(`/system/achievements/catalog-v2/${item.id}`);
       await loadAll();
-      if (selectedGoal?.id === item.id) setSelectedGoal(null);
-      openAlert({ type: "success", title: "Eliminado", message: "Logro eliminado correctamente." });
+      if (selectedAchievement?.id === item.id) setSelectedAchievement(null);
+      openAlert({ type: "success", title: "Eliminado", message: "Achievement eliminado correctamente." });
     } catch (error) {
       openAlert({
         type: "error",
         title: "No se pudo eliminar",
-        message: error.response?.data?.message || "No se pudo eliminar el logro.",
+        message: error.response?.data?.message || "No se pudo eliminar el achievement.",
       });
     } finally {
       setIsSaving(false);
@@ -304,26 +327,31 @@ function AchievementsManagerView() {
     }
   };
 
-  const saveGoal = async (form) => {
+  const saveAchievement = async (form) => {
     const payload = {
-      editionId: Number(form.editionId),
-      emblemId: Number(form.emblemId),
-      title: String(form.title || "").trim(),
+      key: String(form.key || "").trim().toUpperCase(),
+      name: String(form.name || "").trim(),
       description: String(form.description || "").trim(),
-      type: String(form.type || "custom").trim().toLowerCase(),
-      targetValue: Number(form.targetValue || 0),
-      progressType: String(form.progressType || "cumulative").trim().toLowerCase(),
-      isHidden: Boolean(form.isHidden),
+      hint: String(form.hint || "").trim() || null,
+      type: String(form.type || "STAT").trim().toUpperCase(),
+      rarity: String(form.rarity || "COMMON").trim().toUpperCase(),
+      goal: Number(form.goal || 0),
+      operator: form.type === "STAT" ? form.operator : null,
+      statDefinitionId: form.type === "STAT" ? Number(form.statDefinitionId || 0) : null,
+      isSecret: Boolean(form.isSecret),
+      isActive: Boolean(form.isActive),
       isRepeatable: Boolean(form.isRepeatable),
-      startDate: String(form.startDate || "").trim() || null,
-      endDate: String(form.endDate || "").trim() || null,
+      points: Number(form.points || 0),
+      icon: String(form.icon || "").trim() || null,
+      sortOrder: Number(form.sortOrder || 0),
+      prizeEmblemId: Number(form.prizeEmblemId || 0) || null,
     };
 
-    if (!payload.editionId || !payload.emblemId || !payload.title || !payload.description) {
+    if (!payload.key || !payload.name || !payload.description) {
       openAlert({
         type: "warning",
         title: "Campos incompletos",
-        message: "editionId, emblemId, title y description son obligatorios.",
+        message: "key, name y description son obligatorios.",
       });
       return;
     }
@@ -331,19 +359,19 @@ function AchievementsManagerView() {
     try {
       setIsSaving(true);
       if (form.id) {
-        await api.put(`/system/achievements/goals/${form.id}`, payload);
+        await api.put(`/system/achievements/catalog-v2/${form.id}`, payload);
       } else {
-        await api.post("/system/achievements/goals", payload);
+        await api.post("/system/achievements/catalog-v2", payload);
       }
 
       await loadAll();
-      setSelectedGoal(null);
-      openAlert({ type: "success", title: "Guardado", message: "Logro guardado correctamente." });
+      setSelectedAchievement(null);
+      openAlert({ type: "success", title: "Guardado", message: "Achievement guardado correctamente." });
     } catch (error) {
       openAlert({
         type: "error",
         title: "No se pudo guardar",
-        message: error.response?.data?.message || "No se pudo guardar el logro.",
+        message: error.response?.data?.message || "No se pudo guardar el achievement.",
       });
     } finally {
       setIsSaving(false);
@@ -444,18 +472,18 @@ function AchievementsManagerView() {
             ))}
           </div>
         )
-      ) : filteredGoals.length === 0 ? (
+      ) : filteredAchievements.length === 0 ? (
         <div className="rounded-3xl border border-[var(--white-color)]/5 bg-[var(--black-color)]/20 py-12 text-center text-[var(--ins-text-gray)]">
           No hay logros para mostrar.
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filteredGoals.map((item) => (
-            <GoalCard
+          {filteredAchievements.map((item) => (
+            <AchievementCard
               key={item.id}
               item={item}
-              onOpenDetails={setSelectedGoal}
-              onDelete={requestDeleteGoal}
+              onOpenDetails={setSelectedAchievement}
+              onDelete={requestDeleteAchievement}
             />
           ))}
         </div>
@@ -473,14 +501,14 @@ function AchievementsManagerView() {
         />
       )}
 
-      {selectedGoal && (
-        <GoalDetailModal
-          item={selectedGoal}
-          editions={editions}
+      {selectedAchievement && (
+        <AchievementDetailModal
+          item={selectedAchievement}
+          stats={statDefinitions}
           emblems={emblems}
-          onClose={() => setSelectedGoal(null)}
-          onSave={saveGoal}
-          onDelete={requestDeleteGoal}
+          onClose={() => setSelectedAchievement(null)}
+          onSave={saveAchievement}
+          onDelete={requestDeleteAchievement}
           isSaving={isSaving}
         />
       )}
@@ -573,7 +601,7 @@ function EmblemCard({ item, onOpenDetails, onDelete }) {
   );
 }
 
-function GoalCard({ item, onOpenDetails, onDelete }) {
+function AchievementCard({ item, onOpenDetails, onDelete }) {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const cardRef = useRef(null);
 
@@ -598,9 +626,9 @@ function GoalCard({ item, onOpenDetails, onDelete }) {
           <span className="px-3 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wider border-cyan-500/25 bg-cyan-500/10 text-cyan-200">
             {item.type}
           </span>
-          {item.isRepeatable ? (
+          {item.isSecret ? (
             <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-violet-500/25 bg-violet-500/10 text-violet-200">
-              Repetible
+              Secreto
             </span>
           ) : null}
         </div>
@@ -637,16 +665,16 @@ function GoalCard({ item, onOpenDetails, onDelete }) {
       </div>
 
       <div className="space-y-2 text-sm text-[var(--ins-text-gray)]">
-        <p className="font-bold text-base text-[var(--ins-text-white)]">{item.title}</p>
+        <p className="font-bold text-base text-[var(--ins-text-white)]">{item.name}</p>
         <p>{item.description || "Sin descripción"}</p>
         <p className="text-xs text-[var(--ins-text-dark)] flex items-center gap-2">
-          <Link2 size={12} /> Emblema: {item?.emblem?.name || `#${item.emblemId}`}
+          <Link2 size={12} /> Estadística: {item?.statDefinition?.name || "Personalizado"}
         </p>
       </div>
 
       <div className="mt-4 pt-4 border-t border-[var(--white-color)]/10 flex items-center justify-between text-xs font-bold uppercase tracking-wider">
         <span className="text-[var(--ins-text-dark)]">Objetivo</span>
-        <span className="text-[var(--ins-text-white)]">{item.targetValue}</span>
+        <span className="text-[var(--ins-text-white)]">{item.goal}</span>
       </div>
     </div>
   );
@@ -694,11 +722,11 @@ function EmblemDetailModal({ item, editions, onClose, onSave, onDelete, onUpload
     event.target.value = "";
   };
 
-  return (
-    <div className="fixed inset-x-0 top-0 bottom-16 z-[100] flex items-center justify-center p-4 overflow-hidden">
+  return createPortal((
+    <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden p-3 sm:p-5">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-2xl rounded-3xl border border-white/10 bg-[var(--ins-background)]/50 backdrop-blur-lg shadow-2xl flex flex-col max-h-[80dvh]">
+      <div className="relative flex h-[min(700px,calc(100dvh-2rem))] max-h-[700px] w-full max-w-4xl flex-col rounded-3xl border border-white/10 bg-[var(--ins-background)]/95 shadow-2xl md:w-[82vw]">
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--white-color)]/10">
           <div>
             <h3 className="text-xl font-bold text-[var(--ins-text-white)]">
@@ -811,7 +839,7 @@ function EmblemDetailModal({ item, editions, onClose, onSave, onDelete, onUpload
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 }
 
 function GoalDetailModal({ item, editions, emblems, onClose, onSave, onDelete, isSaving }) {
@@ -839,11 +867,11 @@ function GoalDetailModal({ item, editions, emblems, onClose, onSave, onDelete, i
 
   const patchForm = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
-  return (
-    <div className="fixed inset-x-0 top-0 bottom-16 z-[100] flex items-center justify-center p-4 overflow-hidden">
+  return createPortal((
+    <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden p-3 sm:p-5">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-3xl rounded-3xl border border-white/10 bg-[var(--ins-background)]/50 backdrop-blur-lg shadow-2xl flex flex-col max-h-[82dvh]">
+      <div className="relative flex h-[min(700px,calc(100dvh-2rem))] max-h-[700px] w-full max-w-5xl flex-col rounded-3xl border border-white/10 bg-[var(--ins-background)]/95 shadow-2xl md:w-[82vw]">
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--white-color)]/10">
           <div>
             <h3 className="text-xl font-bold text-[var(--ins-text-white)]">{form.id ? "Editar Logro" : "Nuevo Logro"}</h3>
@@ -902,7 +930,7 @@ function GoalDetailModal({ item, editions, emblems, onClose, onSave, onDelete, i
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 }
 
 export default AchievementsManagerView;

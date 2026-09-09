@@ -224,7 +224,7 @@ function Tickets() {
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
-    <section className="min-h-screen py-15 flex items-start justify-center pb-24 min-h-screen h-screen">
+    <section className="min-h-screen py-15 flex items-start justify-center pb-24 min-h-screen h-screen p-3">
       <LoadingOverlay
         isVisible={catalogLoading || ticketsLoading || submitting}
         message={submitting ? "Enviando ticket..." : "Cargando datos..."}
@@ -239,6 +239,7 @@ function Tickets() {
       <div className="w-full px-0 mx-0 text-[var(--ins-text-white)]">
 
         {/* Header */}
+
         <div className="mb-8 px-2">
           <div className="flex items-center gap-2 text-xs font-bold text-[var(--ins-text-gray)] uppercase tracking-widest mb-2">
             <span>{currentUser.role}</span><span>/</span>
@@ -251,17 +252,17 @@ function Tickets() {
         </div>
 
         {/* Resumen */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-          <SummaryCard label="Total tickets" value={summary.total} />
-          <SummaryCard label="Abiertos"       value={summary.abiertos} color="text-emerald-300" />
-          <SummaryCard label="Cerrados"        value={summary.cerrados} color="text-[var(--ins-text-dark)]" />
+        <div className="flex flex-row gap-2 md:gap-3 my-6 items-center justify-start">
+          <TicketSummaryMetric label="Total" value={summary.total} icon={MessageSquareWarning} color="text-[var(--warning-color)]" />
+          <TicketSummaryMetric label="Abiertos" value={summary.abiertos} icon={LifeBuoy} color="text-emerald-300" />
+          <TicketSummaryMetric label="Cerrados" value={summary.cerrados} icon={Lock} color="text-[var(--white-color)]" />
         </div>
 
         {/* Cuerpo */}
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 ">
 
           {/* ── Formulario ── */}
-          <form onSubmit={handleSubmit} className="xl:col-span-2 box-main p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="xl:col-span-2 box-main p-6 space-y-4 mb-5">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <LifeBuoy size={18} className="text-[var(--secondary-color)]" />
               Nuevo ticket
@@ -293,7 +294,7 @@ function Tickets() {
 
             <div className="p-4">
               <div className="flex items-center gap-2 mb-3 text-[var(--ins-text-gray)] text-sm font-semibold">
-                <MapPinned size={16} className="text-[var(--secondary-color)]" /> Coordenadas del incidente (opcionales)
+                <MapPinned size={16} className="text-[var(--secondary-color)]" /> Coordenadas del incidente (Obligatorias para resolver tu caso)
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {[["coordX","X","0"],["coordY","Y","64"],["coordZ","Z","0"]].map(([field, lbl, ph]) => (
@@ -313,7 +314,7 @@ function Tickets() {
           </form>
 
           {/* ── Lista de tickets ── */}
-          <div className="xl:col-span-3 box-main p-6">
+          <div className="xl:col-span-3 box-main p-6 mb-5">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <MessageSquareWarning size={18} className="text-[var(--secondary-color)]" />
               Mis tickets
@@ -351,12 +352,18 @@ function Tickets() {
   );
 }
 
-// ─── SummaryCard ─────────────────────────────────────────────────────────────
-function SummaryCard({ label, value, color = "text-[var(--ins-text-white)]" }) {
+// ─── TicketSummaryMetric ─────────────────────────────────────────────────────
+function TicketSummaryMetric({ label, value, icon, color = "text-[var(--secondary-color)]" }) {
+  const MetricIcon = icon;
   return (
-    <div className="box-main p-6">
-      <p className="text-xs uppercase tracking-widest text-[var(--ins-text-gray)] font-bold">{label}</p>
-      <p className={`text-2xl font-extrabold mt-2 ${color}`}>{value}</p>
+    <div className="flex items-center gap-1 rounded-2xl">
+      <div className={`shrink-0 rounded-2xl bg-white/5 p-2 ${color}`}>
+        <MetricIcon size={18} />
+      </div>
+      <div className="flex items-baseline gap-2">
+        <p className="text-lg font-black text-[var(--ins-text-white)]">{value}</p>
+        <p className="text-[9px] md:text-[11px] font-bold uppercase tracking-[0.10em] text-[var(--ins-text-gray)]">{label}</p>
+      </div>
     </div>
   );
 }
@@ -471,7 +478,7 @@ function TicketChatModal({ chatData, loading, currentUser, typeMap, priorityMap,
   const st = ticket ? statusStyle(ticket.statusKey) : { text:"", border:"", bg:"" };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] bg-[var(--ins-background)]/50 backdrop-blur-lg border border-white/10">
 

@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { models } from '../../models/index.js';
 import { getEquippedEmblemsByUser } from '../../helpers/getEquippedEmblems.js';
+import { Op } from 'sequelize';
 
 function generateVerifyCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -31,6 +32,95 @@ async function sendVerifyMail(to, code, type = 'email') {
 }
 
 class ProfileController {
+    parseInformationValue = (field, value) => {
+        if (value === null || value === undefined || value === '') return null;
+        if (field.dataType === 'boolean') return value === true || value === 'true' ? 'true' : value === false || value === 'false' ? 'false' : undefined;
+        return String(value);
+    };
+
+    validateInformationValue = (field, value) => {
+        const normalized = this.parseInformationValue(field, value);
+        if (normalized === undefined) return 'Debe ser un valor booleano válido';
+        if (normalized === null) return field.required ? 'Este campo es obligatorio' : null;
+        const options = field.options || {};
+        if (field.maxLength && normalized.length > field.maxLength) return `No puede superar ${field.maxLength} caracteres`;
+        if (field.dataType === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) return 'Ingresa un correo válido';
+        if (field.dataType === 'url') {
+            try { new URL(normalized); } catch { return 'Ingresa una URL válida'; }
+        }
+        if (field.dataType === 'number') {
+            const number = Number(normalized);
+            if (!Number.isFinite(number)) return 'Ingresa un número válido';
+            if (options.min !== undefined && number < Number(options.min)) return `El valor mínimo es ${options.min}`;
+            if (options.max !== undefined && number > Number(options.max)) return `El valor máximo es ${options.max}`;
+        }
+        if (field.dataType === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return 'Ingresa una fecha válida';
+        if (field.dataType === 'select' && Array.isArray(options.choices) && !options.choices.includes(normalized)) return 'La opción seleccionada no es válida';
+        return null;
+    };
+
+    serializeInformationValue = (field, value) => {
+        if (value === null || value === undefined) return null;
+        if (field.dataType === 'boolean') return value === 'true';
+        if (field.dataType === 'number') return Number(value);
+        return value;
+    };
+
+    getInformation = async (req, res) => {
+        try {
+            const fields = await models.InformationFields.findAll({
+                where: { enabled: true },
+                include: [{ model: models.UserInformation, as: 'values', where: { userId: req.user.id }, required: false, attributes: ['value'] }],
+                order: [['order', 'ASC'], ['id', 'ASC']],
+            });
+            const information = fields.map((field) => {
+                const plain = field.get({ plain: true });
+                const stored = plain.values?.[0]?.value ?? null;
+                delete plain.values;
+                return { ...plain, value: this.serializeInformationValue(plain, stored) };
+            });
+            return res.json({ fields: information });
+        } catch (error) {
+            return handleError(res, req, error, 'Error al consultar información dinámica del perfil');
+        }
+    };
+
+    updateInformation = async (req, res) => {
+        let transaction;
+        try {
+            const values = req.body?.values;
+            if (!values || typeof values !== 'object' || Array.isArray(values)) return res.status(400).json({ message: 'Formato de información inválido' });
+            const fields = await models.InformationFields.findAll({ where: { enabled: true } });
+            const fieldsByKey = new Map(fields.map((field) => [field.key, field]));
+            const unknown = Object.keys(values).find((key) => !fieldsByKey.has(key));
+            if (unknown) return res.status(400).json({ message: `El campo ${unknown} no está disponible` });
+
+            for (const field of fields) {
+                const error = this.validateInformationValue(field, values[field.key]);
+                if (error) return res.status(400).json({ message: `${field.label}: ${error}`, field: field.key });
+            }
+
+            transaction = await db.transaction();
+            for (const field of fields) {
+                const normalized = this.parseInformationValue(field, values[field.key]);
+                const existing = await models.UserInformation.findOne({ where: { userId: req.user.id, fieldId: field.id }, transaction });
+                if (normalized === null) {
+                    if (existing) await existing.destroy({ transaction });
+                } else if (existing) {
+                    await existing.update({ value: normalized }, { transaction });
+                } else {
+                    await models.UserInformation.create({ userId: req.user.id, fieldId: field.id, value: normalized }, { transaction });
+                }
+            }
+            await transaction.commit();
+            transaction = null;
+            await req.logAction({ accion: 'Información dinámica del perfil actualizada', apartado: 'Perfil', userId: req.user.id, username: req.user.username, valor: `fields=${Object.keys(values).length}`, type: 'info' });
+            return this.getInformation(req, res);
+        } catch (error) {
+            return handleError(res, req, error, 'Error al guardar información dinámica del perfil', transaction);
+        }
+    };
+
     // PATCH /profile/email
     requestEmailChange = async (req, res) => {
         try {

@@ -16,7 +16,7 @@ function Background({
     <section id="inicio" className={`relative ${className}`} {...props}>
       {/* Imagen de fondo */}
       <div
-        className="fixed top-0 left-0 w-full h-full bg-cover bg-center scale-110"
+        className="fixed inset-0 z-0 bg-cover bg-center scale-110"
         style={{
           backgroundImage: `url(${backgroundImage})`,
           filter: `blur(${blur})`,
@@ -26,25 +26,25 @@ function Background({
 
       {/* Overlay */}
       <div
-        className="fixed top-0 left-0 w-full h-full bg-cover inset-0 flex  p-5 z-1"
+        className="fixed inset-0 z-[1] bg-cover p-5"
         style={{
           backgroundColor: overlayColor,
-          zIndex: 10,
+          zIndex: 1,
         }}
       >
       </div>
       <div
-        className="absolute bg-cover inset-0 flex items-center justify-center p-0 md:p-5 z-1"
+        className="absolute inset-0 z-10 flex items-center justify-center bg-cover p-0 md:p-5"
         style={{
           zIndex: 10,
         }}
       >
          {/* max-w-[1000px] */}
-        <div className="w-full z-20 align-middle">
+        <div className="z-10 w-full align-middle">
           {children}
         </div>
       </div>
-      <div className="fixed top-0 left-0 w-full h-full bg-cover bg-gradient-to-t from-black to-transparent pointer-events-none" data-aos="fade" data-aos-duration="2000" />
+      <div className="pointer-events-none fixed inset-0 z-[2] bg-gradient-to-t from-black to-transparent" data-aos="fade" data-aos-duration="2000" />
     </section>
   );
 }

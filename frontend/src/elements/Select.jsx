@@ -207,7 +207,7 @@ const Select = ({
       {isOpen && createPortal(
         <div
           ref={dropdownRef}
-          className="fixed bg-[var(--ins-background)] text-[var(--ins-text-white)] shadow-2xl z-[9999] border border-white/10 rounded-lg overflow-hidden"
+          className="fixed z-[130] overflow-hidden rounded-lg border border-white/10 bg-[var(--ins-background)] text-[var(--ins-text-white)] shadow-2xl"
           style={{
             top: `${dropdownPosition.top}px`,
             left: `${dropdownPosition.left}px`,

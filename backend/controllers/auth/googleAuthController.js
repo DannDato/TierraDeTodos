@@ -6,6 +6,7 @@ import { createAccessCode } from '../../helpers/createCodes.js';
 import { CreateSession } from '../../helpers/CreateSession.js';
 import { applyRolePresetPermissions } from '../../helpers/applyRolePresetPermissions.js';
 import { getActualEdition } from '../../utils/getEdition.js';
+import { incrementStat, setStat } from '../../helpers/achievementEngine.js';
 
 const GOOGLE_PROVIDER = 'GOOGLE';
 
@@ -56,6 +57,11 @@ class GoogleAuthController {
       return res.status(device.status).json({ ...device.response, registered: created });
     }
     const token = await this.createTdtSession({ user, req });
+    try {
+      await incrementStat(user.id, 'LOGIN_COUNT', 1, req);
+    } catch (statError) {
+      await req.logAction({ accion: 'No se pudo actualizar LOGIN_COUNT', apartado: 'Achievements', userId: user.id, username: user.username, valor: statError.message, type: 'error' });
+    }
     await models.Attempts.create({ user: user.id, action_type: 'GOOGLE_LOGIN', status: 'SUCCESS', ip_address: req.ip, user_agent: req.headers['user-agent'] });
     await req.logAction({ accion: created ? 'Registro y login Google exitoso' : 'Login Google exitoso', apartado: 'GoogleAuth', userId: user.id, username: user.username, valor: req.ip, type: 'info' });
     return res.status(created ? 201 : 200).json({ type: 'authenticated', provider: 'google', registered: created, token, user: { id: user.id, username: user.username, role: user.role, displayName: user.displayName, email: user.email, picture: providerData?.avatarUrl || null } });
@@ -110,13 +116,18 @@ class GoogleAuthController {
       await user.update({ folio: this.buildUserFolio(user.id) }, { transaction });
       await applyRolePresetPermissions({ userId: user.id, role: user.role, transaction });
       await models.UserEdition.findOrCreate({ where: { editionId: edition.id, userID: user.id }, defaults: { source: 'GOOGLE_REGISTER' }, transaction });
-      await models.user_connected_accounts.create({ userId: user.id, provider: GOOGLE_PROVIDER, providerUserId: registration.providerUserId, providerEmail: registration.email, displayName: registration.displayName, avatarUrl: registration.avatarUrl, lastUsedAt: new Date() }, { transaction });
+      await models.user_connected_accounts.create({ userId: user.id, provider: registration.provider, providerUserId: registration.providerUserId, providerEmail: registration.email, displayName: registration.displayName, avatarUrl: registration.avatarUrl, lastUsedAt: new Date() }, { transaction });
       await transaction.commit();
       transaction = null;
+        try {
+          await setStat(user.id, 'CONNECTED_ACCOUNTS', 1, req);
+        } catch (statError) {
+          await req.logAction({ accion: 'No se pudo actualizar CONNECTED_ACCOUNTS', apartado: 'Achievements', userId: user.id, username: user.username, valor: statError.message, type: 'error' });
+        }
       return this.finishLogin({ user, req, res, providerData: registration, created: true });
     } catch (error) {
       if (transaction) await transaction.rollback();
-      await req.logAction({ accion: 'Error al completar registro Google', apartado: 'GoogleAuth', valor: error.message, type: 'error' });
+      await req.logAction({ accion: 'Error al completar registro externo', apartado: 'GoogleAuth', valor: error.message, type: 'error' });
       if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') return res.status(401).json({ message: 'El registro externo expiró. Vuelve a iniciar sesión con Google.' });
       return res.status(500).json({ message: 'Error interno del servidor' });
     }
@@ -135,6 +146,12 @@ class GoogleAuthController {
       if (existing && existing.userId !== req.user.id) return res.status(409).json({ message: 'Esta cuenta de Google ya está vinculada a otro usuario' });
       if (existing) return res.status(409).json({ message: 'Esta cuenta de Google ya está vinculada a tu usuario' });
       await models.user_connected_accounts.create({ userId: req.user.id, provider: GOOGLE_PROVIDER, providerUserId: providerData.providerUserId, providerEmail: providerData.email, displayName: providerData.displayName, avatarUrl: providerData.avatarUrl, lastUsedAt: new Date() });
+      try {
+        const connectedCount = await models.user_connected_accounts.count({ where: { userId: req.user.id } });
+        await setStat(req.user.id, 'CONNECTED_ACCOUNTS', connectedCount, req);
+      } catch (statError) {
+        await req.logAction({ accion: 'No se pudo actualizar CONNECTED_ACCOUNTS', apartado: 'Achievements', userId: req.user.id, username: req.user.username, valor: statError.message, type: 'error' });
+      }
       await req.logAction({ accion: 'Proveedor externo vinculado', apartado: 'GoogleAuth', userId: req.user.id, username: req.user.username, valor: `provider=${GOOGLE_PROVIDER}`, type: 'info' });
       return res.status(201).json({ message: 'Google vinculado correctamente' });
     } catch (error) {
@@ -144,10 +161,33 @@ class GoogleAuthController {
   };
 
   removeConnectedAccount = async (req, res) => {
-    const account = await models.user_connected_accounts.findOne({ where: { id: req.params.id, userId: req.user.id } });
-    if (!account) return res.status(404).json({ message: 'Cuenta externa no encontrada' });
-    if (!req.user.password && await models.user_connected_accounts.count({ where: { userId: req.user.id } }) <= 1) return res.status(409).json({ message: 'No puedes eliminar tu último método de autenticación' });
-    await account.destroy();
+    const transaction = await db.transaction();
+    let account;
+    try {
+      const user = await models.Users.findByPk(req.user.id, { transaction, lock: transaction.LOCK.UPDATE });
+      account = await models.user_connected_accounts.findOne({ where: { id: req.params.id, userId: req.user.id }, transaction, lock: transaction.LOCK.UPDATE });
+      if (!account) {
+        await transaction.rollback();
+        return res.status(404).json({ message: 'Cuenta externa no encontrada' });
+      }
+      const connectedCount = await models.user_connected_accounts.count({ where: { userId: req.user.id }, transaction });
+      if (!user?.password && connectedCount <= 1) {
+        await transaction.rollback();
+        return res.status(409).json({ message: 'No puedes desconectar tu última plataforma porque tu cuenta no tiene contraseña. Configura una contraseña antes de continuar.' });
+      }
+      await account.destroy({ transaction });
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      await req.logAction({ accion: 'Error al desvincular proveedor externo', apartado: 'GoogleAuth', userId: req.user.id, username: req.user.username, valor: error.message, type: 'error' });
+      return res.status(500).json({ message: 'No se pudo desvincular el proveedor externo' });
+    }
+    try {
+      const connectedCount = await models.user_connected_accounts.count({ where: { userId: req.user.id } });
+      await setStat(req.user.id, 'CONNECTED_ACCOUNTS', connectedCount, req);
+    } catch (statError) {
+      await req.logAction({ accion: 'No se pudo actualizar CONNECTED_ACCOUNTS', apartado: 'Achievements', userId: req.user.id, username: req.user.username, valor: statError.message, type: 'error' });
+    }
     await req.logAction({ accion: 'Proveedor externo desvinculado', apartado: 'GoogleAuth', userId: req.user.id, username: req.user.username, valor: `provider=${account.provider}`, type: 'info' });
     return res.json({ message: 'Proveedor desvinculado correctamente' });
   };

@@ -161,6 +161,8 @@
       'system.view',
       'system.gest',
       'system.edit',
+      'system_information.view',
+      'system_information.gest',
 
       'ticket_catalogs.view',
       'ticket_catalogs.gest',

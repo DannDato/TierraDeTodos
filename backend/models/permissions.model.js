@@ -157,6 +157,8 @@
       { key: 'system.view', name: 'Ver sistema', description: 'Permite consultar salud y ajustes del sistema', active: true },
       { key: 'system.gest', name: 'Gestionar sistema', description: 'Permite modificar ajustes administrativos del sistema', active: true },
       { key: 'system.edit', name: 'Editar sistema', description: 'Permite modificar ajustes de sistema en endpoints generales', active: true },
+      { key: 'system_information.view', name: 'Ver información del sistema', description: 'Permite consultar la información configurable del sistema', active: true },
+      { key: 'system_information.gest', name: 'Gestionar información del sistema', description: 'Permite modificar la información configurable del sistema', active: true },
 
       { key: 'ticket_catalogs.view', name: 'Ver catálogos de tickets', description: 'Permite consultar tipos y prioridades de tickets', active: true },
       { key: 'ticket_catalogs.gest', name: 'Gestionar catálogos de tickets', description: 'Permite crear tipos y prioridades de tickets', active: true },

@@ -7,6 +7,7 @@ import { initializeDatabase } from './config/databaseBootstrap.js'
 import { logAction } from "./helpers/logger.js";
 import injectLogAction from "./middlewares/injectLogAction.js";
 import secureDelay from "./middlewares/secureDelay.js";
+import { reconcileRecentNotifications } from './helpers/reconcileNotifications.js';
 
 // Crear la app
 const app = express()
@@ -57,3 +58,9 @@ app.listen(port, ()=> {
     logAction({accion: `Servidor iniciado en ${process.env.NODE_ENV}`,apartado: 'Server',query: 'N/A',tabla: 'N/A',condicion: 'N/A',valor: 'N/A',type: type});
     logAction({accion: `El servidor esta funcionando en ${process.env.BACKEND_URL}:${port}/`,apartado: 'Server',query: 'N/A',tabla: 'N/A',condicion: 'N/A',valor: 'N/A',type: type});
 });
+
+setInterval(() => {
+    reconcileRecentNotifications().catch((error) => {
+        console.error('NOTIFICATIONS RECONCILIATION ERROR:', error.message);
+    });
+}, 15 * 60 * 1000);

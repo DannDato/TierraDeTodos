@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   CircleX,
   CircleCheckBig,
@@ -88,9 +89,9 @@ function AlertModal({
     }
   };
 
-  return (
+  return createPortal((
     <div
-      className={`fixed inset-0 flex items-center justify-center z-[120] ${className} transition-opacity duration-200 ${
+      className={`fixed inset-0 z-[300] flex items-center justify-center ${className} transition-opacity duration-200 ${
         isActive ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -137,7 +138,7 @@ function AlertModal({
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 }
 
 export default AlertModal;

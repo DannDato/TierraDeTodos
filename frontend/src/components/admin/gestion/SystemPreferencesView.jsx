@@ -53,8 +53,8 @@ function SystemPreferencesView() {
     try {
       setLoading(true);
       const [linksRes, settingsRes] = await Promise.allSettled([
-        api.get('/admin/system-settings/links'),
-        api.get('/admin/system-settings'),
+        api.get('/admin/system-information/links'),
+        api.get('/admin/system-information'),
       ]);
 
       if (linksRes.status === 'fulfilled') {
@@ -73,7 +73,7 @@ function SystemPreferencesView() {
         }
       }
     } catch (_error) {
-      openAlert('error', 'No se pudo cargar', 'Error al cargar preferencias del sistema.');
+      openAlert('error', 'No se pudo cargar', 'Error al cargar información del sistema.');
     } finally {
       setLoading(false);
     }
@@ -86,7 +86,7 @@ function SystemPreferencesView() {
   const saveLinks = async () => {
     try {
       setSaving(true);
-      await api.put('/admin/system-settings/links', { links });
+      await api.put('/admin/system-information/links', { links });
       openAlert('success', 'Links guardados', 'Los links del sistema se actualizaron correctamente.');
     } catch (error) {
       openAlert('error', 'No se pudo guardar', error.response?.data?.message || 'No fue posible guardar links.');
@@ -98,7 +98,7 @@ function SystemPreferencesView() {
   const saveAuthFlags = async () => {
     try {
       setSaving(true);
-      await api.put('/admin/system-settings/features.auth', {
+      await api.put('/admin/system-information/features.auth', {
         name: 'Control de autenticacion',
         description: 'Permite habilitar o deshabilitar login y registro.',
         category: 'features',
@@ -132,7 +132,7 @@ function SystemPreferencesView() {
 
       <div className='flex items-end justify-between gap-4 mb-8'>
         <div>
-          <h2 className='text-2xl font-extrabold text-[var(--ins-text-white)]'>Preferencias del Sistema</h2>
+          <h2 className='text-2xl font-extrabold text-[var(--ins-text-white)]'>Información del sistema</h2>
           <p className='text-sm text-[var(--ins-text-gray)] mt-1'>
             Configura links globales y banderas principales para comportamiento del sistema.
           </p>

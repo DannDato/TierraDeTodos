@@ -27,7 +27,7 @@ function Home() {
   useEffect(() => {
     const loadSocialLinks = async () => {
       try {
-        const { data } = await api.get("/system/public-settings?keys=links.social");
+        const { data } = await api.get("/system/public-information?keys=links.social");
         const links = data?.config?.["links.social"];
         if (links && typeof links === "object") {
           setSocialLinks({ ...createInitialSocialLinks(), ...links });

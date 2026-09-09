@@ -21,6 +21,7 @@ import NewsTypesManagerView from "../../components/admin/gestion/NewsTypesManage
 import CommandsManager from "../../components/admin/gestion/CommandsManager";
 import CommunitiesManagerView from "../../components/admin/gestion/CommunitiesManagerView";
 import SystemPreferencesView from "../../components/admin/gestion/SystemPreferencesView";
+import MenuManagerView from "../../components/admin/gestion/MenuManagerView";
 import AchievementsManagerView from "../../components/admin/gestion/AchievementsManagerView";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
 import api from "../../api/axios";
@@ -104,7 +105,8 @@ function Gestion() {
     {
       title: "Avanzado",
       items: [
-        { id: "system", label: "Preferencias del Sistema", icon: <Settings size={18} /> },
+        { id: "system", label: "Información del sistema", icon: <Settings size={18} /> },
+        { id: "menu", label: "Menú", icon: <Menu size={18} /> },
       ]
     }
   ];
@@ -147,14 +149,14 @@ function Gestion() {
 
             {/* OVERLAY — solo en < lg */}
             {sidebarOpen && (
-              <div className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+              <div className="lg:hidden fixed inset-0 z-[140] bg-black/50 backdrop-blur-sm" />
             )}
 
             {/* SIDEBAR */}
             <div
               ref={sidebarRef}
               className={`
-                fixed lg:static z-50 lg:z-auto top-0 left-0 h-full lg:h-auto
+                fixed lg:static z-[150] lg:z-auto top-0 left-0 h-full lg:h-auto
                 w-72 lg:w-64
                 flex flex-col gap-8 pb-8
                 lg:bg-transparent
@@ -220,6 +222,7 @@ function Gestion() {
                 {activeSection === "sessions" && <SessionsManagerView />}
                 {activeSection === "devices" && <DevicesManagerView />}
                 {activeSection === "system" && <SystemPreferencesView />}
+                {activeSection === "menu" && <MenuManagerView />}
             </div>
             </div>
         </div>

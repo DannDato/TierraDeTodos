@@ -22,7 +22,7 @@ const streamers = [
 ];
 
 export default function Streamers({ socialLinks }) {
-  const featuredTwitchUrl = String(socialLinks?.twitch || "https://twitch.tv/danndato").trim() || "https://twitch.tv/danndato";
+  const featuredTwitchUrl = String(socialLinks?.twitch || "").trim();
 
   return (
     <section id="streamers" className="py-20 bg-[var(--white-color)] text-[var(--black-color)] relative overflow-hidden mx-2 md:mx-10 rounded-[30px] z-20" data-aos="fade-up" data-aos-duration="1000">

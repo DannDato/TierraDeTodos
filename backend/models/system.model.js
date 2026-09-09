@@ -49,20 +49,20 @@ export default (sequelize, DataTypes) => {
       defaultValue: true
     }
   }, {
-    tableName: 'system_settings',
+    tableName: 'system_information',
     timestamps: true,
     indexes: [
       {
-        name: 'system_settings_key_unique',
+        name: 'system_information_key_unique',
         unique: true,
         fields: ['key']
       },
       {
-        name: 'system_settings_category_index',
+        name: 'system_information_category_index',
         fields: ['category']
       },
       {
-        name: 'system_settings_visibility_index',
+        name: 'system_information_visibility_index',
         fields: ['visibility']
       }
     ]

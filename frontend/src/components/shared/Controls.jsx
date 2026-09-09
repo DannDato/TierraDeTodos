@@ -23,14 +23,32 @@ function Controls({ children, maxWidthClass = "max-w-[1800px]" }) {
   const [showMobileQuickControls, setShowMobileQuickControls] = useState(true);
   const [menuItems, setMenuItems] = useState(fallbackMenuItems);
   const [profileImage, setProfileImage] = useState(() => localStorage.getItem(PROFILE_IMAGE_CACHE_KEY) || UserDefault);
-
-  const unreadNotifications = 4;
+  const [notifications, setNotifications] = useState([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const notificationsRef = useRef(null);
 
   const userMenuItems = menuItems.filter((item) => String(item.menuGroup || "user") === "user");
   const adminMenuItems = menuItems.filter((item) => String(item.menuGroup || "user") === "admin");
   // const desktopMenuItems = menuItems.filter((item) => item.shortAccess);
   const desktopMenuItems = menuItems.filter((item) => item.menuGroup === "user"  && item.id !== 10);
+
+  useEffect(() => {
+    let active = true;
+    const loadNotifications = async () => {
+      try {
+        const [{ data: listData }, { data: countData }] = await Promise.all([
+          api.get('/user/notifications?limit=10'),
+          api.get('/user/notifications/unread-count'),
+        ]);
+        if (!active) return;
+        setNotifications(listData?.notifications || []);
+        setUnreadNotifications(Number(countData?.count) || 0);
+      } catch { /* la campana no debe afectar la navegación */ }
+    };
+    loadNotifications();
+    const interval = window.setInterval(loadNotifications, 30000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, [location.pathname]);
 
   useEffect(() => {
     const loadMenu = async () => {
@@ -166,6 +184,27 @@ function Controls({ children, maxWidthClass = "max-w-[1800px]" }) {
     setShowMobileQuickControls((prev) => (prev === shouldShow ? prev : shouldShow));
   };
 
+  const markNotificationRead = async (item) => {
+    const row = item?.notification ? item : null;
+    if (!row) return;
+    try {
+      if (!row.readAt) {
+        await api.patch(`/user/notifications/${row.id}/read`);
+        setNotifications((current) => current.map((entry) => entry.id === row.id ? { ...entry, readAt: new Date().toISOString(), seenAt: new Date().toISOString() } : entry));
+        setUnreadNotifications((count) => Math.max(count - 1, 0));
+      }
+      if (row.notification.actionTarget) handleNavigate(row.notification.actionTarget, '_self');
+    } catch { /* mantener la UI usable aunque falle el marcado */ }
+  };
+
+  const markAllNotificationsRead = async () => {
+    try {
+      await api.patch('/user/notifications/read-all');
+      setNotifications((current) => current.map((entry) => ({ ...entry, readAt: entry.readAt || new Date().toISOString(), seenAt: entry.seenAt || new Date().toISOString() })));
+      setUnreadNotifications(0);
+    } catch { /* no-op */ }
+  };
+
   return (
     <div className="h-dvh flex flex-col overflow-hidden bg-[var(--ins-background)]">
       <AlertModal
@@ -177,7 +216,7 @@ function Controls({ children, maxWidthClass = "max-w-[1800px]" }) {
         onConfirm={handleLogout}
       />
 
-      <header className="absolute md:fixed top-0 z-50 w-full bg-black/01 md:bg-black/50 md:backdrop-blur-md text-[var(--white-color)]" onClick={handleHeadBarClick}>
+      <header className="absolute top-0 z-[100] w-full bg-black/01 text-[var(--white-color)] md:fixed md:bg-black/50 md:backdrop-blur-md" onClick={handleHeadBarClick}>
         <div className={`mx-auto flex h-[76px] w-full items-center justify-between px-4 sm:px-2 ${maxWidthClass}`}>
           <div className="hidden md:flex items-center justify-start">
             <ul className="hidden md:flex items-center justify-start gap-8">
@@ -249,7 +288,7 @@ function Controls({ children, maxWidthClass = "max-w-[1800px]" }) {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-80 overflow-hidden rounded-2xl border border-black/10 bg-[var(--white-color)] shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+              <div className="absolute right-0 top-[calc(100%+10px)] z-[120] w-80 overflow-hidden rounded-2xl border border-black/10 bg-[var(--white-color)] shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
                 <div className="flex items-center justify-between border-b border-black/10 px-4 py-3">
                   <p className="text-sm font-semibold text-[var(--black-color)]">Notificaciones</p>
                   <button
@@ -262,8 +301,14 @@ function Controls({ children, maxWidthClass = "max-w-[1800px]" }) {
                 </div>
 
                 <div className="max-h-72 overflow-y-auto">
-                  <div className="px-4 py-6 text-sm text-black/65">No hay notificaciones por ahora.</div>
+                  {notifications.length === 0 ? <div className="px-4 py-6 text-sm text-black/65">No hay notificaciones por ahora.</div> : notifications.map((item) => (
+                    <button key={item.id} type="button" onClick={() => markNotificationRead(item)} className={`flex w-full gap-3 border-b border-black/5 px-4 py-3 text-left hover:bg-black/5 ${item.readAt ? 'opacity-60' : ''}`}>
+                      <span className="mt-0.5 text-[var(--secondary-color)]"><Icons.Bell size={16} /></span>
+                      <span className="min-w-0"><strong className="block text-sm text-[var(--black-color)]">{item.notification?.title}</strong><span className="mt-1 block text-xs text-black/60">{item.notification?.message}</span></span>
+                    </button>
+                  ))}
                 </div>
+                {unreadNotifications > 0 && <button type="button" onClick={markAllNotificationsRead} className="w-full border-t border-black/10 px-4 py-3 text-xs font-semibold text-[var(--secondary-color)]">Marcar todo como leído</button>}
               </div>
             )}
           </div>
@@ -277,7 +322,7 @@ function Controls({ children, maxWidthClass = "max-w-[1800px]" }) {
         <div className="absolute inset-0 -z-10 md:mt-[50px] mt-[-20px] ">{children}</div>
       </Background>
 
-      <nav className="w-full flex-shrink-0 bg-[var(--white-color)] z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] block md:hidden">
+      <nav className="z-[110] block w-full flex-shrink-0 bg-[var(--white-color)] shadow-[0_-2px_10px_rgba(0,0,0,0.05)] md:hidden">
         <div className="flex w-full justify-between h-16">
           {menuItems
             .filter((item) => item.shortAccess)
@@ -310,12 +355,12 @@ function Controls({ children, maxWidthClass = "max-w-[1800px]" }) {
 
       <div
         onClick={() => setIsOpen(false)}
-        className={`fixed inset-0 backdrop-blur-sm z-40 transition-opacity duration-300
+        className={`fixed inset-0 z-[140] backdrop-blur-sm transition-opacity duration-300
           ${isOpen ? "opacity-100 visible bg-black/20" : "opacity-0 invisible"}`}
       />
 
       <div
-        className={`fixed top-0 right-0 h-full w-72 bg-[var(--white-color)] z-50
+        className={`fixed right-0 top-0 z-[150] h-full w-72 bg-[var(--white-color)]
           transform transition-transform duration-300 ease-out flex flex-col overflow-y-auto
           ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >

@@ -255,7 +255,7 @@ function Community() {
 
     return (
         <div>
-        <div className="min-h-screen py-15 flex flex-col items-center  pb-24 text-[var(--white-color)] z-[1] min-h-screen h-screen">
+        <div className="min-h-screen py-15 flex flex-col items-center  pb-24 text-[var(--white-color)] z-[1] min-h-screen h-screen p-3">
             <LoadingOverlay isVisible={loadingCommunities} message="Cargando comunidades..." />
 
             <div className="w-full  px-0 mx-0 text-[var(--ins-text-white)]">
@@ -548,7 +548,7 @@ function CommunityDetailModal({ community, isOpen, onClose, onJoin, onLeave, has
     ];
 
     return (
-        <div className="fixed inset-0 z-[120] flex items-end md:items-center justify-center transition-opacity duration-200 ">
+        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center transition-opacity duration-200 ">
 
             <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={onClose} />
             <div className="relative w-full max-w-5xl p-4 md:p-8 modal-main rounded-t-3xl md:rounded-3xl" style={{ maxHeight: '90vh', overflowY: 'auto' }}>

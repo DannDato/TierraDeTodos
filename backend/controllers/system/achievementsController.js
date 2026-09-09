@@ -616,6 +616,114 @@ class AchievementsController {
     }
   };
 
+  getAchievements = async (req, res) => {
+    try {
+      const achievements = await models.Achievements.findAll({
+        include: [
+          { model: models.StatDefinitions, as: 'statDefinition', attributes: ['id', 'key', 'name', 'dataType', 'aggregation'], required: false },
+          { model: models.emblems, as: 'prizeEmblem', attributes: ['id', 'name', 'rarity', 'color', 'iconUrl'], required: false },
+        ],
+        order: [['sortOrder', 'ASC'], ['name', 'ASC'], ['id', 'ASC']],
+      });
+      await req.logAction({ accion: 'Achievements administrativos consultados', apartado: 'Achievements', userId: req.user?.id, username: req.user?.username, valor: `achievements=${achievements.length}`, type: 'info' });
+      return res.json({ achievements });
+    } catch (error) {
+      handleError(res, req, error, 'Error al cargar achievements administrativos');
+    }
+  };
+
+  getStatDefinitions = async (req, res) => {
+    try {
+      const stats = await models.StatDefinitions.findAll({ where: { isActive: true }, order: [['name', 'ASC'], ['id', 'ASC']] });
+      return res.json({ stats });
+    } catch (error) {
+      handleError(res, req, error, 'Error al cargar estadísticas de achievements');
+    }
+  };
+
+  createAchievement = async (req, res) => {
+    try {
+      const payload = this.parseAchievementPayload(req.body);
+      const validation = await this.validateAchievementPayload(payload);
+      if (validation) return res.status(validation.status).json({ message: validation.message });
+      const duplicate = await models.Achievements.findOne({ where: { key: payload.key } });
+      if (duplicate) return res.status(409).json({ message: 'La key del achievement ya existe' });
+      const achievement = await models.Achievements.create(payload);
+      await req.logAction({ accion: 'Achievement creado', apartado: 'Achievements', userId: req.user?.id, username: req.user?.username, valor: `achievementId=${achievement.id}; key=${achievement.key}`, type: 'info' });
+      return res.status(201).json(achievement);
+    } catch (error) {
+      handleError(res, req, error, 'Error al crear achievement');
+    }
+  };
+
+  updateAchievement = async (req, res) => {
+    try {
+      const achievement = await models.Achievements.findByPk(parseNumber(req.params.id));
+      if (!achievement) return res.status(404).json({ message: 'Achievement no encontrado' });
+      const payload = this.parseAchievementPayload(req.body, achievement);
+      const validation = await this.validateAchievementPayload(payload);
+      if (validation) return res.status(validation.status).json({ message: validation.message });
+      const duplicate = await models.Achievements.findOne({ where: { key: payload.key, id: { [Op.ne]: achievement.id } } });
+      if (duplicate) return res.status(409).json({ message: 'La key del achievement ya existe' });
+      await achievement.update(payload);
+      await req.logAction({ accion: 'Achievement actualizado', apartado: 'Achievements', userId: req.user?.id, username: req.user?.username, valor: `achievementId=${achievement.id}; key=${achievement.key}`, type: 'info' });
+      return res.json(achievement);
+    } catch (error) {
+      handleError(res, req, error, 'Error al actualizar achievement');
+    }
+  };
+
+  deleteAchievement = async (req, res) => {
+    try {
+      const achievement = await models.Achievements.findByPk(parseNumber(req.params.id));
+      if (!achievement) return res.status(404).json({ message: 'Achievement no encontrado' });
+      const progressCount = await models.UserAchievements.count({ where: { achievementId: achievement.id } });
+      if (progressCount) return res.status(409).json({ message: 'No se puede eliminar un achievement con progreso de usuarios', progressCount });
+      await achievement.destroy();
+      await req.logAction({ accion: 'Achievement eliminado', apartado: 'Achievements', userId: req.user?.id, username: req.user?.username, valor: `achievementId=${achievement.id}; key=${achievement.key}`, type: 'info' });
+      return res.json({ message: 'Achievement eliminado correctamente' });
+    } catch (error) {
+      handleError(res, req, error, 'Error al eliminar achievement');
+    }
+  };
+
+  parseAchievementPayload = (body = {}, current = {}) => ({
+    key: normalizeText(body.key ?? current.key),
+    name: normalizeText(body.name ?? current.name),
+    description: normalizeText(body.description ?? current.description),
+    hint: normalizeNullableText(body.hint ?? current.hint),
+    type: normalizeText(body.type ?? current.type ?? 'STAT').toUpperCase(),
+    rarity: normalizeText(body.rarity ?? current.rarity ?? 'COMMON').toUpperCase(),
+    goal: Number(body.goal ?? current.goal ?? 1),
+    operator: normalizeNullableText(body.operator ?? current.operator)?.toUpperCase() || null,
+    statDefinitionId: parseNumber(body.statDefinitionId ?? current.statDefinitionId),
+    isSecret: parseBooleanOrDefault(body.isSecret ?? current.isSecret, false),
+    isActive: parseBooleanOrDefault(body.isActive ?? current.isActive, true),
+    isRepeatable: parseBooleanOrDefault(body.isRepeatable ?? current.isRepeatable, false),
+    points: Number(body.points ?? current.points ?? 0),
+    icon: normalizeNullableText(body.icon ?? current.icon),
+    sortOrder: Number(body.sortOrder ?? current.sortOrder ?? 0),
+    prizeEmblemId: parseNumber(body.prizeEmblemId ?? current.prizeEmblemId),
+  });
+
+  validateAchievementPayload = async (payload) => {
+    const rarities = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC'];
+    if (!payload.key || !/^[A-Z0-9_]{3,100}$/.test(payload.key)) return { status: 400, message: 'key debe usar mayúsculas, números y guiones bajos' };
+    if (!payload.name || !payload.description) return { status: 400, message: 'name y description son obligatorios' };
+    if (!['STAT', 'CUSTOM'].includes(payload.type)) return { status: 400, message: 'type inválido' };
+    if (!rarities.includes(payload.rarity)) return { status: 400, message: 'rarity inválida' };
+    if (!Number.isFinite(payload.goal) || payload.goal < 0 || !Number.isFinite(payload.points) || payload.points < 0 || !Number.isInteger(payload.sortOrder) || payload.sortOrder < 0) return { status: 400, message: 'goal, points o sortOrder inválidos' };
+    if (payload.type === 'STAT') {
+      if (!payload.statDefinitionId || !['GTE', 'LTE', 'EQ'].includes(payload.operator)) return { status: 400, message: 'Los achievements STAT requieren estadística y operador válidos' };
+      if (!await models.StatDefinitions.findOne({ where: { id: payload.statDefinitionId, isActive: true } })) return { status: 404, message: 'Estadística no encontrada' };
+    } else {
+      payload.statDefinitionId = null;
+      payload.operator = null;
+    }
+    if (payload.prizeEmblemId && !await models.emblems.findByPk(payload.prizeEmblemId)) return { status: 404, message: 'Emblema premio no encontrado' };
+    return null;
+  };
+
   createGoal = async (req, res) => {
     try {
       const editionId = parseNumber(req.body?.editionId);

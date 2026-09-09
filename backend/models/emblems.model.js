@@ -94,6 +94,11 @@
       as: 'user_emblem_entries',
       constraints: false
     });
+    emblems.hasMany(models.Achievements, {
+      foreignKey: 'prizeEmblemId',
+      as: 'prizeAchievements',
+      constraints: false
+    });
 
     emblems.belongsToMany(models.Users, {
       through: models.user_emblems,

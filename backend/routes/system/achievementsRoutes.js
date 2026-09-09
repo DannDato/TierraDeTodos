@@ -22,6 +22,11 @@ router.put('/achievements/emblems/:id', verifyToken, checkPermissions(['emblems.
 router.delete('/achievements/emblems/:id', verifyToken, checkPermissions(['emblems.remove']), ctrlAchievements.deleteEmblem);
 
 router.get('/achievements/goals', verifyToken, checkPermissions(['goals.view']), ctrlAchievements.getGoals);
+router.get('/achievements/catalog-v2', verifyToken, checkPermissions(['goals.view']), ctrlAchievements.getAchievements);
+router.get('/achievements/stat-definitions', verifyToken, checkPermissions(['goals.view']), ctrlAchievements.getStatDefinitions);
+router.post('/achievements/catalog-v2', verifyToken, checkPermissions(['goals.gest']), ctrlAchievements.createAchievement);
+router.put('/achievements/catalog-v2/:id', verifyToken, checkPermissions(['goals.edit']), ctrlAchievements.updateAchievement);
+router.delete('/achievements/catalog-v2/:id', verifyToken, checkPermissions(['goals.remove']), ctrlAchievements.deleteAchievement);
 router.post('/achievements/goals', verifyToken, checkPermissions(['goals.gest']), ctrlAchievements.createGoal);
 router.put('/achievements/goals/:id', verifyToken, checkPermissions(['goals.edit']), ctrlAchievements.updateGoal);
 router.delete('/achievements/goals/:id', verifyToken, checkPermissions(['goals.remove']), ctrlAchievements.deleteGoal);

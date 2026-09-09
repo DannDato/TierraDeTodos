@@ -2,6 +2,7 @@ import { db, models } from '../../models/index.js';
 import { LikesValidationError } from '../../models/likes.model.js';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { Op } from 'sequelize';
+import { NotifyAll } from '../../helpers/notifications.js';
 
 class NewsController {
   s3 = () => {
@@ -155,6 +156,8 @@ class NewsController {
         type: 'info'
       });
 
+      await NotifyAll({ key: `NEWS_PUBLISHED:${newsCreated.id}`, type: 'NEWS', category: 'news', title: 'Nueva noticia publicada', message: newsCreated.title, priority: 'NORMAL', entityType: 'NEWS', entityId: newsCreated.id, actionTarget: `/news?open=${newsCreated.id}`, icon: 'Newspaper', metadata: { newsType: type } }, req);
+
       return res.status(201).json({
         message: 'Noticia creada correctamente.',
         news: newsCreated
@@ -244,6 +247,18 @@ class NewsController {
         return res.status(400).json({ message: 'No se recibiÃ³ ninguna imagen.' });
       }
 
+      if (!process.env.R2_ENDPOINT || !process.env.R2_BUCKET || !process.env.R2_ACCESS_KEY || !process.env.R2_SECRET_KEY) {
+        await req.logAction({
+          accion: 'Carga de imagen de noticia sin almacenamiento configurado',
+          apartado: 'News',
+          userId: req.user?.id,
+          username: req.user?.username,
+          valor: `newsId=${row.id}`,
+          type: 'error'
+        });
+        return res.status(503).json({ message: 'El almacenamiento de imágenes no está configurado.' });
+      }
+
       const extByMime = {
         'image/jpeg': 'jpg',
         'image/png': 'png',
@@ -292,8 +307,16 @@ class NewsController {
         message: 'Imagen de noticia actualizada.',
         news: row,
       });
-    } catch (_error) {
-      return res.status(500).json({ message: 'Error interno del servidor' });
+    } catch (error) {
+      await req.logAction({
+        accion: 'Error al actualizar imagen de noticia',
+        apartado: 'News',
+        userId: req.user?.id,
+        username: req.user?.username,
+        valor: error.message,
+        type: 'error'
+      });
+      return res.status(500).json({ message: 'No se pudo subir la imagen de la noticia.' });
     }
   };
 

@@ -64,12 +64,12 @@ function Start() {
   });
 
   const [news, setNews] = useState([]);
+  const [socialLinks, setSocialLinks] = useState({ discord: "" });
   const [loadingNews, setLoadingNews] = useState(true);
   const [progressSummary, setProgressSummary] = useState({
-    totalEmblems: 0,
-    equippedEmblems: 0,
-    totalGoals: 0,
-    completedGoals: 0,
+    achievedAchievements: 0,
+    emblemsAchieved: 0,
+    achievementCompletion: 0,
   });
   const [alerts] = useState(mockAlerts); // Estado para las alertas
 
@@ -77,9 +77,10 @@ function Start() {
     const loadStartData = async () => {
       try {
         setLoadingNews(true);
-        const [newsResponse, progressResponse] = await Promise.allSettled([
+        const [newsResponse, progressResponse, publicData] = await Promise.allSettled([
           api.get("/user/news"),
-          api.get("/user/progress/emblems"),
+          api.get("/user/progress/stats"),
+          api.get("/system/public-information?keys=links.social"),
         ]);
 
         const newsData = newsResponse.status === "fulfilled" ? newsResponse.value?.data : null;
@@ -87,20 +88,24 @@ function Start() {
         setNews(Array.isArray(payload) ? payload : []);
 
         if (progressResponse.status === "fulfilled") {
-          const stats = progressResponse.value?.data?.stats || {};
+          const summary = progressResponse.value?.data?.summary || {};
           setProgressSummary({
-            totalEmblems: Number(stats.totalEmblems) || 0,
-            equippedEmblems: Number(stats.equippedEmblems) || 0,
-            totalGoals: Number(stats.totalGoals) || 0,
-            completedGoals: Number(stats.completedGoals) || 0,
+            achievedAchievements: Number(summary.achievedAchievements) || 0,
+            emblemsAchieved: Number(summary.emblemsAchieved) || 0,
+            achievementCompletion: Number(summary.achievementCompletion) || 0,
           });
         } else {
-          setProgressSummary({ totalEmblems: 0, equippedEmblems: 0, totalGoals: 0, completedGoals: 0 });
+          setProgressSummary({ achievedAchievements: 0, emblemsAchieved: 0, achievementCompletion: 0 });
+        }
+
+        if (publicData.status === "fulfilled") {
+          const publicLinks = publicData.value?.data?.config?.["links.social"];
+          if (publicLinks && typeof publicLinks === "object") setSocialLinks(publicLinks);
         }
       } catch (error) {
         console.error("Start news load error:", error);
         setNews([]);
-        setProgressSummary({ totalEmblems: 0, equippedEmblems: 0, totalGoals: 0, completedGoals: 0 });
+        setProgressSummary({ achievedAchievements: 0, emblemsAchieved: 0, achievementCompletion: 0 });
       } finally {
         setLoadingNews(false);
       }
@@ -243,7 +248,7 @@ const initialChatMessages = [
       <div className="flex-row w-full  px-0 mx-0 min-h-screen h-screen">
 
         {/* ENCABEZADO */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 px-2">
+        <div className="flex flex-col md:flex-row md:items-end justify-between my-3 gap-4 px-2">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--white-color)] uppercase tracking-widest mb-2">
               <span>Tierra de Todos</span>
@@ -280,7 +285,7 @@ const initialChatMessages = [
         {/* ESTADISTICAS DEL JUGADOR */}
         {/* ========================================================= */}
         <div
-          className="box-main cursor-pointer  p-6 flex flex-col relative overflow-hidden pb-8 "
+          className="cursor-pointer  p-0 flex flex-col relative overflow-hidden py-3 "
           onClick={() => navigate('/progress')}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
@@ -293,17 +298,7 @@ const initialChatMessages = [
           title="Abrir pagina de progreso"
         >
 
-          <div className="flex items-center justify-between mb-4 relative z-10">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)]">
-                <CircleDashed size={24} style={{ color: "var(--secondary-color)" }}/>
-                Tu progreso actual
-            </h2>
-            <span className="text-[10px] font-bold bg-[var(--secondary-color)]/10 text-[var(--secondary-color)] px-2 py-1 rounded-md">
-              TDT
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 ">
+          <div className="grid grid-cols-3 gap-1 relative z-10 ">
             <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5 ">
               <div
                 className="absolute inset-0 opacity-10 group-hover:opacity-5 hover:blur-[1px] transition-opacity duration-500 "
@@ -318,13 +313,13 @@ const initialChatMessages = [
               ></div>
 
               <div className="relative z-10 w-full">
-                <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider">Insignias</p>
+                <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider">Emblemas obtenidos</p>
 
                 <div className="mt-2 flex items-center gap-3">
                   <div className="p-2 bg-purple-500/20 rounded-xl text-yellow-500 ">
                     <Trophy size={18} />
                   </div>
-                  <span className="text-sm font-bold text-white">{progressSummary.totalEmblems}</span>
+                  <span className="text-sm font-bold text-white">{progressSummary.emblemsAchieved}</span>
                 </div>
               </div>
             </div>
@@ -343,11 +338,11 @@ const initialChatMessages = [
               ></div>
               <div>
                 <div>
-                  <p className="text-[10px] font-bold  uppercase">Tiempo Jugado</p>
+                  <p className="text-[10px] font-bold  uppercase">Logros obtenidos</p>
                 </div>
                 <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 flex-row items-center gap-4 flex">
                   <Clock size={18} />
-                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.equippedEmblems}</p>
+                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.achievedAchievements}</p>
                 </div>
               </div>
             </div>
@@ -366,34 +361,14 @@ const initialChatMessages = [
               ></div>
 
               <div>
-                <p className="text-[10px] font-bold  uppercase">Logros</p>
+                <p className="text-[10px] font-bold  uppercase">Progreso de logros</p>
                 <div className="p-2 bg-emerald-500/10 rounded-3xl text-emerald-600 flex-row items-center gap-4 flex">
                   <Coins size={18} />
-                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.totalGoals}</p>
+                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.achievementCompletion}%</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-black/10 p-3 rounded-3xl flex flex-col items-start gap-2 relative overflow-hidden group border border-white/5">
-              <div
-                className="absolute inset-0 opacity-10 group-hover:opacity-5 transition-opacity duration-500 "
-                style={{
-                  backgroundImage: `url(${Runas})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  WebkitMaskImage: 'linear-gradient(to left, black, transparent)',
-                  maskImage: 'linear-gradient(to left, black, transparent)',
-                  zIndex: 0
-                }}
-              ></div>
-              <div>
-                <p className="text-[10px] font-bold  uppercase">Completados</p>
-                <div className="p-2 bg-red-500/10 rounded-3xl text-red-300 flex-row items-center gap-4 flex">
-                  <Swords size={18} />
-                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.completedGoals}</p>
-                </div>
-              </div>
-            </div>
           </div>
 
         </div>
@@ -445,15 +420,15 @@ const initialChatMessages = [
           </div>
 
           <div className="lg:col-span-1 flex flex-col gap-6 mt-4 md:mt-0 md:ml-4">
-            <div className="box-main cursor-pointer p-6 min-h-[30rem] flex flex-col items-center relative overflow-hidden gap-5">
-              <div className="w-full relative z-10">
+            <div className="box-main cursor-pointer p-6 md:min-h-[30rem] flex flex-col items-center relative overflow-hidden gap-5">
+              <div className="w-full relative z-10 hidden md:block">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[var(--ins-text-white)] justify-center">
                   <Play size={24} style={{ color: "var(--secondary-color)" }}/>
                   ¿Aun no lo instalas?
                 </h2>
               </div>
 
-              <div className="w-full relative z-10">
+              <div className="w-full relative z-10 hidden md:block">
                 {isDownloading ? (
                   <div className="w-full bg-white p-4 rounded-3xl shadow-sm">
                     <div className="flex justify-between items-center mb-2">
@@ -482,16 +457,16 @@ const initialChatMessages = [
                 )}
               </div>
 
-              <Button
+              {socialLinks.discord && <Button
                 variant="discord"
                 size="lg"
                 target={"_blank"}
                 fullWidth
-                // className="py-5 text-xl tracking-wide shadow-lg shadow-[var(--secondary-color)]/30 hover:shadow-[var(--secondary-color)]/50"
-                href="https://discord.gg/tdt3"
+                className="hidden md:flex"
+                href={socialLinks.discord || undefined}
               >
                 Únete a Discord
-              </Button>
+              </Button>}
 
               <div className="mt-0  flex items-center justify-center gap-2 text-xs font-bold text-[var(--white-color)] ">
                 {/* <Server size={14} /> Servidor en línea • 124 Jugadores */}
@@ -503,7 +478,7 @@ const initialChatMessages = [
                     Acceso rápido
                   </h2>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-align-center mt-4 relative z-10">
+                <div className="grid grid-cols-4 lg:grid-cols-4 gap-4 text-align-center mt-4 relative z-10">
                   <button
                     onClick={() => navigate('/commands')}
                     className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-blue-500/20 hover:bg-amber-500/30 transition-colors shadow-md"

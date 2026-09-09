@@ -13,6 +13,7 @@ import VerifyAccess from "./pages/auth/VerifyAccess"
 import PasswordRecovery from "./pages/auth/passwordRecovery"
 import CompleteGoogleRegistration from "./pages/auth/CompleteGoogleRegistration"
 import TwitchCallback from "./pages/auth/TwitchCallback"
+import DiscordCallback from "./pages/auth/DiscordCallback"
 // Layouts
 import DashboardLayout from "./layouts/DashboardLayout";
 // Páginas de usuario
@@ -42,6 +43,7 @@ const App = function App() {
       "/verifyAccess",
       "/complete-registration",
       "/auth/twitch/callback",
+      "/auth/discord/callback",
       "/start",
       "/profile",
       "/progress",
@@ -85,6 +87,7 @@ const App = function App() {
         <Route path="/verifyAccess" element={<VerifyAccess />} />
         <Route path="/complete-registration" element={<CompleteGoogleRegistration />} />
         <Route path="/auth/twitch/callback" element={<TwitchCallback />} />
+        <Route path="/auth/discord/callback" element={<DiscordCallback />} />
         <Route path="/password-recovery" element={<PasswordRecovery />} />
 
         <Route element={<DashboardLayout />}>
