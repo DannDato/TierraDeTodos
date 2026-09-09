@@ -20,6 +20,7 @@ router.get('/community/members', verifyToken, communityController.getMembers);
 // Rutas exclusivas para usuarios con permiso community.manage
 router.post('/communities', verifyToken, checkPermissions(['community.manage']), communityAdminController.create);
 router.post('/communities/logo', verifyToken, uploadsCheck({ type: 'image', field: 'logo', maxSizeMb: 5 }), checkPermissions(['community.manage']), communityAdminController.uploadCommunityLogo);
+router.post('/communities/emblem', verifyToken, uploadsCheck({ type: 'image', field: 'emblem', maxSizeMb: 5, allowedMimes: ['image/png'] }), checkPermissions(['community.manage']), communityAdminController.uploadCommunityEmblem);
 router.get('/community/manage/requests', verifyToken, checkPermissions(['community.manage']), communityAdminController.getManageRequests);
 router.patch('/community/requests/:requestId/approve', verifyToken, checkPermissions(['community.manage']), communityAdminController.approveRequest);
 router.patch('/community/requests/:requestId/reject', verifyToken, checkPermissions(['community.manage']), communityAdminController.rejectRequest);

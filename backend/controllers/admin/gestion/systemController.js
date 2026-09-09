@@ -5,7 +5,11 @@ const ALLOWED_TYPES = new Set(['json', 'string', 'number', 'boolean', 'array']);
 const normalizeKey = (value) => String(value || '').trim().toLowerCase();
 
 const sanitizeLinks = (value) => {
-  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  let parsedValue = value;
+  if (typeof parsedValue === 'string') {
+    try { parsedValue = JSON.parse(parsedValue); } catch { parsedValue = {}; }
+  }
+  const source = parsedValue && typeof parsedValue === 'object' && !Array.isArray(parsedValue) ? parsedValue : {};
   const keys = ['website', 'youtube', 'discord', 'instagram', 'x', 'twitch'];
   const links = {};
 

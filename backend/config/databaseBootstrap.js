@@ -75,8 +75,14 @@ export async function initializeDatabase() {
     try {
         await loadModels();
         await db.authenticate();
-        // await db.sync({ alter: true });
-        await db.sync();
+        const environment = String(process.env.NODE_ENV || '').trim().toLowerCase();
+        if (environment !== 'production') {
+            const syncOptions = environment === 'developmentHard'
+                ? { alter: true, force: false }
+                : { alter: false, force: false };
+
+            await db.sync(syncOptions);
+        }
         // await ensureForeignKeyConstraints();
         await runModelSeeds();
 

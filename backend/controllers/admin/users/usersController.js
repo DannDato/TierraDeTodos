@@ -2,6 +2,7 @@ import { db, models } from '../../../models/index.js';
 import { QueryTypes } from 'sequelize';
 import { applyRolePresetPermissions } from '../../../helpers/applyRolePresetPermissions.js';
 import { getEquippedEmblemsByUser } from '../../../helpers/getEquippedEmblems.js';
+import { addPublicCommunity } from '../../../helpers/publicCommunity.js';
 
 class UsersController {
   async getAssignableStatuses(transaction) {
@@ -235,14 +236,33 @@ class UsersController {
       ]);
 
       const equippedEmblems = await getEquippedEmblemsByUser(user.id);
+      const communityRows = await db.query(
+        `
+          SELECT
+            c.id AS community_id,
+            c.name AS community_name,
+            c.color AS community_color,
+            c.color2 AS community_color2,
+            c.flag_pattern AS community_flag_pattern,
+            c.emblem_url AS community_emblem_url
+          FROM user_community uc
+          INNER JOIN community c ON c.id = uc.communityId
+          WHERE uc.userId = :userId
+          ORDER BY uc.joinedAt DESC, uc.id DESC
+          LIMIT 1
+        `,
+        { replacements: { userId }, type: QueryTypes.SELECT }
+      );
+
+      const communityFields = communityRows[0] || {};
+      const publicUser = addPublicCommunity({
+        ...user.toJSON(),
+        ...communityFields,
+      });
 
       return res.status(200).json({
         user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          folio: user.folio,
-          role: user.role,
+          ...publicUser,
           roleColor: roleRecord?.color || null,
           roleComplementary: roleRecord?.complementary || null,
           roleEnfasis: roleRecord?.enfasis || null,

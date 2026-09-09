@@ -1,5 +1,6 @@
 import { db } from '../../models/index.js';
 import { getEquippedEmblemsByUsers } from '../../helpers/getEquippedEmblems.js';
+import { addPublicCommunities, PUBLIC_COMMUNITY_FIELDS, PUBLIC_COMMUNITY_JOIN } from '../../helpers/publicCommunity.js';
 
 class PlayersController {
   getRandomOrderClause = () => {
@@ -73,7 +74,9 @@ class PlayersController {
             ) AS avatarZoom,
             u.account AS status,
             (SELECT us.color FROM system_statuses us WHERE us.status = u.account AND us.active = 'YES' LIMIT 1) AS statusColor
+            ,${PUBLIC_COMMUNITY_FIELDS}
           FROM Users u
+          ${PUBLIC_COMMUNITY_JOIN}
           WHERE u.account <> 'INACTIVE'
             AND EXISTS (
               SELECT 1
@@ -86,6 +89,8 @@ class PlayersController {
         `,
         { type: db.QueryTypes.SELECT }
       );
+
+      addPublicCommunities(players);
 
       const equippedEmblemsByUserId = await getEquippedEmblemsByUsers(players.map((player) => player.id));
 

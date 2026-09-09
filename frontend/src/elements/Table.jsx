@@ -269,9 +269,9 @@ export default function Table({
       {(enableSorting || enablePagination) && totalItems > 0 ? (
         <div className="mt-4 flex flex-col gap-3 border-t border-[var(--white-color)]/8 pt-4 text-xs text-[var(--ins-text-gray)] md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap items-center gap-3">
-            <span>
+            {/* <span>
               Mostrando {currentStart}-{currentEnd} de {totalItems} registros
-            </span>
+            </span> */}
             {canPaginate ? (
               <label className="flex items-center gap-2">
                 <span>Por página</span>

@@ -147,6 +147,9 @@ class CommunityController {
         shortname: c.shortname,
         color: c.color,
         color2: c.color2,
+        flag_pattern: c.flag_pattern || 'horizontal',
+        text_color: c.text_color || '#f2dfbf',
+        emblem_url: c.emblem_url || null,
         description: c.description,
         logo_url: c.logo_url,
         leader: {
@@ -252,6 +255,9 @@ class CommunityController {
           shortname: c.shortname,
           color: c.color,
           color2: c.color2,
+          flag_pattern: c.flag_pattern || 'horizontal',
+          text_color: c.text_color || '#f2dfbf',
+          emblem_url: c.emblem_url || null,
           description: c.description,
           logo_url: c.logo_url,
           leader: {

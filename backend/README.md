@@ -58,7 +58,7 @@ Al iniciar `server.js`:
 1. Crea la app de Express.
 2. Carga modelos dinamicamente (`loadModels()`).
 3. Se conecta a MySQL (`db.authenticate()`).
-4. Sincroniza esquema con `db.sync({ alter: true })`.
+4. Sincroniza esquema con `db.sync({ alter: true })` sólo en `development`; en `production` no ejecuta `db.sync()` bajo ninguna circunstancia. Los cambios de esquema productivos deben aplicarse mediante migraciones o SQL controlado.
 5. Ejecuta seeds automaticamente para modelos que implementan `seed()`.
 6. Aplica middlewares globales (`cors`, `injectLogAction`, `secureDelay`, parsers JSON/urlencoded).
 7. Monta rutas con prefijo opcional `FOLDER`.
@@ -89,6 +89,16 @@ El backend usa estas variables:
 - `DB_PASS`
 - `DB_HOST`
 - `DB_PORT`
+
+### Cloudflare R2 para archivos
+- `R2_ENDPOINT`
+- `R2_BUCKET`
+- `R2_ACCESS_KEY`
+- `R2_SECRET_KEY`
+- `R2_PUBLIC_URL`
+- `R2_FOLDER`
+
+Los objetos de emblemas se sirven desde `R2_PUBLIC_URL`. La configuración CORS del bucket debe permitir solicitudes `GET` y `HEAD` desde el origen del frontend (por ejemplo `http://localhost:5173` en desarrollo y el dominio web en producción), con `Access-Control-Allow-Origin` compatible con ese origen. Esto es necesario porque el editor carga el PNG con `crossOrigin = "anonymous"` antes de exportarlo mediante canvas.
 
 Notas:
 - El proyecto usa dos conexiones: una principal y otra para logs.

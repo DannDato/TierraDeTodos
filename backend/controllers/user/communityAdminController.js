@@ -2,6 +2,33 @@ import { models, db } from '../../models/index.js';
 import handleError from '../../handlers/handleError.js';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
+const ALLOWED_FLAG_PATTERNS = new Set([
+  'horizontal', 'vertical', 'diagonal', 'diagonal-reverse', 'cross', 'x', 'circle', 'quartered', 'solid'
+]);
+const HEX_COLOR_PATTERN = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+
+const normalizeBannerFields = (body = {}, current = {}) => ({
+  flag_pattern: body.flag_pattern ?? body.flagPattern ?? current.flag_pattern ?? 'horizontal',
+  text_color: body.text_color ?? body.textColor ?? current.text_color ?? '#f2dfbf',
+  emblem_url: body.emblem_url ?? body.emblemUrl ?? current.emblem_url ?? null,
+});
+
+const validateBannerFields = ({ flag_pattern, text_color }) => {
+  if (!ALLOWED_FLAG_PATTERNS.has(flag_pattern)) return 'Patrón de estandarte inválido.';
+  if (!HEX_COLOR_PATTERN.test(text_color)) return 'Color de texto inválido (debe ser hexadecimal).';
+  return null;
+};
+
+const isOwnedEmblemUrl = (value, communityId) => {
+  if (!value) return true;
+  const publicBase = (process.env.R2_PUBLIC_URL || '').replace(/\/$/, '');
+  const folder = process.env.R2_FOLDER || 'tdt-system';
+  if (!publicBase) return false;
+
+  return value.startsWith(`${publicBase}/${folder}/communities/${communityId}/emblem_`)
+    && value.endsWith('.png');
+};
+
 const getManagedCommunity = async (userId) => models.community.findOne({
   where: { lider: userId },
 });
@@ -259,6 +286,7 @@ class CommunityAdminController {
     try {
       const userId = req.user.id;
       const { platform, streamerUsername, streamerLink, streamerImage, communityName, shortname, color, color2, description, logo_url } = req.body;
+      const bannerFields = normalizeBannerFields(req.body);
 
       if (!communityName || typeof communityName !== 'string' || communityName.trim().length === 0 || communityName.length > 100) {
         return res.status(400).json({ message: 'Nombre de comunidad invÃ¡lido (mÃ¡ximo 100 caracteres).' });
@@ -275,9 +303,13 @@ class CommunityAdminController {
       if (description && (typeof description !== 'string' || description.length > 500)) {
         return res.status(400).json({ message: 'DescripciÃ³n demasiado larga (mÃ¡ximo 500 caracteres).' });
       }
+      const bannerValidation = validateBannerFields(bannerFields);
+      if (bannerValidation) return res.status(400).json({ message: bannerValidation });
 
       const existingMembership = await getUserMembership(userId);
       let community = await models.community.findOne({ where: { lider: userId } });
+
+      const requestedEmblemUrl = req.body.emblem_url ?? req.body.emblemUrl ?? '';
 
       if (!community && existingMembership) {
         return res.status(409).json({ message: 'No puedes crear una comunidad porque ya perteneces a otra.' });
@@ -285,6 +317,10 @@ class CommunityAdminController {
 
       if (community && existingMembership && Number(existingMembership.communityId) !== Number(community.id)) {
         return res.status(409).json({ message: 'Tu cuenta estÃ¡ asociada a otra comunidad. Contacta a soporte.' });
+      }
+
+      if (requestedEmblemUrl && (!community || !isOwnedEmblemUrl(requestedEmblemUrl, community.id))) {
+        return res.status(400).json({ message: 'La URL del emblema no pertenece a una subida válida de esta comunidad.' });
       }
 
       let streamer = await models.streamer.findOne({ where: { userID: userId } });
@@ -315,7 +351,10 @@ class CommunityAdminController {
           color,
           color2,
           description,
-          logo_url
+          logo_url,
+          flag_pattern: bannerFields.flag_pattern,
+          text_color: bannerFields.text_color,
+          emblem_url: requestedEmblemUrl ? bannerFields.emblem_url : (community.emblem_url || null),
         });
 
         if (!existingMembership) {
@@ -341,7 +380,10 @@ class CommunityAdminController {
         color,
         color2,
         description,
-        logo_url
+        logo_url,
+        flag_pattern: bannerFields.flag_pattern,
+        text_color: bannerFields.text_color,
+        emblem_url: null,
       });
 
       const joinLeaderToCommunity = await models.user_community.create({
@@ -417,6 +459,64 @@ class CommunityAdminController {
       return res.status(201).json({ url });
     } catch (error) {
       handleError(res, req, error, 'Error al subir logo de la comunidad');
+    }
+  }
+
+  async uploadCommunityEmblem(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No se subió ningún emblema.' });
+      }
+
+      if (req.file.mimetype !== 'image/png' || !req.file.originalname.toLowerCase().endsWith('.png')) {
+        return res.status(400).json({ message: 'El emblema debe ser un archivo PNG.' });
+      }
+
+      const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      if (!req.file.buffer.subarray(0, pngSignature.length).equals(pngSignature)) {
+        return res.status(400).json({ message: 'El contenido del archivo no es un PNG válido.' });
+      }
+
+      const community = await getManagedCommunity(req.user.id);
+      if (!community) {
+        return res.status(404).json({ message: 'No tienes comunidad registrada.' });
+      }
+
+      const folder = process.env.R2_FOLDER || 'tdt-system';
+      const key = `${folder}/communities/${community.id}/emblem_${Date.now()}.png`;
+      const s3 = new S3Client({
+        region: 'auto',
+        endpoint: process.env.R2_ENDPOINT,
+        credentials: {
+          accessKeyId: process.env.R2_ACCESS_KEY,
+          secretAccessKey: process.env.R2_SECRET_KEY,
+        },
+      });
+
+      await s3.send(new PutObjectCommand({
+        Bucket: process.env.R2_BUCKET,
+        Key: key,
+        Body: req.file.buffer,
+        ContentType: 'image/png',
+        CacheControl: 'public, max-age=31536000, immutable',
+      }));
+
+      const url = (process.env.R2_PUBLIC_URL
+        ? process.env.R2_PUBLIC_URL.replace(/\/$/, '')
+        : `${process.env.R2_ENDPOINT}/${process.env.R2_BUCKET}`.replace(/\/$/, '')) + `/${key}`;
+
+      await req.logAction({
+        accion: 'Emblema de comunidad subido',
+        apartado: 'CommunityAdmin',
+        userId: req.user.id,
+        username: req.user?.username,
+        valor: `communityId=${community.id}; key=${key}`,
+        type: 'info'
+      });
+
+      return res.status(201).json({ url });
+    } catch (error) {
+      handleError(res, req, error, 'Error al subir emblema de la comunidad');
     }
   }
 }

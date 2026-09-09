@@ -58,17 +58,25 @@ function SystemPreferencesView() {
       ]);
 
       if (linksRes.status === 'fulfilled') {
-        const serverLinks = linksRes.value?.data?.links;
+        const rawServerLinks = linksRes.value?.data?.links;
+        let serverLinks = rawServerLinks;
+        if (typeof serverLinks === 'string') {
+          try { serverLinks = JSON.parse(serverLinks); } catch { serverLinks = {}; }
+        }
         setLinks({ ...createInitialLinks(), ...(serverLinks || {}) });
       }
 
       if (settingsRes.status === 'fulfilled') {
         const settings = Array.isArray(settingsRes.value?.data?.settings) ? settingsRes.value.data.settings : [];
         const authSetting = settings.find((item) => String(item?.key || '') === 'features.auth');
-        if (authSetting?.value && typeof authSetting.value === 'object') {
+        let authValue = authSetting?.value;
+        if (typeof authValue === 'string') {
+          try { authValue = JSON.parse(authValue); } catch { authValue = null; }
+        }
+        if (authValue && typeof authValue === 'object') {
           setAuthFlags({
-            loginEnabled: authSetting.value.loginEnabled !== false,
-            registerEnabled: authSetting.value.registerEnabled !== false,
+            loginEnabled: authValue.loginEnabled !== false,
+            registerEnabled: authValue.registerEnabled !== false,
           });
         }
       }

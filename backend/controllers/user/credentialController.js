@@ -1,5 +1,6 @@
 import { db } from '../../models/index.js';
 import { getEquippedEmblemsByUser } from '../../helpers/getEquippedEmblems.js';
+import { addPublicCommunity, PUBLIC_COMMUNITY_FIELDS, PUBLIC_COMMUNITY_JOIN } from '../../helpers/publicCommunity.js';
 
 class CredentialController {
   credential = async (req, res) => {
@@ -68,7 +69,9 @@ class CredentialController {
             ) AS avatarZoom,
             u.account AS status,
             (SELECT us.color FROM system_statuses us WHERE us.status = u.account AND us.active = 'YES' LIMIT 1) AS statusColor
+            ,${PUBLIC_COMMUNITY_FIELDS}
           FROM Users u
+          ${PUBLIC_COMMUNITY_JOIN}
           WHERE u.id = ?
           LIMIT 1;
         `,
@@ -81,6 +84,7 @@ class CredentialController {
       const result = userData[0] || null;
 
       if (result?.id) {
+        addPublicCommunity(result);
         result.equippedEmblems = await getEquippedEmblemsByUser(result.id);
       }
 

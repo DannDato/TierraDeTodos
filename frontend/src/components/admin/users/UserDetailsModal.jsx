@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   User,
@@ -217,17 +218,17 @@ function UserDetailsModal({
     { id: "devices", label: "Dispositivos", icon: <Smartphone size={16} />, activeIconClassName: "text-[var(--secondary-color)]" },
   ];
 
-  return (
+  return createPortal((
     // Contenedor principal fijo al viewport util, respetando el alto del menubar
-    <div className="fixed inset-x-0 top-0 bottom-16 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+    <div className="fixed inset-0 z-[220] flex items-center justify-center p-2 sm:p-4 lg:p-6 overflow-hidden">
 
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-[var(--black-color)]/60 backdrop-blur-sm transition-opacity animate-[fadeIn_0.2s_ease-out]"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-6xl h-[calc(100%-2rem)] sm:h-[calc(100%-3rem)] max-h-[820px] flex flex-col modal-main overflow-hidden transform transition-all animate-[slideUp_0.3s_ease-out]">
-        <div className="relative flex-shrink-0 px-8 py-6 bg-[var(--white-color)]/[0.02] overflow-hidden">
+      <div className="relative w-[calc(100%-0.5rem)] sm:w-[calc(100%-2rem)] max-w-7xl h-[calc(100dvh-1rem)] sm:h-[calc(100dvh-2rem)] max-h-[900px] flex flex-col modal-main overflow-hidden transform transition-all animate-[slideUp_0.3s_ease-out]">
+        <div className="relative flex-shrink-0 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6 bg-[var(--white-color)]/[0.02] overflow-hidden">
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-[var(--secondary-color)]/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
 
           <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-4 relative z-10">
@@ -271,7 +272,7 @@ function UserDetailsModal({
         </div>
 
         {/* Contenedor pestaña */}
-        <div className="flex-1 min-h-0 p-8 pt-4 overflow-y-auto tdt-scrollbar">
+        <div className="flex-1 min-h-0 p-4 sm:p-6 lg:p-8 pt-4 overflow-y-auto tdt-scrollbar">
           {activeTab === "data" ? (
             <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
               <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
@@ -485,7 +486,7 @@ function UserDetailsModal({
           )}
         </div>
 
-        <div className="flex-shrink-0 px-8 py-5 bg-[var(--black-color)]/20 border-t border-[var(--white-color)]/10 flex items-center justify-end gap-3 backdrop-blur-md">
+        <div className="flex-shrink-0 px-4 py-4 sm:px-6 lg:px-8 sm:py-5 bg-[var(--black-color)]/20 border-t border-[var(--white-color)]/10 flex items-center justify-end gap-3 backdrop-blur-md">
           {/* <Button variant="secondary" size="md" onClick={onClose} className="hover:bg-[var(--white-color)]/10 border-[var(--white-color)]/10">
             Cancelar
           </Button> */}
@@ -506,7 +507,7 @@ function UserDetailsModal({
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 }
 
 export default UserDetailsModal;

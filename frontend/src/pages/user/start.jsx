@@ -51,6 +51,7 @@ function Start() {
   const currentUsername = localStorage.getItem("username") || "Jugador";
   const iframeContainerRef = useRef(null);
   const downloadIntervalRef = useRef(null);
+  const downloadCompletionTimeoutRef = useRef(null);
 
   // Base local para evolucionar a progreso real desde API sin rehacer la UI.
   const [playerSummary] = useState({
@@ -99,7 +100,11 @@ function Start() {
         }
 
         if (publicData.status === "fulfilled") {
-          const publicLinks = publicData.value?.data?.config?.["links.social"];
+          const rawPublicLinks = publicData.value?.data?.config?.["links.social"];
+          let publicLinks = rawPublicLinks;
+          if (typeof publicLinks === "string") {
+            try { publicLinks = JSON.parse(publicLinks); } catch { publicLinks = null; }
+          }
           if (publicLinks && typeof publicLinks === "object") setSocialLinks(publicLinks);
         }
       } catch (error) {
@@ -152,6 +157,7 @@ const initialChatMessages = [
 ];
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadStatus, setDownloadStatus] = useState("preparing");
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
   const [chatMessages, setChatMessages] = useState(initialChatMessages);
   const [chatInput, setChatInput] = useState("");
@@ -161,6 +167,9 @@ const initialChatMessages = [
     return () => {
       if (downloadIntervalRef.current) {
         clearInterval(downloadIntervalRef.current);
+      }
+      if (downloadCompletionTimeoutRef.current) {
+        clearTimeout(downloadCompletionTimeoutRef.current);
       }
     };
   }, []);
@@ -174,6 +183,7 @@ const initialChatMessages = [
 
     setIsDownloading(true);
     setDownloadProgress(0);
+    setDownloadStatus("preparing");
 
     downloadIntervalRef.current = setInterval(() => {
       setDownloadProgress(prev => {
@@ -182,7 +192,13 @@ const initialChatMessages = [
             clearInterval(downloadIntervalRef.current);
             downloadIntervalRef.current = null;
           }
-          setTimeout(() => setIsDownloading(false), 1000);
+          setDownloadStatus("not-ready");
+          downloadCompletionTimeoutRef.current = setTimeout(() => {
+            setIsDownloading(false);
+            setDownloadProgress(0);
+            setDownloadStatus("preparing");
+            downloadCompletionTimeoutRef.current = null;
+          }, 3000);
           return 100;
         }
         return prev + 5;
@@ -336,13 +352,14 @@ const initialChatMessages = [
                   zIndex: 0
                 }}
               ></div>
-              <div>
-                <div>
-                  <p className="text-[10px] font-bold  uppercase">Logros obtenidos</p>
-                </div>
-                <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 flex-row items-center gap-4 flex">
-                  <Clock size={18} />
-                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.achievedAchievements}</p>
+              <div className="relative z-10 w-full">
+                <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider">Logros obtenidos</p>
+
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600">
+                    <Clock size={18} />
+                  </div>
+                  <span className="text-sm font-bold text-white">{progressSummary.achievedAchievements}</span>
                 </div>
               </div>
             </div>
@@ -360,11 +377,14 @@ const initialChatMessages = [
                 }}
               ></div>
 
-              <div>
-                <p className="text-[10px] font-bold  uppercase">Progreso de logros</p>
-                <div className="p-2 bg-emerald-500/10 rounded-3xl text-emerald-600 flex-row items-center gap-4 flex">
-                  <Coins size={18} />
-                  <p className="text-sm font-extrabold text-[var(--ins-text-white)]">{progressSummary.achievementCompletion}%</p>
+              <div className="relative z-10 w-full">
+                <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider">Progreso de logros</p>
+
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-600">
+                    <Coins size={18} />
+                  </div>
+                  <span className="text-sm font-bold text-white">{progressSummary.achievementCompletion}%</span>
                 </div>
               </div>
             </div>
@@ -433,7 +453,8 @@ const initialChatMessages = [
                   <div className="w-full bg-white p-4 rounded-3xl shadow-sm">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-xs font-bold text-[var(--secondary-color)] flex items-center gap-1">
-                        <Download size={14} className="animate-bounce" /> Preparando descarga...
+                        <Download size={14} className="animate-bounce" />
+                        {downloadStatus === "not-ready" ? "Huevos... aún no está listo xD" : "Preparando descarga..."}
                       </span>
                       <span className="text-xs font-bold text-gray-500">{downloadProgress}%</span>
                     </div>
@@ -462,7 +483,7 @@ const initialChatMessages = [
                 size="lg"
                 target={"_blank"}
                 fullWidth
-                className="hidden md:flex"
+                className="flex"
                 href={socialLinks.discord || undefined}
               >
                 Únete a Discord
@@ -481,7 +502,7 @@ const initialChatMessages = [
                 <div className="grid grid-cols-4 lg:grid-cols-4 gap-4 text-align-center mt-4 relative z-10">
                   <button
                     onClick={() => navigate('/commands')}
-                    className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-blue-500/20 hover:bg-amber-500/30 transition-colors shadow-md"
+                    className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-blue-500/20 hover:bg-blue-500/30 transition-colors shadow-md"
                     type="button"
                     >
                     <Code size={28} className="text-blue-500" />
@@ -489,7 +510,7 @@ const initialChatMessages = [
                   </button>
                   <button
                     onClick={() => navigate('/community')}
-                    className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-[var(--white-color)]/20 hover:bg-[var(--secondary-color)]/30 transition-colors shadow-md"
+                    className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-[var(--white-color)]/20 hover:bg-[var(--white-color)]/30 transition-colors shadow-md"
                     type="button"
                     >
                     <Users size={28} className="text-[var(--white-color)]" />

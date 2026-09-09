@@ -2,6 +2,7 @@
 import { db } from '../../models/index.js';
 import generateDeviceHash from '../../utils/generateDeviceHash.js';
 import handleError from '../../handlers/handleError.js';
+import { addPublicCommunity, PUBLIC_COMMUNITY_FIELDS, PUBLIC_COMMUNITY_JOIN } from '../../helpers/publicCommunity.js';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { models } from '../../models/index.js';
@@ -302,11 +303,19 @@ class ProfileController {
                         ']'
                     ),
                     '[]'
-                ) AS devices
+                ) AS devices,
+                ${PUBLIC_COMMUNITY_FIELDS}
             FROM Users u
             LEFT JOIN user_devices ud ON ud.user = u.id
+            ${PUBLIC_COMMUNITY_JOIN}
             WHERE u.id = ?
-            GROUP BY u.id;
+            GROUP BY u.id,
+                community_visual.community_id,
+                community_visual.community_name,
+                community_visual.community_color,
+                community_visual.community_color2,
+                community_visual.community_flag_pattern,
+                community_visual.community_emblem_url;
         `, {
             replacements:[country,
                 hashDevice,
@@ -318,6 +327,7 @@ class ProfileController {
 
         const result = userData[0];
         result.devices = result.devices ? JSON.parse(result.devices) : [];
+        addPublicCommunity(result);
         result.equippedEmblems = await getEquippedEmblemsByUser(user);
         await req.logAction({
             accion: 'Perfil consultado',

@@ -30,6 +30,20 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: '#222222'
     },
+    flag_pattern: {
+      type: DataTypes.STRING(32),
+      allowNull: false,
+      defaultValue: 'horizontal'
+    },
+    text_color: {
+      type: DataTypes.STRING(7),
+      allowNull: false,
+      defaultValue: '#f2dfbf'
+    },
+    emblem_url: {
+      type: DataTypes.STRING(2048),
+      allowNull: true
+    },
     description: {
       type: DataTypes.TEXT,
       allowNull: true

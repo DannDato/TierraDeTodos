@@ -23,8 +23,8 @@ export default function Reglas() {
   }, []);
 
   return (
-    <section id="reglas" className="scroll-smooth py-20 px-6 md:px-12 lg:px-20 rounded-[30px] mx-2 md:mx-10 text-[var(--white-color)] min-h-screen relative z-20">
-      <div className="max-w-7xl mx-auto space-y-16">
+    <section id="reglas" className="scroll-smooth py-20 md:px-8 rounded-[30px] mx-2 md:mx-2 text-[var(--white-color)] min-h-screen relative z-20">
+      <div className="mx-auto space-y-16">
 
         <div className="text-center space-y-4">
           <h2 className="text-4xl md:text-5xl font-extrabold text-[var(--white-color)]" data-aos="fade-up" data-aos-duration="2000">
@@ -44,18 +44,18 @@ export default function Reglas() {
             aun no tenemos las reglas definidas
           </div>
         ) : (
-        <div className="max-w-4xl mx-auto bg-black/45 rounded-[28px] border border-white/8 shadow-2xl backdrop-blur-sm overflow-hidden" data-aos="fade-up" data-aos-duration="1000">
+        <div className="w-full mx-auto bg-black/45 rounded-[28px] border border-white/8 shadow-2xl backdrop-blur-sm overflow-hidden" data-aos="fade-up" data-aos-duration="1000">
           <div className="px-6 md:px-8 py-5 border-b border-white/8 bg-black/20">
             <p className="text-sm md:text-base text-gray-300 leading-relaxed">
               Cada punto marca una regla obligatoria dentro de la edición actual. Léelas completas antes de entrar al servidor.
             </p>
           </div>
 
-          <ul className="divide-y divide-white/6">
+          <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,28rem),1fr))] gap-4 p-4 md:p-6">
             {reglasData.map((rule, index) => (
               <li
                 key={rule.id || `${rule.category}-${index}`}
-                className="flex items-start gap-4 px-6 md:px-8 py-5 hover:bg-white/[0.03] transition-colors duration-300"
+                className="flex items-start gap-4 rounded-2xl border border-white/8 bg-white/[0.03] px-5 py-5 hover:bg-white/[0.07] transition-colors duration-300"
                 data-aos="fade-up"
                 data-aos-duration={500 + index * 70}
               >

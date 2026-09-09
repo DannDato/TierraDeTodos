@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 const Select = ({
+  label,
   value,
   onChange,
   options = [],
@@ -193,6 +194,11 @@ const Select = ({
   return (
 
     <div className={`relative ${className}`} ref={selectRef}>
+      {label && (
+        <label className="block pl-1 text-sm font-medium text-left text-[var(--ins-text-white)]">
+          {label}
+        </label>
+      )}
       <div
         onClick={handleToggle}
         onKeyDown={handleKeyboardNavigation}

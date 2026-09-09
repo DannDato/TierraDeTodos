@@ -1,10 +1,12 @@
 
+import mapaImage from "../img/mapa.png";
 
 function Background({
   // backgroundImage = "/img/banner2.gif",
   // backgroundImage = "/img/pollos.jpg",
   // backgroundImage = "/img/banner2.webp",
-  backgroundImage = "/img/banner.webp",
+  backgroundImage = mapaImage,
+  // backgroundImage = "/img/banner.webp",
   // backgroundImage = "/img/bannergif.webp",
   overlayColor = "rgba(39, 37, 35, 0.51)",
   blur = "20px",

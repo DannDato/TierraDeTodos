@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Menu as MenuIcon, MoreVertical, Plus, Save, Search, X } from "lucide-react";
+import { GripVertical, Menu as MenuIcon, MoreVertical, Plus, Save, Search, X } from "lucide-react";
 import api from "../../../api/axios";
 import AlertModal from "../../../elements/AlertModal";
 import Button from "../../../elements/Button";
@@ -19,6 +19,8 @@ function MenuManagerView() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [draggedId, setDraggedId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
   const [alert, setAlert] = useState({ isOpen: false, type: "info", title: "Aviso", message: "" });
 
   const loadItems = async () => {
@@ -43,6 +45,45 @@ function MenuManagerView() {
     if (!query) return items;
     return items.filter((item) => [item.key, item.name, item.path, item.menuGroup].some((value) => String(value || "").toLowerCase().includes(query)));
   }, [items, search]);
+
+  const reorderItems = async (targetId) => {
+    if (draggedId === null || draggedId === targetId || search.trim()) return;
+
+    const sourceIndex = items.findIndex((item) => item.id === draggedId);
+    const targetIndex = items.findIndex((item) => item.id === targetId);
+    if (sourceIndex < 0 || targetIndex < 0) return;
+
+    const reordered = [...items];
+    const [movedItem] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, movedItem);
+    const normalized = reordered.map((item, index) => ({ ...item, orderIndex: index }));
+
+    setItems(normalized);
+    setDraggedId(null);
+    setDragOverId(null);
+
+    try {
+      setSaving(true);
+      await Promise.all(normalized.map((item) => api.put(`/system/menu/admin/${item.id}`, {
+        key: item.key,
+        name: item.name,
+        icon: item.icon,
+        path: item.path,
+        target: item.target,
+        shortAccess: Boolean(item.shortAccess),
+        orderIndex: item.orderIndex,
+        basic: item.basic,
+        menuGroup: item.menuGroup,
+        required_permissions: item.required_permissions || [],
+        active: item.active !== false,
+      })));
+    } catch (error) {
+      await loadItems();
+      setAlert({ isOpen: true, type: "error", title: "No se pudo reordenar", message: error.response?.data?.message || "No se pudo guardar el nuevo orden." });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const save = async (form) => {
     const payload = {
@@ -81,14 +122,14 @@ function MenuManagerView() {
         <div><h2 className="flex items-center gap-2 text-2xl font-extrabold text-[var(--ins-text-white)]"><MenuIcon size={22} className="text-[var(--secondary-color)]" /> Menú</h2><p className="mt-1 text-sm text-[var(--ins-text-gray)]">Administra las opciones visibles y sus permisos de acceso.</p></div>
         <div className="flex flex-col gap-3 sm:flex-row"><div className="relative"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar menú..." className="w-full rounded-xl border border-white/10 bg-[var(--black-color)]/30 px-4 py-2.5 pr-10 text-sm text-[var(--ins-text-white)] outline-none focus:border-[var(--secondary-color)] sm:w-64" />{search ? <button type="button" onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)]"><X size={14} /></button> : <Search size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ins-text-gray)]" />}</div><Button variant="primary" onClick={() => setSelected({ ...initialItem })}><Plus size={17} /> Nuevo</Button></div>
       </div>
-      {!filtered.length ? <div className="rounded-3xl border border-white/5 bg-black/20 py-12 text-center text-sm text-[var(--ins-text-gray)]">No hay elementos de menú para mostrar.</div> : <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{filtered.map((item) => <MenuItem key={item.id} item={item} onEdit={setSelected} onDeactivate={deactivate} />)}</div>}
+      {!filtered.length ? <div className="rounded-3xl border border-white/5 bg-black/20 py-12 text-center text-sm text-[var(--ins-text-gray)]">No hay elementos de menú para mostrar.</div> : <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{filtered.map((item) => <MenuItem key={item.id} item={item} onEdit={setSelected} draggableEnabled={!search.trim()} isDragged={draggedId === item.id} isDragOver={dragOverId === item.id} onDragStart={() => setDraggedId(item.id)} onDragOver={(event) => { event.preventDefault(); setDragOverId(item.id); }} onDrop={() => void reorderItems(item.id)} onDragEnd={() => { setDraggedId(null); setDragOverId(null); }} />)}</div>}
       {selected && <MenuEditor item={selected} onClose={() => setSelected(null)} onSave={save} onDeactivate={deactivate} saving={saving} />}
     </div>
   );
 }
 
-function MenuItem({ item, onEdit }) {
-  return <article className="relative rounded-2xl border border-white/10 bg-black/10 p-4"><div className="flex items-start gap-3"><div className="rounded-xl bg-white/10 p-3 text-[var(--secondary-color)]"><MenuIcon size={20} /></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-3"><div><h3 className="font-bold text-[var(--ins-text-white)]">{item.name}</h3><p className="mt-1 text-xs text-[var(--ins-text-gray)]">{item.key} · {item.path}</p></div><button type="button" onClick={() => onEdit(item)} className="rounded-lg p-2 text-[var(--ins-text-gray)] hover:bg-white/10 hover:text-white" aria-label={`Editar ${item.name}`}><MoreVertical size={18} /></button></div><div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider"><span className="rounded-full bg-white/10 px-2 py-1 text-[var(--ins-text-gray)]">{item.menuGroup}</span><span className={`rounded-full px-2 py-1 ${item.active ? "bg-emerald-500/15 text-emerald-300" : "bg-red-500/15 text-red-300"}`}>{item.active ? "Activo" : "Inactivo"}</span>{item.shortAccess && <span className="rounded-full bg-sky-500/15 px-2 py-1 text-sky-300">Acceso corto</span>}</div></div></div></article>;
+function MenuItem({ item, onEdit, draggableEnabled, isDragged, isDragOver, onDragStart, onDragOver, onDrop, onDragEnd }) {
+  return <article draggable={draggableEnabled} onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop} onDragEnd={onDragEnd} className={`relative rounded-2xl border bg-black/10 p-4 transition-all ${isDragOver ? "border-[var(--secondary-color)] ring-2 ring-[var(--secondary-color)]/30" : "border-white/10"} ${isDragged ? "opacity-40" : "opacity-100"}`}><div className="flex items-start gap-3"><div className={`mt-1 rounded-lg p-1 text-[var(--ins-text-gray)] ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "opacity-40"}`} title={draggableEnabled ? "Arrastrar para reordenar" : "Desactiva la búsqueda para reordenar"}><GripVertical size={18} /></div><div className="rounded-xl bg-white/10 p-3 text-[var(--secondary-color)]"><MenuIcon size={20} /></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-3"><div><h3 className="font-bold text-[var(--ins-text-white)]">{item.name}</h3><p className="mt-1 text-xs text-[var(--ins-text-gray)]">{item.key} · {item.path}</p></div><button type="button" draggable={false} onClick={() => onEdit(item)} className="rounded-lg p-2 text-[var(--ins-text-gray)] hover:bg-white/10 hover:text-white" aria-label={`Editar ${item.name}`}><MoreVertical size={18} /></button></div><div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider"><span className="rounded-full bg-white/10 px-2 py-1 text-[var(--ins-text-gray)]">{item.menuGroup}</span><span className={`rounded-full px-2 py-1 ${item.active ? "bg-emerald-500/15 text-emerald-300" : "bg-red-500/15 text-red-300"}`}>{item.active ? "Activo" : "Inactivo"}</span>{item.shortAccess && <span className="rounded-full bg-sky-500/15 px-2 py-1 text-sky-300">Acceso corto</span>}</div></div></div></article>;
 }
 
 function MenuEditor({ item, onClose, onSave, onDeactivate, saving }) {
