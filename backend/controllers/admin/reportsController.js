@@ -146,8 +146,6 @@ class AdminReportsController {
         type: 'info'
       });
 
-      await NotifyUser(ticket.userId, { key: `TICKET_MESSAGE:${ticket.id}:${created.id}`, type: 'TICKET', category: 'tickets', title: 'Nueva respuesta en tu ticket', message: ticket.subject, priority: 'NORMAL', entityType: 'TICKET', entityId: ticket.id, actionTarget: '/tickets', icon: 'MessageCircle' }, req);
-
       return res.status(200).json({ tickets: ticketsWithUnread, canCloseTicket });
     } catch (error) {
       handleError(res, req, error, 'Error al obtener reportes de tickets');

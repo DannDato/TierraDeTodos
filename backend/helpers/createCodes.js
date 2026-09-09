@@ -76,13 +76,7 @@ export const sendAccessCodeEmail = async ({ user, code, req, apartado = "VerifyA
 export const createAccessCode = async (user, deviceHash, req, res) => {
     try {
         const generateNumber = () => {
-            var baseTime= new Date().getTime();
-            var base=0
-            const digitos = Math.floor(Math.log10(baseTime)) + 1;
-            if (baseTime >= 6){
-                base=Math.floor(baseTime / Math.pow(10, digitos - 6));
-            }
-            return Math.floor(base + Math.random() * 900000).toString();
+            return Math.floor(100000 + Math.random() * 900000).toString();
         };
 
         const code = generateNumber();

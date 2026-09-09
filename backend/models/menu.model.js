@@ -108,7 +108,7 @@ export default (sequelize, DataTypes) => {
         path: '/progress',
         target: '_self',
         shortAccess: false,
-        orderIndex: 2,
+        orderIndex: 5,
         required_permissions: ['menu.progress'],
         menuGroup: 'user',
         active: true
@@ -121,7 +121,7 @@ export default (sequelize, DataTypes) => {
         path: '/news',
         target: '_self',
         shortAccess: true,
-        orderIndex: 3,
+        orderIndex: 4,
         required_permissions: ['menu.news'],
         menuGroup: 'user',
         active: true
@@ -134,7 +134,7 @@ export default (sequelize, DataTypes) => {
         path: '/players',
         target: '_self',
         shortAccess: true,
-        orderIndex: 4,
+        orderIndex: 2,
         required_permissions: ['menu.players'],
         menuGroup: 'user',
         active: true
@@ -176,7 +176,7 @@ export default (sequelize, DataTypes) => {
         orderIndex: 7,
         required_permissions: ['menu.profile'],
         menuGroup: 'user',
-        active: true
+        active: false
       },
       {
         id: 6,
@@ -186,7 +186,7 @@ export default (sequelize, DataTypes) => {
         path: '/community',
         target: '_self',
         shortAccess: true,
-        orderIndex: 6,
+        orderIndex: 3,
         required_permissions: ['menu.community'],
         menuGroup: 'user',
         active: true

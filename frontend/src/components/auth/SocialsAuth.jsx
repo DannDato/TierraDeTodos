@@ -121,9 +121,9 @@ function SocialsAuth({
         <img src="/img/icons/twitch.svg" alt="Twitch" className="w-8 h-8 m-[-10px]" />
       </button>
 
-      <button type="button" onClick={onMicrosoft} className="flex items-center justify-center gap-3 w-full py-3 rounded-lg bg-[#2F2F2F] text-white font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
+      {/* <button type="button" onClick={onMicrosoft} className="flex items-center justify-center gap-3 w-full py-3 rounded-lg bg-[#2F2F2F] text-white font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
         <img src="/img/icons/microsoft.svg" alt="Microsoft" className="w-5 h-5" />
-      </button>
+      </button> */}
     </div>
   );
 }

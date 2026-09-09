@@ -53,6 +53,8 @@ async function runModelSeeds() {
     const seeded = new Set();
     for (const modelName of SEED_ORDER) {
         const model = models[modelName];
+        //loggear que esta corriendo seed
+        console.log(`[seed] Corriendo seed para el modelo: ${modelName}`);
         if (model && typeof model.seed === 'function') {
             await model.seed();
             seeded.add(modelName);
@@ -84,8 +86,7 @@ export async function initializeDatabase() {
             await db.sync(syncOptions);
         }
         // await ensureForeignKeyConstraints();
-        await runModelSeeds();
-
+        // await runModelSeeds();
         dbConnection = true;
         dbMessage = 'Base de datos conectada correctamente';
     } catch (error) {
