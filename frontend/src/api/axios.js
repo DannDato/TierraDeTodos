@@ -4,9 +4,10 @@ const isDev = import.meta.env.DEV;
 
 // En desarrollo usamos proxy local (/api) para evitar preflight CORS (OPTIONS + request real).
 // En producción conservamos la URL explícita configurada por entorno.
-const API_URL = isDev
-  ? '/api'
-  : `${import.meta.env.VITE_API_BASE}:${import.meta.env.VITE_API_PORT}`;
+//const API_URL = isDev
+//  ? '/api'
+//  : `${import.meta.env.VITE_API_BASE}:${import.meta.env.VITE_API_PORT}`;
+const API_URL='/api';
 
 // Creamos una instancia de axios con la ruta base y el timeout global
 const api = axios.create({

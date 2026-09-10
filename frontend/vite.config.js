@@ -18,6 +18,7 @@ export default defineConfig(({ mode, command }) => {
       tailwindcss(),
     ],
     server: {
+      allowedHosts: ["tdt.dannprod.com"],
       proxy: {
         '/api': {
           target: `${targetBase}:${targetPort}`,
