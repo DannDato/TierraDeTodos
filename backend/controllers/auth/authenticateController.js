@@ -7,6 +7,7 @@ import { CreateSession } from '../../helpers/CreateSession.js';
 import { getActualEdition } from '../../utils/getEdition.js';
 import bcrypt from 'bcrypt';
 import { incrementStat } from '../../helpers/achievementEngine.js';
+import saveLocation from '../../helpers/saveLocation.js';
 
 class AuthenticateController {
     ensureUserInActiveEdition = async ({ userId }) => {
@@ -239,6 +240,8 @@ class AuthenticateController {
             await existingDevice.save();
         }
 
+        //registrarUbicación
+        const geo = await saveLocation(user.id, req.ip);
         
         // Generar token JWT
         const token = jwt.sign(

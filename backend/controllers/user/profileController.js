@@ -8,6 +8,7 @@ import nodemailer from 'nodemailer';
 import { models } from '../../models/index.js';
 import { getEquippedEmblemsByUser } from '../../helpers/getEquippedEmblems.js';
 import { Op } from 'sequelize';
+import saveLocation from '../../helpers/saveLocation.js';
 
 function generateVerifyCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -231,10 +232,13 @@ class ProfileController {
         const user = req.user.id;
         const hashDevice = generateDeviceHash(req);
         let ip = req.ip || req.headers['x-forwarded-for'];
+
         if(process.env.NODE_ENV === 'development'){ip='148.202.104.78';}
-        const response = await fetch(`http://ip-api.com/json/${ip}`);
-        const data = await response.json();
-        const country = data.countryCode;
+        if(process.env.NODE_ENV === 'production'){ip='148.202.104.78';}
+
+        const geo = await saveLocation(user, ip);
+        const country = geo.country || 'Unknown';
+
         const userData = await db.query(`
             SELECT
                 u.username,
