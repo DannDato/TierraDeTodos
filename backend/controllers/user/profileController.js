@@ -236,9 +236,6 @@ class ProfileController {
         if(process.env.NODE_ENV === 'development'){ip='148.202.104.78';}
         if(process.env.NODE_ENV === 'production'){ip='148.202.104.78';}
 
-        const geo = await saveLocation(user, ip);
-        const country = geo.country || 'Unknown';
-
         const userData = await db.query(`
             SELECT
                 u.username,
@@ -250,7 +247,7 @@ class ProfileController {
                 (SELECT r.extra FROM Roles r WHERE r.role = u.role AND r.active = 'YES' LIMIT 1) AS roleExtra,
                 u.email,
                 u.uuid,
-                ? AS country,
+                (SELECT country FROM user_locations ul WHERE ul.userId = u.id ORDER BY ul.id DESC LIMIT 1) AS country,
                 u.createdAt,
                 u.updatedAt,
                 u.mojang,
@@ -321,7 +318,7 @@ class ProfileController {
                 community_visual.community_flag_pattern,
                 community_visual.community_emblem_url;
         `, {
-            replacements:[country,
+            replacements:[
                 hashDevice,
                 user
             ],

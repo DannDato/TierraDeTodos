@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Play,
   Download,
@@ -22,6 +22,7 @@ import Button from "../../elements/Button";
 import api from "../../api/axios";
 import tdtNewsImage from "../../img/tdtnews.png";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
+import AlertModal from "../../elements/AlertModal";
 import { useNavigate } from "react-router-dom";
 import Runas from "../../img/runas.png";
 
@@ -52,6 +53,8 @@ function Start() {
   const iframeContainerRef = useRef(null);
   const downloadIntervalRef = useRef(null);
   const downloadCompletionTimeoutRef = useRef(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [logoutMode, setLogoutMode] = useState("current");
 
   // Base local para evolucionar a progreso real desde API sin rehacer la UI.
   const [playerSummary] = useState({
@@ -249,6 +252,24 @@ const initialChatMessages = [
     setChatInput("");
   };
 
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout", {
+        allDevices: logoutMode === "all",
+      });
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+  };
+
+  const showAlertLogout = useCallback((mode = "current") => {
+    setLogoutMode(mode);
+    setShowAlert(true);
+  }, []);
+
   useEffect(() => {
     if (!chatListRef.current) return;
     chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
@@ -261,6 +282,14 @@ const initialChatMessages = [
         rel="stylesheet"
       />
       <LoadingOverlay isVisible={loadingNews} message="Cargando noticias" />
+      <AlertModal
+        isOpen={showAlert}
+        type="warning"
+        title="Un momento..."
+        message={logoutMode === "all" ? "Estas a punto de cerrar sesión en todos los dispositivos." : "Estas a punto de cerrar sesión."}
+        onClose={() => setShowAlert(false)}
+        onConfirm={handleLogout}
+      />
       <div className="flex-row w-full  px-0 mx-0 min-h-screen h-screen">
 
         {/* ENCABEZADO */}
@@ -525,7 +554,7 @@ const initialChatMessages = [
                     {/* <span className="text-xs font-bold text-amber-500 uppercase">Tickets</span> */}
                   </button>
                   <button
-                    onClick={() => navigate('/logout')}
+                    onClick={() => showAlertLogout("current")}
                     className="flex flex-col items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-red-500/20 hover:bg-red-500/30 transition-colors shadow-md"
                     type="button"
                     >

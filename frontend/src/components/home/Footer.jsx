@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Button from "../../elements/Button";
 import api from "../../api/axios";
 
-function Footer({ socialLinks }) {
+function Footer({ socialLinks, showSections = true }) {
   const [publicLinks, setPublicLinks] = useState(socialLinks || {});
 
   useEffect(() => {
@@ -38,11 +38,11 @@ function Footer({ socialLinks }) {
             <p className="text-sm md:text-base font-light text-gray-400 max-w-sm">
               El servidor de Minecraft donde la aventura, la creatividad y la comunidad se unen.
             </p>
-            <ul className="mt-6 space-y-2 text-sm font-medium text-gray-300 flex flex-row  gap-4 ">
+            {showSections && <ul className="mt-6 space-y-2 text-sm font-medium text-gray-300 flex flex-row  gap-4 ">
               <li><a href="/">Inicio</a></li>
               <li><a href="/login">Iniciar sesión</a></li>
               <li><a href="/register">Registrarse</a></li>
-            </ul>
+            </ul>}
           </div>
 
           <div className="flex flex-col text-center md:text-right items-center md:items-end justify-center gap-4">
@@ -70,7 +70,7 @@ function Footer({ socialLinks }) {
           <p className="text-xs md:text-sm font-light text-gray-500 flex items-center gap-1.5 justify-center">
             Construido bloque a bloque con amor
             <span className="text-[var(--secondary-color)] animate-pulse">♥</span>
-            By: <span className="text-gray-300 font-medium hover:text-[var(--primary-color)] transition-colors cursor-default">DannDato</span>
+            por: <span className="text-gray-300 font-medium hover:text-[var(--primary-color)] transition-colors cursor-default"><a href={publicLinks.twitch} target="_blank" rel="noopener noreferrer">DannDato</a></span>
           </p>
         </div>
 

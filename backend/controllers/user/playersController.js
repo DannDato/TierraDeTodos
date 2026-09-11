@@ -42,7 +42,7 @@ class PlayersController {
             (SELECT r.complementary FROM Roles r WHERE r.role = u.role AND r.active = 'YES' LIMIT 1) AS roleComplementary,
             (SELECT r.enfasis FROM Roles r WHERE r.role = u.role AND r.active = 'YES' LIMIT 1) AS roleEnfasis,
             (SELECT r.extra FROM Roles r WHERE r.role = u.role AND r.active = 'YES' LIMIT 1) AS roleExtra,
-            'MX' AS country,
+            (SELECT country FROM user_locations ul WHERE ul.userId = u.id ORDER BY ul.id DESC LIMIT 1) AS country,
             u.createdAt,
             (
               SELECT upi.img

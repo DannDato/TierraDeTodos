@@ -1,11 +1,21 @@
 import { models } from '../models/index.js';
+import handleError from '../handlers/handleError.js';
 
 async function saveLocation(userId, ip) {
-    try{
-        const response = await fetch(`https://api.ipapi.is/?q=${ip}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 50000);
+
+    if(!userId) return null;
+    if(!ip) return null;
+    try {
+        const response = await fetch(`https://api.ipapi.is/?q=${ip}`, {
+            signal: controller.signal
+        });
+
+        if (!response.ok) {throw new Error(`ipApi respondió ${response.status}`);}
+
         const geo = await response.json();
 
-        //registrar en modelo userLocation
         await models.UserLocations.create({
             userId,
             ip,
@@ -18,11 +28,12 @@ async function saveLocation(userId, ip) {
             lon: geo.lon || null,
             timezone: geo.timezone || ''
         });
-
-        return geo;
+        return geo ? geo : null;
     } catch (error) {
         handleError(null, null, error, `Error al obtener ubicación ip: ${ip}`);
         return null;
+    } finally {
+        clearTimeout(timeout);
     }
 }
 

@@ -6,7 +6,7 @@ import { ctrlGoogleAuth } from './googleAuthController.js';
 import { setStat, incrementStat } from '../../helpers/achievementEngine.js';
 
 const TWITCH_PROVIDER = 'TWITCH';
-const TWITCH_SCOPE = 'user:read:email';
+const TWITCH_SCOPE = `user:read:email user:read:follows`;
 
 class TwitchAuthController {
   getConfig = (req, res) => {
@@ -32,7 +32,7 @@ class TwitchAuthController {
         userId: req.user?.id || null,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),
       });
-
+      
       const params = new URLSearchParams({
         client_id: process.env.TWITCH_CLIENT_ID,
         redirect_uri: process.env.TWITCH_REDIRECT_URI,

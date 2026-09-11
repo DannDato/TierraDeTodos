@@ -56,7 +56,10 @@ function Socials({
   }, [googleClientId, connectedAccounts]);
 
   return (
-    <div className={`grid w-full grid-cols-2 gap-3 md:grid-cols-4 ${className}`}>
+    <div 
+      className={`gap-3`}
+      style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(60px, 1fr))" }}
+    >
       {providers.map((provider) => {
         const connected = isConnected(provider.key);
         const isGoogle = provider.key === "GOOGLE";

@@ -19,15 +19,6 @@ class PageController {
 				attributes: ['id', 'type', 'title', 'fecha', 'description', 'image', 'Reporter']
 			});
 
-			await req.logAction({
-				accion: 'Noticias publicas consultadas',
-				apartado: 'Home',
-				userId: req.user?.id,
-				username: req.user?.username,
-				valor: `news=${newsRows.length}`,
-				type: 'info'
-			});
-
 			return res.status(200).json({
 				news: newsRows
 			});
@@ -58,15 +49,6 @@ class PageController {
 				},
 				attributes: ['id', 'editionId', 'category', 'item', 'icon', 'color', 'sortOrder'],
 				order: [['sortOrder', 'ASC'], ['id', 'ASC']]
-			});
-
-			await req.logAction({
-				accion: 'Reglas de edicion activa consultadas',
-				apartado: 'Home',
-				userId: req.user?.id,
-				username: req.user?.username,
-				valor: `editionId=${activeEdition.id}; rules=${ruleRows.length}`,
-				type: 'info'
 			});
 
 			return res.status(200).json({
@@ -100,15 +82,6 @@ class PageController {
 				},
 				attributes: ['id', 'editionId', 'date', 'name', 'description', 'emoji', 'color'],
 				order: [['date', 'ASC'], ['id', 'ASC']]
-			});
-
-			await req.logAction({
-				accion: 'Timeline de edicion activa consultado',
-				apartado: 'Home',
-				userId: req.user?.id,
-				username: req.user?.username,
-				valor: `editionId=${activeEdition.id}; timeline=${timelineRows.length}`,
-				type: 'info'
 			});
 
 			return res.status(200).json({

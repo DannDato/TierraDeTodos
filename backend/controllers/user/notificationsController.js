@@ -29,7 +29,8 @@ class NotificationsController {
         where: { userId: req.user.id, readAt: null, archivedAt: null },
         include: [{ model: models.Notifications, as: 'notification', where: notificationWindowWhere(), required: true }],
       });
-      const location = await saveLocation(req.user.id, req.ip);
+      const saveIp = process.env.NODE_ENV == 'development' ? '148.202.104.78' : req.ip;
+      const location = await saveLocation(req.user.id, saveIp);
       return res.json({ count });
     } catch (error) {
       return handleError(res, req, error, 'Error al consultar contador de notificaciones');
