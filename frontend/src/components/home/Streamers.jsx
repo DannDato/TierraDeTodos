@@ -20,6 +20,7 @@ export default function Streamers() {
   const featured = participants.find((participant) => participant.category === "DANNDATO");
   const cards = participants.filter((participant) => participant.id !== featured?.id);
 
+  if (!(participants.length > 3)) return null;
   return (
     <section id="streamers" className="py-20 bg-[var(--white-color)] text-[var(--black-color)] relative overflow-hidden mx-2 md:mx-10 rounded-[30px] z-20" data-aos="fade-up" data-aos-duration="1000">
       

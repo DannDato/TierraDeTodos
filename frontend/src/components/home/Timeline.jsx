@@ -75,11 +75,11 @@ export default function Timeline() {
     });
   };
 
+  // if (loading || !timelineData.length) return null;
+
   return (
     <section id="timeline" className="text-[var(--white-color)] py-24 px-6 overflow-hidden bg-minecraft z-20">
       <div className="max-w-6xl mx-auto relative z-10">
-      <MinecraftBackground />
-
         <div className="relative w-full text-center mb-24 space-y-4" data-aos="fade-down">
           <h2 className="text-4xl md:text-5xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-400">
             Línea de Tiempo
@@ -90,14 +90,8 @@ export default function Timeline() {
         </div>
 
         <div className="relative">
-
           <div className="absolute left-[28px] md:left-1/2 top-0 bottom-0 w-[2px] md:-translate-x-1/2 bg-white/10" />
 
-          {loading ? (
-            <div className="text-center text-gray-400 text-lg py-12">Cargando timeline...</div>
-          ) : timelineData.length === 0 ? (
-            <div className="text-center text-gray-400 text-lg py-12">aun no tenemos las fechas definidas</div>
-          ) : (
           <div className="space-y-12 md:space-y-20">
             {timelineData.map((item) => {
               const state = getItemState(item.date);

@@ -147,7 +147,7 @@ section[id] {
 /* Animación y posicionamiento de los cubos */
 .mc-cube-anim {
   position: absolute;
-  bottom: -100px; /* Inician fuera de la pantalla por abajo */
+  bottom: -150px; /* Inician fuera de la pantalla por abajo */
   opacity: 0;
   animation: float-minecraft linear infinite;
   will-change: transform; /* Optimización de rendimiento */
@@ -157,16 +157,16 @@ section[id] {
 @keyframes float-minecraft {
   0% {
     transform: translateY(0) rotate(0deg);
-    opacity: 1;
+    opacity: 0;
   }
-  15% {
-    opacity: 1;
+  10% {
+    opacity: 0.85;
   }
-  85% {
-    opacity: 1;
+  90% {
+    opacity: 0.85;
   }
   100% {
-    transform: translateY(-500vh) rotate(120deg);
-    opacity: 1;
+    transform: translateY(calc(-100vh - 200px)) rotate(120deg);
+    opacity: 0;
   }
 }

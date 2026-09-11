@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react"
 import Banner from "../../elements/Banner"
 import Footer from "../../components/home/Footer"
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
+import MinecraftBackground from "../../components/home/MinecraftBackground";
 import {
   clearPendingVerifyAccessUser,
   getPendingVerifyAccessUser,
@@ -178,6 +179,7 @@ function VerifyAccess() {
 
   return (
     <>
+      <MinecraftBackground/>
       <Banner>
         <LoadingOverlay isVisible={loading} />
         <div className="grid grid-cols-2 max-w-xl mx-auto"
@@ -274,7 +276,7 @@ function VerifyAccess() {
               </div>
             </div>
 
-
+            
 
             {/* Footer de navegación rápida */}
             <div className="mt-8 flex justify-center gap-6">

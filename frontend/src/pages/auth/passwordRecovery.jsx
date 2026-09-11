@@ -6,6 +6,7 @@ import Button from "../../elements/Button";
 import Banner from "../../elements/Banner";
 import Footer from "../../components/home/Footer";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
+import MinecraftBackground from "../../components/home/MinecraftBackground";
 import api from "../../api/axios";
 
 export default function PasswordRecovery() {
@@ -91,6 +92,7 @@ export default function PasswordRecovery() {
 
   return (
     <>
+      <MinecraftBackground/>
       <Banner className="h-[800px]">
         <LoadingOverlay isVisible={loading || checking} message={checking ? "Validando enlace..." : ""} />
         <div className="grid grid-cols-2 max-w-4xl mx-auto shadow-2xl overflow-hidden rounded-3xl"

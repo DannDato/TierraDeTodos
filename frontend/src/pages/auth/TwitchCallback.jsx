@@ -4,6 +4,7 @@ import api from "../../api/axios";
 import Banner from "../../elements/Banner";
 import Footer from "../../components/home/Footer";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
+import MinecraftBackground from "../../components/home/MinecraftBackground";
 import { setPendingVerifyAccessUser, setVerifyAccessResendAvailableAt } from "../../utils/verifyAccessStorage";
 
 function TwitchCallback() {
@@ -64,6 +65,7 @@ function TwitchCallback() {
 
   return (
     <>
+      <MinecraftBackground/>
       <LoadingOverlay isVisible={isProcessing} />
       <Banner className="h-[800px]">
         <div

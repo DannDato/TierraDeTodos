@@ -7,6 +7,7 @@ import Button from "../../elements/Button"
 import Banner from "../../elements/Banner"
 import Footer from "../../components/home/Footer"
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
+import MinecraftBackground from "../../components/home/MinecraftBackground";
 import SocialsAuth from "../../components/auth/SocialsAuth"
 import AlertModal from "../../elements/AlertModal";
 import { ArrowLeft, LogIn } from "lucide-react";
@@ -83,6 +84,7 @@ function Register() {
 
   return (
     <>
+      <MinecraftBackground/>
       <AlertModal
         isOpen={showAlert}
         type="info"

@@ -1,6 +1,7 @@
 import handleError from '../../handlers/handleError.js';
 import { models } from '../../models/index.js';
 import { notificationWindowWhere } from '../../helpers/notifications.js';
+import saveLocation from '../../helpers/saveLocation.js';
 
 class NotificationsController {
   list = async (req, res) => {
@@ -28,6 +29,7 @@ class NotificationsController {
         where: { userId: req.user.id, readAt: null, archivedAt: null },
         include: [{ model: models.Notifications, as: 'notification', where: notificationWindowWhere(), required: true }],
       });
+      const location = await saveLocation(req.user.id, req.ip);
       return res.json({ count });
     } catch (error) {
       return handleError(res, req, error, 'Error al consultar contador de notificaciones');

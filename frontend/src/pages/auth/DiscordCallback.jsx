@@ -4,6 +4,7 @@ import api from "../../api/axios";
 import Banner from "../../elements/Banner";
 import Footer from "../../components/home/Footer";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
+import MinecraftBackground from "../../components/home/MinecraftBackground";
 
 function DiscordCallback() {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ function DiscordCallback() {
 
   return (
     <>
+      <MinecraftBackground />
       <LoadingOverlay isVisible={isProcessing} />
       <Banner className="h-[800px]">
         <div className="grid max-w-4xl mx-auto overflow-hidden rounded-3xl shadow-2xl" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>

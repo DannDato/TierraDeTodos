@@ -6,6 +6,7 @@ import Input from "../../elements/Input";
 import Button from "../../elements/Button";
 import Footer from "../../components/home/Footer";
 import LoadingOverlay from "../../components/shared/LoadingOverlay";
+import MinecraftBackground from "../../components/home/MinecraftBackground";
 import { setPendingVerifyAccessUser, setVerifyAccessResendAvailableAt } from "../../utils/verifyAccessStorage";
 
 function CompleteGoogleRegistration() {
@@ -48,6 +49,7 @@ function CompleteGoogleRegistration() {
 
   return (
     <>
+      <MinecraftBackground />
       <LoadingOverlay isVisible={loading} />
       <Banner className="h-[800px]">
         <div className="max-w-lg mx-auto rounded-3xl bg-[var(--white-color)] p-10 shadow-2xl">

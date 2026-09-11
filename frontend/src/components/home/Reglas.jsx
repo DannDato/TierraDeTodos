@@ -22,6 +22,8 @@ export default function Reglas() {
     loadRules();
   }, []);
 
+  if (!reglasData.length) return null;
+
   return (
     <section id="reglas" className="scroll-smooth py-20 md:px-8 rounded-[30px] mx-2 md:mx-2 text-[var(--white-color)] min-h-screen relative z-20">
       <div className="mx-auto space-y-16">

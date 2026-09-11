@@ -1,3 +1,4 @@
+import MinecraftBackground from "../../components/home/MinecraftBackground";
 import { Navigate, useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { useState } from "react";
@@ -67,6 +68,7 @@ function Login() {
 
   return (
     <>
+      <MinecraftBackground />
       <Banner className="h-[800px]">
         <LoadingOverlay isVisible={loading} />
         <div className="grid grid-cols-2 max-w-4xl mx-auto shadow-2xl overflow-hidden rounded-3xl"

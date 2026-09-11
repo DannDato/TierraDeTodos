@@ -61,6 +61,7 @@ export default function News() {
   const scrollLeft = () => {carouselRef.current?.scrollBy({ left: -400, behavior: "smooth" });};
   const scrollRight = () => {carouselRef.current?.scrollBy({ left: 400, behavior: "smooth" });};
 
+  if (!normalizedNews.length) return null;
   return (
     <section
       id="noticias"

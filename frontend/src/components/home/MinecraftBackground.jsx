@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 
-// Este componente es la animación de fondo con cubos de  minecraft del timeline
+// Animación de fondo fija con cubos de Minecraft para toda la página
 
 export default function MinecraftBackground() {
   const cubes = useMemo(() => {
@@ -11,19 +11,19 @@ export default function MinecraftBackground() {
       "text-[var(--dirt-color)]"
     ];
 
-    return Array.from({ length: 15 }).map((_, i) => {
+    return Array.from({ length: 18 }).map((_, i) => {
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
       
       const left = Math.random() * 100; 
-      const size = Math.random() * 40 + 100;
-      const duration = Math.random() * 15 + 10; 
+      const size = Math.random() * 40 + 80;
+      const duration = Math.random() * 12 + 10; 
 
       const delay = Math.random() * -25;
 
       return (
         <div
           key={i}
-          className={`mc-cube-anim ${randomColor} z-1 `}
+          className={`mc-cube-anim ${randomColor}`}
           style={{
             left: `${left}%`,
             width: `${size}px`,
@@ -43,7 +43,7 @@ export default function MinecraftBackground() {
   }, []);
 
   return (
-    <div className="absolute inset-0 z-0 pointer-events-none">
+    <div className="fixed inset-0 z-[5] pointer-events-none overflow-hidden">
       {cubes}
     </div>
   );

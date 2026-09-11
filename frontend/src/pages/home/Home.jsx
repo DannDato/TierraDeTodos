@@ -1,4 +1,5 @@
 import Banner from "../../elements/Banner";
+import MinecraftBackground from "../../components/home/MinecraftBackground";
 import Button from "../../elements/Button";
 import Timeline from "../../components/home/Timeline";
 import News from "../../components/home/News";
@@ -65,9 +66,10 @@ function Home() {
   return (
     <>
       <Navbar></Navbar>
+      <MinecraftBackground />
       <Banner>
         <center className="h-full flex items-center justify-center px-4">
-          <div className="w-full max-w-3xl text-[var(--white-color)] flex flex-col items-center z-20">
+          {/* <div className="w-full max-w-3xl text-[var(--white-color)] flex flex-col items-center z-20">
             <img
               src="img/tdtLine.png"
               alt="Tierra de Todos Logo"
@@ -83,6 +85,34 @@ function Home() {
               la aventura y la creatividad se unen en una nueva edición.
             </p>
             <Button variant="primary" size="lg" href={"/login"} data-aos="fade" data-aos-duration="3000">¡Juega ya!</Button>
+          </div> */}
+          <div className="w-full max-w-3xl text-[var(--white-color)] flex flex-col items-center z-20">
+            <img
+              src="img/tdtLine.png"
+              alt="Tierra de Todos Logo"
+              className="w-full max-w-[550px] mb-5 -my-30"
+              data-aos="fade-down"
+              data-aos-duration="2000"
+            />
+            <p className="text-base md:text-lg font-light mb-8 leading-relaxed"
+              data-aos="fade-up"
+              data-aos-duration="500"
+            >
+              <span>
+                Aun no sabemos cuando... Pero mantente al tanto de la próxima edición.
+                <br />
+                Por ahora puedes descargar los mundos de las ediciones anteriores y jugar localmente.
+              </span> 
+            </p>
+            {/* <Button variant="primary" size="lg" href={"/login"} data-aos="fade" data-aos-duration="3000">¡Juega ya!</Button> */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <a href="https://drive.google.com/file/d/1cc1Uo4fLwkHIHbxGUdvGmmvKCu3Ac5eS/view?usp=drive_link" target="_blank" data-aos-duration="500">
+                <button className="p-4 rounded-xl bg-[var(--primary-color)] font-bold text-xl text-[var(--ins-white-color)]">Descargar TDT 1</button>
+              </a>
+              <a href="https://drive.google.com/file/d/1u8uE-jUa0-MqTwjxL8eQvHj1ZaGhTBfe/view?usp=drive_link" target="_blank" data-aos-duration="700">
+                <button className="p-4 rounded-xl bg-[var(--primary-color)] font-bold text-xl text-[var(--ins-white-color)]">Descargar TDT 2</button>
+              </a>
+            </div>
           </div>
         </center>
       </Banner>
