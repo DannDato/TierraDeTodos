@@ -12,6 +12,8 @@ import { reconcileRecentNotifications } from './helpers/reconcileNotifications.j
 // Crear la app
 const app = express()
 
+app.set('trust proxy',1);
+
 // res.locals hace que la variable esté disponible en TODAS las vistas automáticamente
 app.use((req, res, next) => {
     res.locals.folder = process.env.FOLDER || ''; // por si folder hace de las suyas como en ammfen
